@@ -9,6 +9,14 @@ import (
 
 type colorSpec struct{ fill, stroke, text string }
 
+// zoneColors cycles through distinct backgrounds for trust zone subgraphs.
+var zoneColors = []colorSpec{
+	{"#b8d4f0", "#5b8db8", "#1a3a5c"},
+	{"#c8e8c0", "#5b8b5a", "#1a3c1a"},
+	{"#f5e6c8", "#b8935b", "#3c2a1a"},
+	{"#e8c8f0", "#8b5bb8", "#2a1a3c"},
+}
+
 // typeColors maps Mermaid-safe component type names to fill/stroke/text colours.
 var typeColors = map[string]colorSpec{
 	"embedded_device": {"#dce8f5", "#5b8db8", "#1a3a5c"},
@@ -45,7 +53,7 @@ func DataFlow(proj *model.Project) string {
 
 	inZone := make(map[string]bool)
 
-	for _, zone := range proj.TrustZones {
+	for i, zone := range proj.TrustZones {
 		zoneID := toMermaidID(zone.ID)
 		b.WriteString(fmt.Sprintf("    subgraph %s[\"%s\"]\n", zoneID, zone.Title))
 		for _, memberID := range zone.Members {
@@ -53,6 +61,8 @@ func DataFlow(proj *model.Project) string {
 			inZone[memberID] = true
 		}
 		b.WriteString("    end\n")
+		zc := zoneColors[i%len(zoneColors)]
+		b.WriteString(fmt.Sprintf("    style %s fill:%s,stroke:%s,color:%s\n", zoneID, zc.fill, zc.stroke, zc.text))
 	}
 
 	for _, comp := range proj.Components {
