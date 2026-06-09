@@ -67,7 +67,11 @@ func TestThreatModel_ThreatSummaryRow(t *testing.T) {
 
 	got := render(t, proj, "", false)
 
-	assertContains(t, got, "| critical | t-001 | Spoof sensor | comp-a | high |")
+	// threats are grouped by target; summary table omits target column
+	assertContains(t, got, "### comp-a")
+	assertContains(t, got, "| critical |")
+	assertContains(t, got, "| Spoof sensor |")
+	assertContains(t, got, "| high |")
 }
 
 func TestThreatModel_MitigationResolvesToControlTitle(t *testing.T) {

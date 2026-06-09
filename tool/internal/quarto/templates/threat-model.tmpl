@@ -2,6 +2,9 @@
 title: "Threat Model — {{ .Title }}"
 date: "{{ .Date }}"
 version: "{{ .Version }}"
+{{ if .Logo -}}
+title-block-banner: true
+{{ end -}}
 format:
   html:
     toc: true
@@ -14,28 +17,38 @@ format:
 
 ## System Overview
 
+{{ if .Logo }}
+![]({{ .Logo }}){width=180px style="float:right; margin: 0 0 1em 2em;"}
+{{ end -}}
 {{ .Description }}
 
 ## Data Flow Diagram
 
 ```{mermaid}
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#dce8f5', 'primaryBorderColor': '#5b8db8', 'lineColor': '#666666', 'secondaryColor': '#f0f4f8', 'tertiaryColor': '#ffffff'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#dce8f5', 'primaryBorderColor': '#5b8db8', 'lineColor': '#555555', 'secondaryColor': '#b8d4f0', 'tertiaryColor': '#c8e8c0', 'clusterBkg': '#b8d4f0', 'clusterBorder': '#5b8db8'}}}%%
 {{ .Diagram }}
 ```
 
-## Threats
+{{ if .AssetList }}
+## Assets
 
-### Summary
-
-| Severity | ID | Title | Target | Residual Risk |
+| ID | Type | Classification | Hosted on | Description |
 |---|---|---|---|---|
-{{ range .Threats -}}
-| {{ .Severity }} | {{ .ID }} | {{ .Title }} | {{ .Target }} | {{ .ResidualRisk }} |
+{{ range .AssetList -}}
+| `{{ .ID }}` | {{ .Type }} | {{ .Classification }} | {{ range $i, $c := (index $.AssetComponents .ID) }}{{ if $i }}, {{ end }}`{{ $c }}`{{ end }} | {{ .Description | trim }} |
 {{ end }}
+{{ end -}}
+## Threats
+{{ range .ThreatGroups }}
+### {{ .TargetTitle }}
 
-### Details
+| Severity | ID | Title | Residual Risk |
+|---|---|---|---|
+{{ range .Threats -}}
+| {{ .Severity }} | [`{{ .ID }}`](#{{ .ID }}) | {{ .Title }} | {{ .ResidualRisk }} |
+{{ end }}
 {{ range .Threats }}
-#### {{ .Title }}
+#### {{ .Title }} {#{{ .ID }}}
 
 | Field | Value |
 |---|---|
@@ -53,6 +66,7 @@ format:
 | **Mitigations** | none |
 {{ end }}
 {{ .Notes }}
+{{ end -}}
 {{ end -}}
 {{ if .ComponentList }}
 ## Components

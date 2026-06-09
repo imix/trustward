@@ -43,22 +43,32 @@ func DefaultTemplate() *template.Template {
 	return template.Must(ParseTemplate(defaultTmplContent))
 }
 
+// ThreatGroup groups threats by target for per-component report sections.
+type ThreatGroup struct {
+	TargetID    string
+	TargetTitle string
+	Threats     []model.Threat
+}
+
 // threatModelData is the context passed to every threat model template.
 // Field names are part of the template API — renaming them is a breaking change.
 type threatModelData struct {
-	Title       string
-	Date        string
-	Version     string
-	Description string
-	Threats     []model.Threat
+	Title               string
+	Date                string
+	Version             string
+	Description         string
+	Logo                string
+	AssetList           []model.Asset
+	AssetComponents     map[string][]string // asset id → component ids that hold it
+	ThreatGroups        []ThreatGroup       // threats grouped by target, in encounter order
 	Controls            map[string]string   // id → title, for the controlTitle helper
-	ControlList         []model.Control     // full control objects for rendering a controls section
+	ControlList         []model.Control
 	ControlComponents   map[string][]string // control id → component ids that implement it
-	ComponentList       []model.Component   // all components, for rendering a components section
-	CatalogList         []model.Catalog     // all catalogs, for rendering a compliance section
-	RequirementControls map[string][]string // "catalog::req-id" → control IDs that implement it
-	Diagram     string
-	PDF         bool
+	ComponentList       []model.Component
+	CatalogList         []model.Catalog
+	RequirementControls map[string][]string // "catalog-id::req-id" → control IDs
+	Diagram             string
+	PDF                 bool
 }
 
 // ThreatModel renders a threat model report using the provided template.
@@ -83,20 +93,62 @@ func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, p
 		}
 	}
 
+	assetComponents := make(map[string][]string)
+	for _, comp := range proj.Components {
+		for _, assetID := range comp.Assets {
+			assetComponents[assetID] = append(assetComponents[assetID], comp.ID)
+		}
+	}
+
+	compTitles := make(map[string]string, len(proj.Components))
+	for _, c := range proj.Components {
+		t := c.Title
+		if t == "" {
+			t = c.ID
+		}
+		compTitles[c.ID] = t
+	}
+
+	var targetOrder []string
+	targetSeen := make(map[string]bool)
+	threatMap := make(map[string][]model.Threat)
+	for _, t := range proj.Threats {
+		if !targetSeen[t.Target] {
+			targetSeen[t.Target] = true
+			targetOrder = append(targetOrder, t.Target)
+		}
+		threatMap[t.Target] = append(threatMap[t.Target], t)
+	}
+	groups := make([]ThreatGroup, 0, len(targetOrder))
+	for _, targetID := range targetOrder {
+		title := compTitles[targetID]
+		if title == "" {
+			title = targetID
+		}
+		groups = append(groups, ThreatGroup{
+			TargetID:    targetID,
+			TargetTitle: title,
+			Threats:     threatMap[targetID],
+		})
+	}
+
 	data := threatModelData{
-		Threats:             proj.Threats,
+		AssetList:           proj.Assets,
+		AssetComponents:     assetComponents,
+		ThreatGroups:        groups,
 		Controls:            controls,
 		ControlList:         proj.Controls,
 		ControlComponents:   controlComponents,
 		ComponentList:       proj.Components,
 		CatalogList:         proj.Catalogs,
 		RequirementControls: reqControls,
-		Diagram:     strings.TrimRight(diagram, "\n"),
-		PDF:         pdf,
+		Diagram:             strings.TrimRight(diagram, "\n"),
+		PDF:                 pdf,
 	}
 	if proj.SystemMeta != nil {
 		data.Title = proj.SystemMeta.Title
 		data.Description = proj.SystemMeta.Description
+		data.Logo = proj.SystemMeta.Logo
 	}
 	data.Date = proj.Version.ReleaseDate
 	data.Version = proj.Version.Semver

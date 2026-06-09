@@ -9,6 +9,7 @@ type SystemMeta struct {
 	ID          string `yaml:"id"`
 	Title       string `yaml:"title"`
 	Description string `yaml:"description"`
+	Logo        string `yaml:"logo"` // optional path to logo image
 }
 
 type Asset struct {
