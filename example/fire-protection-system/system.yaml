@@ -57,6 +57,11 @@ components:
       - alarm-activation
       - system-config
       - central-unit-firmware
+    controls:
+      - comp-iam
+      - comp-password-policy
+      - comp-audit-log
+      - comp-encryption-at-rest
     description: >
       Central fire alarm control unit — evaluates sensor input, manages alarm
       logic, and drives the control panel
@@ -65,6 +70,8 @@ components:
     type: embedded-device
     assets:
       - sensor-data
+    controls:
+      - comp-sensor-msg-auth
     description: >
       Addressable smoke/heat detector — continuously samples air and reports
       readings to the central unit
@@ -74,6 +81,8 @@ components:
     assets:
       - alarm-activation
       - panel-firmware
+    controls:
+      - comp-iam
     description: >
       Operator control panel — displays system status, allows authorized
       personnel to silence or reset alarms
