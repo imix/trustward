@@ -53,3 +53,12 @@ format:
 {{ end }}
 {{ .Notes }}
 {{ end -}}
+{{ if .ControlList }}
+## Controls
+
+| ID | Title | Description |
+|---|---|---|
+{{ range .ControlList -}}
+| `{{ .ID }}` | {{ .Title }} | {{ .Description | trim }} |
+{{ end }}
+{{ end -}}

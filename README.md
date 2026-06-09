@@ -16,11 +16,8 @@ cd example/fire-protection-system
 # Generate a Mermaid data flow diagram
 ../../sectrack.sh diagram dataflow
 
-# Generate a Quarto threat model report
-../../sectrack.sh report threat-model > report.qmd
-
-# Render the report to HTML (Quarto is inside the image)
-docker run --rm -v "$(pwd):/model" --entrypoint quarto sectrack render report.qmd
+# Generate and render a threat model report to HTML
+../../sectrack.sh render threat-model       # produces threat-model.html
 ```
 
 ---
@@ -55,7 +52,14 @@ Pipe to a file or embed directly in Markdown.
 
 ### `sectrack report threat-model [--pdf]`
 
-Prints a [Quarto](https://quarto.org) document (`.qmd`) to stdout. Redirect to a file then render with Quarto.
+Prints a [Quarto](https://quarto.org) document (`.qmd`) to stdout. Use `sectrack.sh render` to generate and render in one step:
+
+```bash
+./sectrack.sh render threat-model    # produces threat-model.html
+./sectrack.sh render threat-model --pdf
+```
+
+Or manually:
 
 ```bash
 sectrack report threat-model > report.qmd

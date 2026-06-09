@@ -106,6 +106,14 @@ controls:
       privilege changes, configuration modifications, and alarm state changes.
       Log integrity is protected and logs are retained for at least 90 days.
 
+  - id: comp-sensor-msg-auth
+    title: Sensor Message Authentication
+    description: >
+      Keyed HMAC on every sensor frame. The central unit validates the
+      authentication tag before acting on any reading; unauthenticated or
+      tampered frames are discarded and logged. Keys are provisioned during
+      commissioning and stored in protected memory on both ends.
+
   - id: comp-encryption-at-rest
     title: Data at Rest Encryption
     description: >

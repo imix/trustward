@@ -29,14 +29,15 @@ threats:
     asset: sensor-data
     target: flow-sensor-central
     severity: critical
-    mitigations: []
-    residualRisk: critical
+    mitigations:
+      - comp-sensor-msg-auth
+    residualRisk: high
     notes: >
-      The sensor signal crosses the field/control trust boundary with no
-      message authentication. An attacker with access to the field wiring can
-      inject false readings to either suppress a real fire alarm (life-safety
-      impact) or trigger continuous false alarms. No company control currently
-      addresses message-level authentication on embedded sensor links.
+      comp-sensor-msg-auth prevents wire-level injection: an attacker tapping
+      the field bus cannot forge authenticated frames. Residual risk remains
+      high because a physically compromised sensor node can still emit
+      authenticated false readings — the control does not protect against
+      a tampered or replaced device.
 
   - id: threat-suppress-alarm
     title: Suppress alarm activation on the central unit

@@ -14,6 +14,7 @@ var defaultTmplContent []byte
 // funcMap is the set of functions available inside all threat model templates.
 var funcMap = template.FuncMap{
 	"join": strings.Join,
+	"trim": strings.TrimSpace,
 	"controlTitle": func(controls map[string]string, id string) string {
 		if title, ok := controls[id]; ok {
 			return title + " (`" + id + "`)"
@@ -51,6 +52,7 @@ type threatModelData struct {
 	Description string
 	Threats     []model.Threat
 	Controls    map[string]string // id → title, for the controlTitle helper
+	ControlList []model.Control   // full control objects for rendering a controls section
 	Diagram     string
 	PDF         bool
 }
@@ -64,10 +66,11 @@ func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, p
 	}
 
 	data := threatModelData{
-		Threats:  proj.Threats,
-		Controls: controls,
-		Diagram:  strings.TrimRight(diagram, "\n"),
-		PDF:      pdf,
+		Threats:     proj.Threats,
+		Controls:    controls,
+		ControlList: proj.Controls,
+		Diagram:     strings.TrimRight(diagram, "\n"),
+		PDF:         pdf,
 	}
 	if proj.SystemMeta != nil {
 		data.Title = proj.SystemMeta.Title
