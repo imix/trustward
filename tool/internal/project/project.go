@@ -42,10 +42,12 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		return fmt.Errorf("%s: %w", filepath.Base(abs), err)
 	}
 
+	name := filepath.Base(abs)
+
 	// Phase 1: detect content type from top-level keys.
 	var keys map[string]interface{}
 	if err := yaml.Unmarshal(data, &keys); err != nil {
-		return fmt.Errorf("%s: parsing: %w", filepath.Base(abs), err)
+		return fmt.Errorf("%s: parsing: %w", name, err)
 	}
 
 	// Phase 2: unmarshal and merge by content type.
@@ -53,7 +55,9 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		var v struct {
 			Version model.Version `yaml:"version"`
 		}
-		yaml.Unmarshal(data, &v) //nolint:errcheck
+		if err := yaml.Unmarshal(data, &v); err != nil {
+			return fmt.Errorf("%s: version: %w", name, err)
+		}
 		p.Version = v.Version
 	}
 
@@ -61,7 +65,9 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		var v struct {
 			SystemMeta *model.SystemMeta `yaml:"system"`
 		}
-		yaml.Unmarshal(data, &v) //nolint:errcheck
+		if err := yaml.Unmarshal(data, &v); err != nil {
+			return fmt.Errorf("%s: system: %w", name, err)
+		}
 		p.SystemMeta = v.SystemMeta
 	}
 
@@ -69,7 +75,9 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		var v struct {
 			Assets []model.Asset `yaml:"assets"`
 		}
-		yaml.Unmarshal(data, &v) //nolint:errcheck
+		if err := yaml.Unmarshal(data, &v); err != nil {
+			return fmt.Errorf("%s: assets: %w", name, err)
+		}
 		p.Assets = append(p.Assets, v.Assets...)
 	}
 
@@ -77,7 +85,9 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		var v struct {
 			Components []model.Component `yaml:"components"`
 		}
-		yaml.Unmarshal(data, &v) //nolint:errcheck
+		if err := yaml.Unmarshal(data, &v); err != nil {
+			return fmt.Errorf("%s: components: %w", name, err)
+		}
 		p.Components = append(p.Components, v.Components...)
 	}
 
@@ -85,7 +95,9 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		var v struct {
 			TrustZones []model.TrustZone `yaml:"trust-zones"`
 		}
-		yaml.Unmarshal(data, &v) //nolint:errcheck
+		if err := yaml.Unmarshal(data, &v); err != nil {
+			return fmt.Errorf("%s: trust-zones: %w", name, err)
+		}
 		p.TrustZones = append(p.TrustZones, v.TrustZones...)
 	}
 
@@ -93,7 +105,9 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		var v struct {
 			DataFlows []model.DataFlow `yaml:"data-flows"`
 		}
-		yaml.Unmarshal(data, &v) //nolint:errcheck
+		if err := yaml.Unmarshal(data, &v); err != nil {
+			return fmt.Errorf("%s: data-flows: %w", name, err)
+		}
 		p.DataFlows = append(p.DataFlows, v.DataFlows...)
 	}
 
@@ -104,7 +118,9 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 			var f struct {
 				Threats []model.Threat `yaml:"threats"`
 			}
-			yaml.Unmarshal(data, &f) //nolint:errcheck
+			if err := yaml.Unmarshal(data, &f); err != nil {
+				return fmt.Errorf("%s: threats: %w", name, err)
+			}
 			p.Threats = append(p.Threats, f.Threats...)
 		}
 	}
@@ -113,7 +129,9 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		var v struct {
 			Controls []model.Control `yaml:"controls"`
 		}
-		yaml.Unmarshal(data, &v) //nolint:errcheck
+		if err := yaml.Unmarshal(data, &v); err != nil {
+			return fmt.Errorf("%s: controls: %w", name, err)
+		}
 		p.Controls = append(p.Controls, v.Controls...)
 	}
 
@@ -121,7 +139,9 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		var v struct {
 			Catalog model.Catalog `yaml:"catalog"`
 		}
-		yaml.Unmarshal(data, &v) //nolint:errcheck
+		if err := yaml.Unmarshal(data, &v); err != nil {
+			return fmt.Errorf("%s: catalog: %w", name, err)
+		}
 		if v.Catalog.ID != "" {
 			p.Catalogs = append(p.Catalogs, v.Catalog)
 		}
@@ -131,7 +151,9 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		var v struct {
 			ThreatCatalog model.ThreatCatalog `yaml:"threat-catalog"`
 		}
-		yaml.Unmarshal(data, &v) //nolint:errcheck
+		if err := yaml.Unmarshal(data, &v); err != nil {
+			return fmt.Errorf("%s: threat-catalog: %w", name, err)
+		}
 		if v.ThreatCatalog.ID != "" {
 			p.ThreatCatalogs = append(p.ThreatCatalogs, v.ThreatCatalog)
 		}
@@ -141,7 +163,9 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 	var imported struct {
 		Imports []rawImport `yaml:"imports"`
 	}
-	yaml.Unmarshal(data, &imported) //nolint:errcheck
+	if err := yaml.Unmarshal(data, &imported); err != nil {
+		return fmt.Errorf("%s: imports: %w", name, err)
+	}
 	dir := filepath.Dir(abs)
 	for _, imp := range imported.Imports {
 		if err := loadGraph(p, filepath.Join(dir, imp.Path), visited); err != nil {

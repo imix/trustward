@@ -220,6 +220,27 @@ func TestLoad_MissingEntryPoint(t *testing.T) {
 	}
 }
 
+func TestLoad_MalformedKeyReturnsError(t *testing.T) {
+	cases := []struct {
+		name string
+		yaml string
+	}{
+		{"assets wrong type",     "assets: \"not a list\""},
+		{"components wrong type", "components: 42"},
+		{"controls wrong type",   "controls: true"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			writeFile(t, dir, "system.yaml", tc.yaml)
+			_, err := project.Load(dir)
+			if err == nil {
+				t.Fatalf("want error for malformed %q, got nil", tc.name)
+			}
+		})
+	}
+}
+
 func TestLoad_CompanyVocabularyThreatsIgnored(t *testing.T) {
 	dir := t.TempDir()
 	// company.yaml uses "threats:" as a vocabulary mapping, not a threat list
