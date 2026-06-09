@@ -1,23 +1,8 @@
 package model
 
-type SystemFile struct {
-	Version    Version     `yaml:"version"`
-	Imports    []Import    `yaml:"imports"`
-	SystemMeta *SystemMeta `yaml:"system"`
-	Assets     []Asset     `yaml:"assets"`
-	Components []Component `yaml:"components"`
-	TrustZones []TrustZone `yaml:"trust-zones"`
-	DataFlows  []DataFlow  `yaml:"data-flows"`
-}
-
 type Version struct {
 	Semver      string `yaml:"semver"`
 	ReleaseDate string `yaml:"releasedate"`
-}
-
-type Import struct {
-	Path    string `yaml:"path"`
-	Version string `yaml:"version"`
 }
 
 type SystemMeta struct {

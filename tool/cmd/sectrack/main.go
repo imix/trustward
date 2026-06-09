@@ -23,7 +23,7 @@ func main() {
 	}
 	diagramCmd.AddCommand(&cobra.Command{
 		Use:   "dataflow",
-		Short: "Generate a Mermaid data flow diagram from system.yaml",
+		Short: "Render a Mermaid data flow diagram",
 		RunE:  runDataflow,
 	})
 
@@ -33,7 +33,7 @@ func main() {
 	}
 	threatModelCmd := &cobra.Command{
 		Use:   "threat-model",
-		Short: "Generate a Quarto threat model report from system.yaml and threat-model.yaml",
+		Short: "Render a Quarto threat model report",
 		RunE:  runThreatModelReport,
 	}
 	threatModelCmd.Flags().Bool("pdf", false, "include PDF format in the Quarto front matter (requires Chrome headless)")
@@ -51,7 +51,7 @@ func runDataflow(_ *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("loading project: %w", err)
 	}
-	fmt.Print(mermaid.DataFlow(&proj.System))
+	fmt.Print(mermaid.DataFlow(proj))
 	return nil
 }
 
@@ -61,19 +61,8 @@ func runThreatModelReport(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("loading project: %w", err)
 	}
 	pdf, _ := cmd.Flags().GetBool("pdf")
-
-	sys := proj.System
-	meta := quarto.ReportMeta{
-		Date:    sys.Version.ReleaseDate,
-		Version: sys.Version.Semver,
-	}
-	if sys.SystemMeta != nil {
-		meta.Title = sys.SystemMeta.Title
-		meta.Description = sys.SystemMeta.Description
-	}
-	diagram := mermaid.DataFlow(&sys)
-
-	out, err := quarto.ThreatModel(meta, &proj.ThreatModel, &proj.Company, diagram, pdf)
+	diagram := mermaid.DataFlow(proj)
+	out, err := quarto.ThreatModel(proj, diagram, pdf)
 	if err != nil {
 		return fmt.Errorf("rendering report: %w", err)
 	}

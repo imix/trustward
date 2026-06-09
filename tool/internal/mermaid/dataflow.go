@@ -7,16 +7,16 @@ import (
 	"sectrack/internal/model"
 )
 
-// DataFlow renders a system file as a Mermaid flowchart showing components
+// DataFlow renders a project as a Mermaid flowchart showing components
 // grouped by trust zone, with labelled edges for each data flow.
-func DataFlow(sys *model.SystemFile) string {
+func DataFlow(proj *model.Project) string {
 	var b strings.Builder
 
 	b.WriteString("flowchart TD\n")
 
 	inZone := make(map[string]bool)
 
-	for _, zone := range sys.TrustZones {
+	for _, zone := range proj.TrustZones {
 		zoneID := toMermaidID(zone.ID)
 		b.WriteString(fmt.Sprintf("    subgraph %s[\"%s\"]\n", zoneID, zone.Title))
 		for _, memberID := range zone.Members {
@@ -26,7 +26,7 @@ func DataFlow(sys *model.SystemFile) string {
 		b.WriteString("    end\n")
 	}
 
-	for _, comp := range sys.Components {
+	for _, comp := range proj.Components {
 		if !inZone[comp.ID] {
 			b.WriteString(fmt.Sprintf("    %s[\"%s\"]\n", toMermaidID(comp.ID), comp.ID))
 		}
@@ -34,7 +34,7 @@ func DataFlow(sys *model.SystemFile) string {
 
 	b.WriteString("\n")
 
-	for _, flow := range sys.DataFlows {
+	for _, flow := range proj.DataFlows {
 		if len(flow.Connects) != 2 {
 			continue
 		}

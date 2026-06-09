@@ -23,7 +23,7 @@ func assertNotContains(t *testing.T, got, want string) {
 }
 
 func TestDataFlow_ComponentInTrustZone(t *testing.T) {
-	sys := &model.SystemFile{
+	proj := &model.Project{
 		TrustZones: []model.TrustZone{
 			{ID: "zone-a", Title: "Zone A", Members: []string{"comp-a"}},
 		},
@@ -32,14 +32,14 @@ func TestDataFlow_ComponentInTrustZone(t *testing.T) {
 		},
 	}
 
-	got := mermaid.DataFlow(sys)
+	got := mermaid.DataFlow(proj)
 
 	assertContains(t, got, `subgraph zone_a["Zone A"]`)
 	assertContains(t, got, `comp_a["comp-a"]`)
 }
 
 func TestDataFlow_UnzonedComponentIsTopLevel(t *testing.T) {
-	sys := &model.SystemFile{
+	proj := &model.Project{
 		TrustZones: []model.TrustZone{
 			{ID: "zone-a", Title: "Zone A", Members: []string{"comp-a"}},
 		},
@@ -49,7 +49,7 @@ func TestDataFlow_UnzonedComponentIsTopLevel(t *testing.T) {
 		},
 	}
 
-	got := mermaid.DataFlow(sys)
+	got := mermaid.DataFlow(proj)
 
 	// comp-b has no zone — must appear as a bare node, not inside a subgraph
 	assertContains(t, got, `comp_b["comp-b"]`)
@@ -59,7 +59,7 @@ func TestDataFlow_UnzonedComponentIsTopLevel(t *testing.T) {
 }
 
 func TestDataFlow_EdgeWithLabel(t *testing.T) {
-	sys := &model.SystemFile{
+	proj := &model.Project{
 		Components: []model.Component{
 			{ID: "comp-a", Type: "server"},
 			{ID: "comp-b", Type: "server"},
@@ -69,13 +69,13 @@ func TestDataFlow_EdgeWithLabel(t *testing.T) {
 		},
 	}
 
-	got := mermaid.DataFlow(sys)
+	got := mermaid.DataFlow(proj)
 
 	assertContains(t, got, `comp_a -->|"asset-x"| comp_b`)
 }
 
 func TestDataFlow_EdgeWithoutLabel(t *testing.T) {
-	sys := &model.SystemFile{
+	proj := &model.Project{
 		Components: []model.Component{
 			{ID: "comp-a", Type: "server"},
 			{ID: "comp-b", Type: "server"},
@@ -85,13 +85,13 @@ func TestDataFlow_EdgeWithoutLabel(t *testing.T) {
 		},
 	}
 
-	got := mermaid.DataFlow(sys)
+	got := mermaid.DataFlow(proj)
 
 	assertContains(t, got, `comp_a --> comp_b`)
 }
 
 func TestDataFlow_HyphensConvertedToUnderscores(t *testing.T) {
-	sys := &model.SystemFile{
+	proj := &model.Project{
 		TrustZones: []model.TrustZone{
 			{ID: "my-zone", Title: "My Zone", Members: []string{"my-comp"}},
 		},
@@ -100,7 +100,7 @@ func TestDataFlow_HyphensConvertedToUnderscores(t *testing.T) {
 		},
 	}
 
-	got := mermaid.DataFlow(sys)
+	got := mermaid.DataFlow(proj)
 
 	assertContains(t, got, `subgraph my_zone["My Zone"]`)
 	assertContains(t, got, `my_comp["my-comp"]`)
@@ -109,7 +109,7 @@ func TestDataFlow_HyphensConvertedToUnderscores(t *testing.T) {
 }
 
 func TestDataFlow_MultipleAssetsJoinedInLabel(t *testing.T) {
-	sys := &model.SystemFile{
+	proj := &model.Project{
 		Components: []model.Component{
 			{ID: "comp-a", Type: "server"},
 			{ID: "comp-b", Type: "server"},
@@ -124,7 +124,7 @@ func TestDataFlow_MultipleAssetsJoinedInLabel(t *testing.T) {
 		},
 	}
 
-	got := mermaid.DataFlow(sys)
+	got := mermaid.DataFlow(proj)
 
 	assertContains(t, got, `comp_a -->|"asset-x, asset-y"| comp_b`)
 }

@@ -38,28 +38,28 @@ data-flows:
 		t.Fatalf("Load: %v", err)
 	}
 
-	if got := len(proj.System.Assets); got != 1 {
+	if got := len(proj.Assets); got != 1 {
 		t.Errorf("Assets: want 1, got %d", got)
-	} else if proj.System.Assets[0].ID != "asset-a" {
-		t.Errorf("Assets[0].ID: want asset-a, got %q", proj.System.Assets[0].ID)
+	} else if proj.Assets[0].ID != "asset-a" {
+		t.Errorf("Assets[0].ID: want asset-a, got %q", proj.Assets[0].ID)
 	}
 
-	if got := len(proj.System.Components); got != 1 {
+	if got := len(proj.Components); got != 1 {
 		t.Errorf("Components: want 1, got %d", got)
-	} else if proj.System.Components[0].ID != "comp-a" {
-		t.Errorf("Components[0].ID: want comp-a, got %q", proj.System.Components[0].ID)
+	} else if proj.Components[0].ID != "comp-a" {
+		t.Errorf("Components[0].ID: want comp-a, got %q", proj.Components[0].ID)
 	}
 
-	if got := len(proj.System.TrustZones); got != 1 {
+	if got := len(proj.TrustZones); got != 1 {
 		t.Errorf("TrustZones: want 1, got %d", got)
-	} else if proj.System.TrustZones[0].ID != "zone-a" {
-		t.Errorf("TrustZones[0].ID: want zone-a, got %q", proj.System.TrustZones[0].ID)
+	} else if proj.TrustZones[0].ID != "zone-a" {
+		t.Errorf("TrustZones[0].ID: want zone-a, got %q", proj.TrustZones[0].ID)
 	}
 
-	if got := len(proj.System.DataFlows); got != 1 {
+	if got := len(proj.DataFlows); got != 1 {
 		t.Errorf("DataFlows: want 1, got %d", got)
-	} else if proj.System.DataFlows[0].ID != "flow-a" {
-		t.Errorf("DataFlows[0].ID: want flow-a, got %q", proj.System.DataFlows[0].ID)
+	} else if proj.DataFlows[0].ID != "flow-a" {
+		t.Errorf("DataFlows[0].ID: want flow-a, got %q", proj.DataFlows[0].ID)
 	}
 }
 
@@ -82,10 +82,10 @@ controls:
 		t.Fatalf("Load: %v", err)
 	}
 
-	if got := len(proj.Company.Controls); got != 2 {
+	if got := len(proj.Controls); got != 2 {
 		t.Errorf("Controls: want 2, got %d", got)
-	} else if proj.Company.Controls[0].ID != "ctrl-a" {
-		t.Errorf("Controls[0].ID: want ctrl-a, got %q", proj.Company.Controls[0].ID)
+	} else if proj.Controls[0].ID != "ctrl-a" {
+		t.Errorf("Controls[0].ID: want ctrl-a, got %q", proj.Controls[0].ID)
 	}
 }
 
@@ -110,10 +110,10 @@ threats:
 		t.Fatalf("Load: %v", err)
 	}
 
-	if got := len(proj.ThreatModel.Threats); got != 2 {
+	if got := len(proj.Threats); got != 2 {
 		t.Errorf("Threats: want 2, got %d", got)
-	} else if proj.ThreatModel.Threats[0].ID != "threat-a" {
-		t.Errorf("Threats[0].ID: want threat-a, got %q", proj.ThreatModel.Threats[0].ID)
+	} else if proj.Threats[0].ID != "threat-a" {
+		t.Errorf("Threats[0].ID: want threat-a, got %q", proj.Threats[0].ID)
 	}
 }
 
@@ -141,10 +141,10 @@ threats:
 		t.Fatalf("Load: %v", err)
 	}
 
-	if got := len(proj.System.Assets); got != 1 {
+	if got := len(proj.Assets); got != 1 {
 		t.Errorf("Assets: want 1 (no duplicates), got %d", got)
 	}
-	if got := len(proj.ThreatModel.Threats); got != 1 {
+	if got := len(proj.Threats); got != 1 {
 		t.Errorf("Threats: want 1 (no duplicates), got %d", got)
 	}
 }
@@ -175,10 +175,10 @@ components:
 		t.Fatalf("Load: %v", err)
 	}
 
-	if got := len(proj.System.Assets); got != 2 {
+	if got := len(proj.Assets); got != 2 {
 		t.Errorf("Assets: want 2, got %d", got)
 	}
-	if got := len(proj.System.Components); got != 2 {
+	if got := len(proj.Components); got != 2 {
 		t.Errorf("Components: want 2, got %d", got)
 	}
 }
@@ -203,11 +203,11 @@ system:
 		t.Fatalf("Load: %v", err)
 	}
 
-	if proj.System.SystemMeta == nil {
+	if proj.SystemMeta == nil {
 		t.Fatal("SystemMeta is nil")
 	}
-	if proj.System.SystemMeta.ID != "primary" {
-		t.Errorf("SystemMeta.ID: want primary, got %q", proj.System.SystemMeta.ID)
+	if proj.SystemMeta.ID != "primary" {
+		t.Errorf("SystemMeta.ID: want primary, got %q", proj.SystemMeta.ID)
 	}
 }
 
@@ -245,10 +245,10 @@ threats:
 		t.Fatalf("Load: %v", err)
 	}
 
-	if got := len(proj.ThreatModel.Threats); got != 0 {
+	if got := len(proj.Threats); got != 0 {
 		t.Errorf("Threats: want 0 (vocabulary object must not be parsed as threat list), got %d", got)
 	}
-	if got := len(proj.Company.Controls); got != 1 {
+	if got := len(proj.Controls); got != 1 {
 		t.Errorf("Controls: want 1, got %d", got)
 	}
 }

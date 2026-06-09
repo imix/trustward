@@ -1,11 +1,5 @@
 package model
 
-type ThreatModelFile struct {
-	Version Version  `yaml:"version"`
-	Imports []Import `yaml:"imports"`
-	Threats []Threat `yaml:"threats"`
-}
-
 type Threat struct {
 	ID           string   `yaml:"id"`
 	Title        string   `yaml:"title"`

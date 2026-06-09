@@ -7,18 +7,13 @@ import (
 	"sectrack/internal/model"
 )
 
-// ReportMeta carries the system-level metadata the threat model report needs.
-type ReportMeta struct {
+type threatModelData struct {
 	Title       string
 	Date        string
 	Version     string
 	Description string
-}
-
-type threatModelData struct {
-	Meta        ReportMeta
-	ThreatModel *model.ThreatModelFile
-	Controls    map[string]string // id → title
+	Threats     []model.Threat
+	Controls    map[string]string
 	Diagram     string
 	PDF         bool
 }
@@ -33,9 +28,9 @@ var threatModelTmpl = template.Must(template.New("threat-model").Funcs(template.
 	},
 	"upper": strings.ToUpper,
 }).Parse(`---
-title: "Threat Model — {{ .Meta.Title }}"
-date: "{{ .Meta.Date }}"
-version: "{{ .Meta.Version }}"
+title: "Threat Model — {{ .Title }}"
+date: "{{ .Date }}"
+version: "{{ .Version }}"
 format:
   html:
     toc: true
@@ -48,7 +43,7 @@ format:
 
 ## System Overview
 
-{{ .Meta.Description }}
+{{ .Description }}
 
 ## Data Flow Diagram
 
@@ -62,21 +57,21 @@ format:
 
 | Severity | ID | Title | Target | Residual Risk |
 |---|---|---|---|---|
-{{ range .ThreatModel.Threats -}}
+{{ range .Threats -}}
 | {{ .Severity }} | {{ .ID }} | {{ .Title }} | {{ .Target }} | {{ .ResidualRisk }} |
 {{ end }}
 
 ### Details
-{{ range .ThreatModel.Threats }}
+{{ range .Threats }}
 #### {{ .Title }}
 
 | Field | Value |
 |---|---|
-| **ID** | `+"`"+`{{ .ID }}`+"`"+` |
+| **ID** | ` + "`" + `{{ .ID }}` + "`" + ` |
 | **Type** | {{ .Type }} |
-| **Target** | `+"`"+`{{ .Target }}`+"`"+` |
+| **Target** | ` + "`" + `{{ .Target }}` + "`" + ` |
 {{ if .Asset -}}
-| **Asset** | `+"`"+`{{ .Asset }}`+"`"+` |
+| **Asset** | ` + "`" + `{{ .Asset }}` + "`" + ` |
 {{ end -}}
 | **Severity** | {{ .Severity }} |
 | **Residual Risk** | {{ .ResidualRisk }} |
@@ -89,21 +84,27 @@ format:
 {{ end -}}
 `))
 
-func ThreatModel(meta ReportMeta, tm *model.ThreatModelFile, company *model.CompanyFile, diagram string, pdf bool) (string, error) {
-	controls := make(map[string]string, len(company.Controls))
-	for _, c := range company.Controls {
+func ThreatModel(proj *model.Project, diagram string, pdf bool) (string, error) {
+	controls := make(map[string]string, len(proj.Controls))
+	for _, c := range proj.Controls {
 		controls[c.ID] = c.Title
 	}
 
+	data := threatModelData{
+		Threats:  proj.Threats,
+		Controls: controls,
+		Diagram:  strings.TrimRight(diagram, "\n"),
+		PDF:      pdf,
+	}
+	if proj.SystemMeta != nil {
+		data.Title = proj.SystemMeta.Title
+		data.Description = proj.SystemMeta.Description
+	}
+	data.Date = proj.Version.ReleaseDate
+	data.Version = proj.Version.Semver
+
 	var b strings.Builder
-	err := threatModelTmpl.Execute(&b, threatModelData{
-		Meta:        meta,
-		ThreatModel: tm,
-		Controls:    controls,
-		Diagram:     strings.TrimRight(diagram, "\n"),
-		PDF:         pdf,
-	})
-	if err != nil {
+	if err := threatModelTmpl.Execute(&b, data); err != nil {
 		return "", err
 	}
 	return b.String(), nil
