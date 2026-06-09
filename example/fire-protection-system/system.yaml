@@ -1,0 +1,122 @@
+version:
+  semver: 0.1.0
+  releasedate: 2026-06-09
+
+imports:
+  - path: "./company.yaml"
+    version: 1.0.0
+  - path: "./threat-model.yaml"
+    version: 1.0.0
+
+system:
+  id: fire-protection-system
+  title: Fire Protection System
+  description: >
+    Standalone fire protection system for a single building. Detects fire via
+    a smoke/heat sensor, evaluates the signal on a central unit, and notifies
+    occupants through a control panel. No internet connectivity.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Assets
+# ─────────────────────────────────────────────────────────────────────────────
+assets:
+  - id: alarm-activation
+    type: function
+    classification: restricted
+    description: Triggering of the fire alarm — activates sirens and signals evacuation
+
+  - id: sensor-data
+    type: user-data
+    classification: internal
+    description: Real-time smoke and heat readings from the detection sensor
+
+  - id: system-config
+    type: config
+    classification: confidential
+    description: >
+      Threshold values, zone assignments, and alarm routing configuration
+      stored on the central unit
+
+  - id: panel-firmware
+    type: firmware
+    classification: confidential
+    description: Firmware running on the control panel
+
+  - id: central-unit-firmware
+    type: firmware
+    classification: confidential
+    description: Firmware running on the central unit
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Components
+# ─────────────────────────────────────────────────────────────────────────────
+components:
+  - id: central-unit
+    type: embedded-device
+    assets:
+      - alarm-activation
+      - system-config
+      - central-unit-firmware
+    description: >
+      Central fire alarm control unit — evaluates sensor input, manages alarm
+      logic, and drives the control panel
+
+  - id: smoke-sensor
+    type: embedded-device
+    assets:
+      - sensor-data
+    description: >
+      Addressable smoke/heat detector — continuously samples air and reports
+      readings to the central unit
+
+  - id: control-panel
+    type: embedded-device
+    assets:
+      - alarm-activation
+      - panel-firmware
+    description: >
+      Operator control panel — displays system status, allows authorized
+      personnel to silence or reset alarms
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Trust zones
+# ─────────────────────────────────────────────────────────────────────────────
+trust-zones:
+  - id: zone-field
+    title: Field Zone
+    description: Physically exposed detection layer; sensor is mounted in the building
+    members:
+      - smoke-sensor
+
+  - id: zone-control
+    title: Control Zone
+    description: Control room equipment; physically protected, operator-accessible
+    members:
+      - central-unit
+      - control-panel
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Data flows
+# ─────────────────────────────────────────────────────────────────────────────
+data-flows:
+  - id: flow-sensor-central
+    title: Sensor → Central Unit
+    connects:
+      - smoke-sensor
+      - central-unit
+    assets:
+      - sensor-data
+    description: >
+      Continuous smoke/heat readings from the sensor to the central unit.
+      Crosses the field/control trust boundary.
+
+  - id: flow-central-panel
+    title: Central Unit ↔ Control Panel
+    connects:
+      - central-unit
+      - control-panel
+    assets:
+      - alarm-activation
+    description: >
+      Status, alarm state, and operator commands between the central unit
+      and the control panel. Both components are within the control zone.

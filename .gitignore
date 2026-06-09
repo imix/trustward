@@ -1,0 +1,12 @@
+# Build output
+tool/sectrack
+
+# Parked / work-in-progress examples
+example/tmp/
+
+# OS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/

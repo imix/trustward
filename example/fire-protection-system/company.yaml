@@ -1,0 +1,114 @@
+version:
+  semver: 1.0.0
+  releasedate: 2026-06-09
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Asset vocabulary
+# ─────────────────────────────────────────────────────────────────────────────
+asset:
+  types:
+    - name: user-data
+      description: Data of value to users (PII, process records, documents)
+    - name: config
+      description: Configuration data for devices and services
+    - name: firmware
+      description: Embedded software running on field devices
+    - name: function
+      description: A system capability or operational function (e.g. alarm triggering)
+
+  classifications:
+    - name: public
+      level: 0
+      description: No harm if disclosed externally
+    - name: internal
+      level: 1
+      description: For employees and contractors only
+    - name: confidential
+      level: 2
+      description: Restricted to a named group; disclosure causes significant harm
+    - name: restricted
+      level: 3
+      description: Highest sensitivity; disclosure causes severe or safety-critical harm
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Threat vocabulary
+# ─────────────────────────────────────────────────────────────────────────────
+threats:
+  # Threat types express *what kind of harm* an attacker causes.
+  # The `stride` tag maps each type to its STRIDE category for familiarity;
+  # the primary taxonomy is IEC 62443-native.
+  types:
+    - id: spoofing
+      title: Spoofing
+      description: Impersonating a user, device, or system to gain unauthorized access
+      stride: S
+    - id: tampering
+      title: Tampering
+      description: Unauthorized modification of data, firmware, or system state
+      stride: T
+    - id: repudiation
+      title: Repudiation
+      description: Denying actions or events to evade accountability
+      stride: R
+    - id: info-disclosure
+      title: Information Disclosure
+      description: Exposure of sensitive data to unauthorized parties
+      stride: I
+    - id: dos
+      title: Denial of Service
+      description: Disruption of availability of a function or service
+      stride: D
+    - id: priv-escalation
+      title: Privilege Escalation
+      description: Gaining elevated access beyond what is authorized
+      stride: E
+
+  # Severity scale (0 = least, 3 = most). Used in threat-model.yaml.
+  severity:
+    - name: low
+      level: 0
+      description: Limited impact; normal operations unaffected; easily recovered
+    - name: medium
+      level: 1
+      description: Moderate impact on operations or data integrity
+    - name: high
+      level: 2
+      description: Significant operational or data-safety impact
+    - name: critical
+      level: 3
+      description: Severe or irreversible impact on safety, operations, or data
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Company controls
+# Controls defined and owned by the company (not transcribed from a standard).
+# Each is mapped to standard requirements in mappings/.
+# ─────────────────────────────────────────────────────────────────────────────
+controls:
+  - id: comp-iam
+    title: Identity and Access Management
+    description: >
+      Central IAM system enforcing user identification and authentication
+      across all operator interfaces. Assigns and manages unique user accounts,
+      enforces role-based access, and provides centralized account lifecycle
+      management (create / modify / disable / review).
+
+  - id: comp-password-policy
+    title: Password Policy Enforcement
+    description: >
+      Technical enforcement of password complexity, minimum length, rotation
+      interval, and account lockout after configurable consecutive failed
+      attempts on all operator and service accounts.
+
+  - id: comp-audit-log
+    title: Audit Logging
+    description: >
+      Tamper-evident, centralized logging of all authentication events,
+      privilege changes, configuration modifications, and alarm state changes.
+      Log integrity is protected and logs are retained for at least 90 days.
+
+  - id: comp-encryption-at-rest
+    title: Data at Rest Encryption
+    description: >
+      Data at rest is encrypted with an accepted cryptographic method
+      (AES-256 or equivalent). Applies to historian databases, configuration
+      backups, and any removable media containing classified data.

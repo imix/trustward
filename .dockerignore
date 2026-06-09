@@ -1,0 +1,6 @@
+# Only the tool source is needed for the build
+*.yaml
+*.md
+*.sh
+example/
+tool/sectrack

@@ -1,0 +1,71 @@
+version:
+  semver: 0.1.0
+  releasedate: 2026-06-09
+
+imports:
+  - path: "./company.yaml"
+    version: 1.0.0
+  - path: "./system.yaml"
+    version: 1.0.0
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Threat model
+#
+# Each threat entry:
+#   id          — unique identifier (kebab-case)
+#   title       — short human-readable description
+#   type        — references a threats.types[].id from company.yaml
+#   asset       — (optional) the asset directly threatened; references assets[].id
+#   target      — component or data-flow ID where the attack surface lives
+#   severity    — references threats.severity[].name from company.yaml
+#   mitigations — list of company control IDs that reduce the risk
+#   residualRisk — severity name after mitigations are applied
+#   notes       — rationale: why these mitigations, what gap remains
+# ─────────────────────────────────────────────────────────────────────────────
+threats:
+  - id: threat-spoof-sensor-signal
+    title: Spoof sensor readings to suppress or trigger alarm
+    type: spoofing
+    asset: sensor-data
+    target: flow-sensor-central
+    severity: critical
+    mitigations: []
+    residualRisk: critical
+    notes: >
+      The sensor signal crosses the field/control trust boundary with no
+      message authentication. An attacker with access to the field wiring can
+      inject false readings to either suppress a real fire alarm (life-safety
+      impact) or trigger continuous false alarms. No company control currently
+      addresses message-level authentication on embedded sensor links.
+
+  - id: threat-suppress-alarm
+    title: Suppress alarm activation on the central unit
+    type: tampering
+    asset: alarm-activation
+    target: central-unit
+    severity: critical
+    mitigations:
+      - comp-iam
+    residualRisk: high
+    notes: >
+      comp-iam restricts access to authenticated operator accounts, reducing
+      opportunistic tampering. Residual risk remains high because a stolen or
+      shared credential gives full access to alarm logic with no second factor
+      and no device-level authentication requirement.
+
+  - id: threat-modify-thresholds
+    title: Raise detection thresholds to prevent alarm triggering
+    type: tampering
+    asset: system-config
+    target: central-unit
+    severity: high
+    mitigations:
+      - comp-iam
+      - comp-audit-log
+    residualRisk: medium
+    notes: >
+      comp-iam limits who can write configuration changes. comp-audit-log
+      records all configuration modifications, enabling detection after the
+      fact. Residual risk is medium — the controls reduce likelihood and
+      improve detectability but do not prevent a determined insider with valid
+      credentials from modifying thresholds before the change is noticed.
