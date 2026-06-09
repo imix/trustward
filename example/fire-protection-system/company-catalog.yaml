@@ -1,0 +1,44 @@
+catalog:
+  id: company-baseline
+  title: Company Security Baseline
+  requirements:
+    - id: req-iam
+      title: Identity and Access Management
+      description: >
+        All operator interfaces must require individual authentication.
+        Shared accounts are not permitted.
+      satisfies:
+        - iec-62443-sl2::SR-1.1
+        - iec-62443-sl2::SR-1.2
+
+    - id: req-password-policy
+      title: Password Policy
+      description: >
+        Password complexity, minimum length, rotation interval, and lockout
+        after failed attempts must be technically enforced on all accounts.
+      satisfies:
+        - iec-62443-sl2::SR-1.5
+
+    - id: req-audit-log
+      title: Audit Logging
+      description: >
+        Security-relevant events (authentication, privilege changes,
+        configuration modifications) must be logged and retained for 90 days.
+      satisfies:
+        - iec-62443-sl2::SR-2.8
+
+    - id: req-msg-integrity
+      title: Message Integrity
+      description: >
+        Communication between field devices and the control unit must be
+        authenticated to detect tampering or injection.
+      satisfies:
+        - iec-62443-sl2::SR-3.1
+
+    - id: req-encryption-at-rest
+      title: Data at Rest Protection
+      description: >
+        Sensitive data stored on devices or removable media must be encrypted
+        using AES-256 or equivalent.
+      satisfies:
+        - iec-62443-sl2::SR-4.2

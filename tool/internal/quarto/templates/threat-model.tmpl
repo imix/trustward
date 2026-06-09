@@ -63,6 +63,18 @@ format:
 | {{ if .Title }}{{ .Title }}{{ else }}`{{ .ID }}`{{ end }} | {{ .Type }} | {{ range $i, $c := .Controls }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $c }}{{ end }} |
 {{ end }}
 {{ end -}}
+{{ range .CatalogList }}
+{{ $cat := . -}}
+## Compliance: {{ .Title }}
+
+| Requirement | Title | Status | Control |
+|---|---|---|---|
+{{ range .Requirements -}}
+{{- $key := printf "%s::%s" $cat.ID .ID -}}
+{{- $controls := index $.RequirementControls $key -}}
+| `{{ .ID }}` | {{ .Title }} | {{ if $controls }}covered{{ else }}**gap**{{ end }} | {{ range $i, $c := $controls }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $c }}{{ end }} |
+{{ end }}
+{{ end -}}
 {{ if .ControlList }}
 ## Controls
 

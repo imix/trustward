@@ -116,6 +116,16 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		p.Controls = append(p.Controls, v.Controls...)
 	}
 
+	if hasAny(keys, "catalog") {
+		var v struct {
+			Catalog model.Catalog `yaml:"catalog"`
+		}
+		yaml.Unmarshal(data, &v) //nolint:errcheck
+		if v.Catalog.ID != "" {
+			p.Catalogs = append(p.Catalogs, v.Catalog)
+		}
+	}
+
 	// Phase 3: follow imports relative to this file's directory.
 	var imported struct {
 		Imports []rawImport `yaml:"imports"`

@@ -11,4 +11,5 @@ type Project struct {
 	DataFlows  []DataFlow
 	Threats    []Threat
 	Controls   []Control
+	Catalogs   []Catalog
 }

@@ -51,10 +51,12 @@ type threatModelData struct {
 	Version     string
 	Description string
 	Threats     []model.Threat
-	Controls           map[string]string   // id → title, for the controlTitle helper
-	ControlList        []model.Control     // full control objects for rendering a controls section
-	ControlComponents  map[string][]string // control id → component ids that implement it
-	ComponentList      []model.Component   // all components, for rendering a components section
+	Controls            map[string]string   // id → title, for the controlTitle helper
+	ControlList         []model.Control     // full control objects for rendering a controls section
+	ControlComponents   map[string][]string // control id → component ids that implement it
+	ComponentList       []model.Component   // all components, for rendering a components section
+	CatalogList         []model.Catalog     // all catalogs, for rendering a compliance section
+	RequirementControls map[string][]string // "catalog::req-id" → control IDs that implement it
 	Diagram     string
 	PDF         bool
 }
@@ -74,12 +76,21 @@ func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, p
 		}
 	}
 
+	reqControls := make(map[string][]string)
+	for _, c := range proj.Controls {
+		if c.Ref != "" {
+			reqControls[c.Ref] = append(reqControls[c.Ref], c.ID)
+		}
+	}
+
 	data := threatModelData{
-		Threats:           proj.Threats,
-		Controls:          controls,
-		ControlList:       proj.Controls,
-		ControlComponents: controlComponents,
-		ComponentList:     proj.Components,
+		Threats:             proj.Threats,
+		Controls:            controls,
+		ControlList:         proj.Controls,
+		ControlComponents:   controlComponents,
+		ComponentList:       proj.Components,
+		CatalogList:         proj.Catalogs,
+		RequirementControls: reqControls,
 		Diagram:     strings.TrimRight(diagram, "\n"),
 		PDF:         pdf,
 	}

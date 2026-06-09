@@ -61,11 +61,25 @@ Only treated as threat list when value is a YAML sequence (not a mapping). List 
 - `residualRisk` — severity after mitigations applied (string)
 - `notes` — rationale, mitigation justification, residual risk explanation (string)
 
+#### `catalog:` — requirement catalog (one per file)
+A single object defining a named set of requirements used for gap analysis and compliance mapping:
+- `id` — unique identifier (string, kebab-case)
+- `title` — human-readable catalog name (string)
+- `requirements` — list of requirement objects:
+  - `id` — unique identifier within this catalog (string, kebab-case)
+  - `title` — requirement name (string)
+  - `description` — what must be implemented (string)
+  - `satisfies` — list of requirements in other catalogs this requirement covers, in `catalog-id::req-id` form (list of strings, optional)
+
+Multiple catalogs are loaded by importing multiple catalog files. A company baseline catalog can reference which IEC 62443, NIS2, or other standard requirements it satisfies via `satisfies:`.
+
 #### `controls:` — list of security controls
 List of objects with:
 - `id` — unique identifier (string, kebab-case)
 - `title` — control name (string)
 - `description` — control scope and implementation approach (string)
+- `ref` — single catalog requirement this control implements, in `catalog-id::req-id` form (string, optional)
+- `evidence` — list of references proving implementation: commit hashes, ticket numbers, document names (list of strings, optional)
 
 ---
 
@@ -80,6 +94,8 @@ List of objects with:
 | `threats[].target` | component or data-flow ID | `components[].id` or `data-flows[].id` |
 | `threats[].asset` | asset ID | `assets[].id` |
 | `threats[].mitigations[]` | control IDs | `controls[].id` |
+| `controls[].ref` | `catalog-id::req-id` | `catalog.id` + `catalog.requirements[].id` |
+| `catalog.requirements[].satisfies[]` | `catalog-id::req-id` | another `catalog.id` + `requirements[].id` |
 
 ---
 
@@ -89,6 +105,7 @@ The loader merges content from all imported files depth-first. Behavior by key:
 - `system:` — first occurrence wins; subsequent declarations ignored
 - `version:`, `imports:` — file-level metadata only
 - All list fields (`assets:`, `components:`, `trust-zones:`, `data-flows:`, `threats:`, `controls:`) — merged by appending
+- `catalog:` — each file contributes at most one catalog; all catalogs are collected into the project
 
 A single file can hold the entire model; splitting is purely for version management convenience.
 
