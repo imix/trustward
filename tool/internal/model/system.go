@@ -20,6 +20,7 @@ type Asset struct {
 
 type Component struct {
 	ID          string   `yaml:"id"`
+	Title       string   `yaml:"title"`
 	Type        string   `yaml:"type"`
 	Assets      []string `yaml:"assets"`
 	Controls    []string `yaml:"controls"`

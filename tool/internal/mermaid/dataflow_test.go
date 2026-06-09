@@ -35,7 +35,33 @@ func TestDataFlow_ComponentInTrustZone(t *testing.T) {
 	got := mermaid.DataFlow(proj)
 
 	assertContains(t, got, `subgraph zone_a["Zone A"]`)
-	assertContains(t, got, `comp_a["comp-a"]`)
+	assertContains(t, got, `comp_a["comp-a"]`) // no title set — falls back to ID
+}
+
+func TestDataFlow_ComponentTitleUsedAsLabel(t *testing.T) {
+	proj := &model.Project{
+		Components: []model.Component{
+			{ID: "comp-a", Title: "My Component", Type: "server"},
+		},
+	}
+
+	got := mermaid.DataFlow(proj)
+
+	assertContains(t, got, `comp_a["My Component"]`)
+	assertNotContains(t, got, `comp_a["comp-a"]`)
+}
+
+func TestDataFlow_ClassDefEmittedPerType(t *testing.T) {
+	proj := &model.Project{
+		Components: []model.Component{
+			{ID: "comp-a", Type: "embedded-device"},
+		},
+	}
+
+	got := mermaid.DataFlow(proj)
+
+	assertContains(t, got, `classDef embedded_device`)
+	assertContains(t, got, `class comp_a embedded_device`)
 }
 
 func TestDataFlow_UnzonedComponentIsTopLevel(t *testing.T) {

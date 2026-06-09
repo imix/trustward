@@ -52,6 +52,7 @@ assets:
 # ─────────────────────────────────────────────────────────────────────────────
 components:
   - id: central-unit
+    title: Central Unit
     type: embedded-device
     assets:
       - alarm-activation
@@ -67,6 +68,7 @@ components:
       logic, and drives the control panel
 
   - id: smoke-sensor
+    title: Smoke Sensor
     type: embedded-device
     assets:
       - sensor-data
@@ -77,6 +79,7 @@ components:
       readings to the central unit
 
   - id: control-panel
+    title: Control Panel
     type: embedded-device
     assets:
       - alarm-activation
