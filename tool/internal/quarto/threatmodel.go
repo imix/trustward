@@ -54,6 +54,7 @@ type threatModelData struct {
 	Controls           map[string]string   // id → title, for the controlTitle helper
 	ControlList        []model.Control     // full control objects for rendering a controls section
 	ControlComponents  map[string][]string // control id → component ids that implement it
+	ComponentList      []model.Component   // all components, for rendering a components section
 	Diagram     string
 	PDF         bool
 }
@@ -78,6 +79,7 @@ func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, p
 		Controls:          controls,
 		ControlList:       proj.Controls,
 		ControlComponents: controlComponents,
+		ComponentList:     proj.Components,
 		Diagram:     strings.TrimRight(diagram, "\n"),
 		PDF:         pdf,
 	}

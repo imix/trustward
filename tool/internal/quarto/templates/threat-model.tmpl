@@ -54,6 +54,15 @@ format:
 {{ end }}
 {{ .Notes }}
 {{ end -}}
+{{ if .ComponentList }}
+## Components
+
+| Component | Type | Controls |
+|---|---|---|
+{{ range .ComponentList -}}
+| {{ if .Title }}{{ .Title }}{{ else }}`{{ .ID }}`{{ end }} | {{ .Type }} | {{ range $i, $c := .Controls }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $c }}{{ end }} |
+{{ end }}
+{{ end -}}
 {{ if .ControlList }}
 ## Controls
 
