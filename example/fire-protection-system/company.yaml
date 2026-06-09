@@ -113,6 +113,9 @@ controls:
       authentication tag before acting on any reading; unauthenticated or
       tampered frames are discarded and logged. Keys are provisioned during
       commissioning and stored in protected memory on both ends.
+    evidence:
+      - "commit:a3f9c12"
+      - "test-report-2026-05-sensor-auth.pdf"
 
   - id: comp-encryption-at-rest
     title: Data at Rest Encryption
