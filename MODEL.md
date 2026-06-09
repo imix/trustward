@@ -1,207 +1,202 @@
-# Data Model
+## YAML Schema Reference
 
-This document is the single source of truth for every field in the YAML files.
-A field used in any YAML file must appear here; a field defined here must appear
-in at least one YAML file (round-trip). See GLOSSARY.md for term definitions.
+### Top-level keys
+
+Any `.yaml` file in a sectrack project can contain any combination of the following top-level keys. All files are linked via `imports:`. The loader starts at `system.yaml` and follows the import graph depth-first.
+
+#### `version:`
+- `semver` — SemVer string, e.g. `"0.1.0"` (string)
+- `releasedate` — ISO date, e.g. `"2026-06-09"` (string)
+
+File-level metadata only; not part of the domain model.
+
+#### `imports:` — list of file references
+List of objects with:
+- `path` — relative path to a YAML file (string)
+- `version` — expected SemVer of the imported file (string)
+
+#### `system:` — system metadata (first occurrence wins)
+- `id` — unique identifier (string, kebab-case)
+- `title` — human-readable name (string)
+- `description` — free-text description used in reports (string)
+
+#### `assets:` — list of assets
+List of objects with:
+- `id` — unique identifier (string, kebab-case)
+- `type` — e.g. `user-data`, `config`, `firmware`, `function` (string)
+- `classification` — e.g. `public`, `internal`, `confidential`, `restricted` (string, optional)
+- `description` — asset purpose and sensitivity context (string)
+
+#### `components:` — list of system components
+List of objects with:
+- `id` — unique identifier (string, kebab-case)
+- `type` — e.g. `server`, `embedded-device`, `hmi`, `plc` (string)
+- `assets` — list of asset IDs hosted on this component (list of strings)
+- `description` — component role and technical details (string)
+
+#### `trust-zones:` — logical security boundaries
+List of objects with:
+- `id` — unique identifier (string, kebab-case)
+- `title` — human-readable name shown in diagrams (string)
+- `description` — zone characteristics and access model (string)
+- `members` — list of component IDs in this zone (list of strings)
+
+#### `data-flows:` — communication paths between components
+List of objects with:
+- `id` — unique identifier (string, kebab-case)
+- `title` — edge label in diagrams (string)
+- `connects` — exactly two component IDs being connected (list of two strings)
+- `assets` — list of asset IDs carried by this flow (list of strings)
+- `description` — protocol, encryption, or technology details (string)
+
+#### `threats:` — list of threats
+Only treated as threat list when value is a YAML sequence (not a mapping). List of objects with:
+- `id` — unique identifier (string, kebab-case)
+- `title` — threat name (string)
+- `type` — e.g. `spoofing`, `tampering`, `repudiation`, `disclosure`, `denial`, `elevation` (string)
+- `target` — component ID or data-flow ID being attacked (string)
+- `asset` — asset ID at risk (string, optional)
+- `severity` — e.g. `low`, `medium`, `high`, `critical` (string)
+- `mitigations` — list of control IDs that reduce risk (list of strings)
+- `residualRisk` — severity after mitigations applied (string)
+- `notes` — rationale, mitigation justification, residual risk explanation (string)
+
+#### `controls:` — list of security controls
+List of objects with:
+- `id` — unique identifier (string, kebab-case)
+- `title` — control name (string)
+- `description` — control scope and implementation approach (string)
 
 ---
 
-## Common conventions
+### Cross-reference rules
 
-### Versioning
-Every file that can be imported carries a top-level `version` block:
+| Source | Field | Target |
+|--------|-------|--------|
+| `components[].assets[]` | asset IDs | `assets[].id` |
+| `trust-zones[].members[]` | component IDs | `components[].id` |
+| `data-flows[].connects[]` | component IDs | `components[].id` |
+| `data-flows[].assets[]` | asset IDs | `assets[].id` |
+| `threats[].target` | component or data-flow ID | `components[].id` or `data-flows[].id` |
+| `threats[].asset` | asset ID | `assets[].id` |
+| `threats[].mitigations[]` | control IDs | `controls[].id` |
 
-```yaml
-version:
-  semver: <SemVer string>      # e.g. "1.0.0"
-  releasedate: <ISO date>      # e.g. "2026-06-09"
-```
+---
 
-### Imports
-Files that reference entities from other files declare:
+### File splitting and merging
 
-```yaml
-imports:
-  - path: <relative path>       # e.g. "../../definitions/company.yaml"
-    version: <SemVer string>    # version of the imported file expected
-```
+The loader merges content from all imported files depth-first. Behavior by key:
+- `system:` — first occurrence wins; subsequent declarations ignored
+- `version:`, `imports:` — file-level metadata only
+- All list fields (`assets:`, `components:`, `trust-zones:`, `data-flows:`, `threats:`, `controls:`) — merged by appending
 
-Cross-references use **string IDs only**. Every ID referenced in any `members`,
-`by`, `affects`, `mitigations`, `asset`, `zone`, or `connects` field **must
-resolve** to a defined entity either in the same file or in an imported file.
+A single file can hold the entire model; splitting is purely for version management convenience.
+
+---
 
 ### ID conventions
-- **Company-defined entities** — kebab-case, optionally prefixed by kind:
-  `comp-iam`, `zone-control-room`, `threat-steal-data`.
-- **Standard catalog entries** — preserve the standard's own notation:
-  `CR 1.1`, `CR 1.1 (1) (2)`, `CCSC 1`, `EDR 2.4`.
 
-### Cardinality rule
-Any field that references multiple entities is **always a list**, even when a
-single value is currently sufficient. Never a scalar for multi-valued fields.
+- All IDs use kebab-case: `comp-iam`, `zone-control-room`, `threat-steal-data`
+- IDs must be unique within their entity type across all imported files
+- Use descriptive prefixes to clarify intent when appropriate
 
 ---
 
-## Entity types
+### Minimal complete example
 
-### `asset` (in `definitions/company.yaml`)
-
+**system.yaml**
 ```yaml
-asset:
-  types:
-    - name: <string>            # unique ID; referenced by assets[].type
-      description: <string>
-  classifications:
-    - name: <string>            # unique ID; referenced by assets[].classification
-      level: <integer>          # 0 = least sensitive; higher = more sensitive
-      description: <string>
-```
+version:
+  semver: "0.1.0"
+  releasedate: "2026-06-09"
 
-### `asset instance` (in `system.yaml`)
+system:
+  id: fire-protection
+  title: Fire Protection System
+  description: Building fire detection and suppression system
 
-```yaml
 assets:
-  - id: <string>
-    type: <string>              # → asset.types[].name
-    classification: <string>    # (optional) → asset.classifications[].name
-    description: <string>
-```
+  - id: sensor-readings
+    type: telemetry
+    classification: internal
+    description: Real-time temperature and smoke sensor data
+  - id: control-config
+    type: config
+    classification: restricted
+    description: Suppression system activation logic
 
----
-
-### `component` (in `system.yaml`)
-
-```yaml
 components:
-  - id: <string>
-    type: <string>              # free text: server, embedded-device, hmi, switch, …
-    description: <string>
+  - id: sensor-hub
+    type: embedded-device
+    assets: [sensor-readings]
+    description: Central sensor aggregator
+  - id: control-unit
+    type: plc
+    assets: [control-config]
+    description: Automated suppression logic controller
+
+trust-zones:
+  - id: zone-industrial
+    title: Industrial Floor
+    description: Manufacturing area with fire hazard
+    members: [sensor-hub]
+  - id: zone-control
+    title: Control Room
+    description: Operator station and decision center
+    members: [control-unit]
+
+data-flows:
+  - id: flow-sensor-control
+    title: Sensor Alerts
+    connects: [sensor-hub, control-unit]
+    assets: [sensor-readings]
+    description: Encrypted sensor data over hardened network
 ```
 
----
-
-### `zone` (in `system.yaml`)
-
+**threat-model.yaml**
 ```yaml
-zones:
-  - id: <string>
-    title: <string>
-    targetSL: <integer>         # 1–4; determines required control-group from catalog
-    members:                    # list of component IDs in this zone
-      - <component id>
-```
+version:
+  semver: "0.1.0"
+  releasedate: "2026-06-09"
 
-### `conduit` (in `system.yaml`)
+imports:
+  - path: system.yaml
+    version: "0.1.0"
 
-```yaml
-conduits:
-  - id: <string>
-    title: <string>
-    connects:                   # exactly two zone IDs
-      - <zone id>
-      - <zone id>
-    description: <string>       # (optional) protocol / technology note
-```
-
----
-
-### `control` — company-defined (in `definitions/company.yaml`)
-
-```yaml
 controls:
-  - id: <string>                # kebab-case; comp- prefix recommended
-    title: <string>
-    description: <string>
-```
+  - id: comp-sensor-encryption
+    title: Sensor Data Encryption
+    description: AES-256 encryption in transit
+  - id: comp-access-control
+    title: Role-Based Access Control
+    description: Operator authentication and privilege separation
 
-### `control` — standard catalog entry (in `catalogs/*.yaml`)
-
-```yaml
-controls:
-  - id: <string>                # standard notation: "CR 1.1", "CR 1.1 (1)", etc.
-    type: <string>              # ccsc | cr | edr | hdr | ndr | sar
-    title: <string>
-    clause: <string>            # section reference in the standard (e.g. "5.3")
-    appliesTo: <string>         # (optional) component type, e.g. embedded-device
-    _stub: true                 # (optional) marks entries added only for reference
-                                #   integrity; full text not yet transcribed
-```
-
----
-
-### `control-group` (in `catalogs/*.yaml`)
-
-```yaml
-control-groups:
-  - id: <string>
-    title: <string>
-    foundationalRequirement: <string>   # (optional) FR1–FR7
-    securityLevel: <integer>            # (optional) 1–4
-    members:                            # (optional) flat list of control IDs
-      - <control id>
-    containedGroups:                    # (optional) IDs of nested control-groups
-      - <control-group id>
-```
-
-Either `members` or `containedGroups` (or both) must be present.
-
----
-
-### `implements` mapping (in `mappings/*.yaml`)
-
-```yaml
-implements:
-  - requirement: <string>     # → catalogs control id
-    by:                       # list of company control IDs that satisfy this requirement
-      - <control id>
-```
-
-An entry with an empty or missing `by` list, or a standard requirement that
-appears in a zone's SL-T control-group but has **no** matching `implements`
-entry, is an **open capability gap**.
-
----
-
-### `threat` (in `systems/*/threat-model.yaml`)
-
-```yaml
 threats:
-  - id: <string>
-    title: <string>
-    type: <string>              # → threats.types[].id in definitions/company.yaml
-    asset: <string>             # (optional) → assets[].id
-    zone: <string>              # → zones[].id (the attack surface)
-    affects:                    # list of component IDs in the attack path
-      - <component id>
-    severity: <string>          # → threats.severity[].name
-    mitigations:                # list of company control IDs that reduce risk
-      - <control id>
-    residualRisk: <string>      # → threats.severity[].name after mitigations
-    notes: <string>             # (optional) rationale — why these mitigations,
-                                #   what gap remains, and SL alignment
+  - id: threat-sensor-spoof
+    title: Sensor Data Spoofing
+    type: spoofing
+    target: flow-sensor-control
+    asset: sensor-readings
+    severity: critical
+    mitigations: [comp-sensor-encryption]
+    residualRisk: medium
+    notes: Encrypted channel prevents active injection; monitoring logs for anomalies reduce residual risk to medium
+
+  - id: threat-config-tampering
+    title: Control Logic Tampering
+    type: tampering
+    target: control-unit
+    asset: control-config
+    severity: critical
+    mitigations: [comp-access-control]
+    residualRisk: low
+    notes: Role-based access and audit logging ensure only authorized operators modify suppression logic
 ```
 
 ---
 
-## Cross-reference map
+### Notes
 
-```
-system.yaml
-  assets[].type             → definitions/company.yaml  asset.types[].name
-  assets[].classification   → definitions/company.yaml  asset.classifications[].name
-  zones[].members[]         → system.yaml               components[].id
-  conduits[].connects[]     → system.yaml               zones[].id
-
-mappings/iec-62443-4-2.yaml
-  implements[].requirement  → catalogs/iec-62443-4-2.yaml  controls[].id
-  implements[].by[]         → definitions/company.yaml      controls[].id
-
-systems/*/threat-model.yaml
-  threats[].type            → definitions/company.yaml  threats.types[].id
-  threats[].severity        → definitions/company.yaml  threats.severity[].name
-  threats[].residualRisk    → definitions/company.yaml  threats.severity[].name
-  threats[].asset           → system.yaml               assets[].id
-  threats[].zone            → system.yaml               zones[].id
-  threats[].affects[]       → system.yaml               components[].id
-  threats[].mitigations[]   → definitions/company.yaml  controls[].id
-```
+- The `threats:` key disambiguation: a YAML sequence (list) is treated as a threat list; a YAML mapping (dict) is treated as vocabulary and ignored by the loader.
+- `version:` and `imports:` are file-level metadata; they do not appear in the merged domain model.
+- All ID references must resolve within the import graph; unresolved references are validation errors.

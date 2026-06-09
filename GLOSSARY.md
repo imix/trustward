@@ -1,108 +1,69 @@
-# Glossary — IEC 62443 terms used in this model
+# Glossary
 
-Terms are drawn from **ANSI/ISA-62443-3-2-2020** (Security risk assessment) and
-**ANSI/ISA-62443-4-2-2018** (Technical security requirements for IACS components).
+Domain terms used in sectrack models and documentation.
 
 ---
 
 ## Asset
-Any data, function, device, or capability that has value to the organization
-and that an attacker might target.
+
+Data, configuration, firmware, or capability that has value and could be targeted by an attacker. Assets are defined at the project level and assigned to components or data flows. Examples: sensor readings, system configuration, firmware image, alarm activation signal.
 
 ---
 
 ## Component
-A physical or virtual node (server, PLC, HMI, network switch) that hosts assets
-and implements controls. Mapped to zones in `system.yaml`.
+
+A physical or logical node in the system — a device, server, PLC, HMI, or application. Components host assets and are placed into trust zones. Data flows connect pairs of components.
 
 ---
 
-## Conduit
-A communication path connecting two zones. Per 62443-3-2, a conduit inherits
-the higher of the two connected zones' SL-T values; conduit-specific controls
-(e.g. firewall, encrypted tunnel) can reduce the inherited requirement.
+## Control
+
+A technical or organizational measure that reduces the likelihood or impact of a threat. Controls are defined once and referenced by ID from threat mitigations. A control ID that appears in `mitigations:` must resolve to a `controls:` entry somewhere in the import graph.
 
 ---
 
-## Control (company control)
-A technical or organizational measure deployed by the organization to fulfill
-one or more standard requirements. Defined in `definitions/company.yaml`;
-capability evidence recorded in `mappings/`.
+## Data Flow
+
+A communication path between exactly two components. Data flows carry assets across the network. When a data flow connects components in different trust zones it crosses a trust boundary — a signal that additional scrutiny may be warranted.
 
 ---
 
-## Control-group
-A named, version-stable set of standard controls. Used in `catalogs/` to
-express the exact set of requirements mandated at a given Security Level for
-a given Foundational Requirement. Membership is always **explicit** because
-the standard has "Not Selected" gaps — a control absent at SL1 may appear at
-SL2, so membership cannot be inferred from level alone.
+## Import Graph
+
+The set of YAML files reachable from `system.yaml` by following `imports:` declarations recursively. The loader merges all files in the graph into a single project model. Cycles are detected and skipped.
 
 ---
 
-## CR (Component Requirement)
-A generic requirement that applies to all component types (SAR, EDR, HDR, NDR).
-Identified by `CR <FR>.<seq>` (e.g. `CR 1.1`). May have Requirement
-Enhancements (`RE`), which are separate, higher-bar permutations written as
-`CR 1.1 (1)`, `CR 1.1 (1) (2)`, etc.
+## Project
+
+The accumulated security model for a directory: all assets, components, trust zones, data flows, threats, and controls merged from the import graph. The unit of work for all `sectrack` commands.
 
 ---
 
-## CCSC (Common Component Security Constraint)
-An overarching constraint that applies across all component types, independent
-of Security Level. Structurally identical to a CR but carries the `ccsc` type.
+## Residual Risk
+
+The severity of a threat that remains after all listed mitigations are applied. If no controls address a threat, residual risk equals the original severity. Residual risk is an assessment, not a computed value.
 
 ---
 
-## EDR / HDR / NDR / SAR
-Component-type-specific requirement series:
-- **EDR** — Embedded Device Requirement
-- **HDR** — Host Device Requirement
-- **NDR** — Network Device Requirement
-- **SAR** — Software Application Requirement
+## Severity
 
-The same conceptual requirement (e.g. "Mobile code") may appear as separate
-numbered entries per component type (`EDR 2.4`, `SAR 2.4`, …), each with its
-own clause and wording.
+A qualitative rating of threat impact or likelihood. Recommended values: `low`, `medium`, `high`, `critical`. Used on both the raw threat and the residual risk after mitigations.
 
 ---
 
-## FR (Foundational Requirement)
-A top-level security requirement category. IEC 62443-4-2 defines seven:
+## Target
 
-| FR | Name |
-|-----|------|
-| FR1 | Identification & Authentication Control (IAC) |
-| FR2 | Use Control (UC) |
-| FR3 | System Integrity (SI) |
-| FR4 | Data Confidentiality (DC) |
-| FR5 | Restricted Data Flow (RDF) |
-| FR6 | Timely Response to Events (TRE) |
-| FR7 | Resource Availability (RA) |
+The component or data flow a threat is directed at. A threat against a component attacks the assets it hosts; a threat against a data flow attacks the assets it carries.
 
 ---
 
-## RE (Requirement Enhancement)
-An additive extension to a base CR that raises the security bar. REs are
-cumulative and applied in parenthetical notation: `CR 1.1 (1)` includes RE1;
-`CR 1.1 (1) (2)` includes RE1 and RE2. Each permutation is a separate, flat
-control entry in the catalog.
+## Threat
+
+A potential attack scenario: what could go wrong, against which target, with what severity, and what controls reduce the risk. Threats are typed (spoofing, tampering, repudiation, disclosure, denial, elevation) and have an explicit residual risk assessment.
 
 ---
 
-## Security Level (SL)
-An integer (0–4) expressing the security capability or target for a zone or
-component. Three related concepts:
+## Trust Zone
 
-| Term | Meaning |
-|------|---------|
-| **SL-T** (Target) | The SL a zone is *required* to achieve — set by the risk assessment and declared in `system.yaml` on each zone. |
-| **SL-C** (Capability) | The SL a company control or component *can achieve* — evidenced by the mapping from company controls to standard requirements in `mappings/`. |
-| **SL-A** (Achieved) | The SL *actually reached* given the deployed controls. SL-A = the highest SL for which all required controls are implemented (no gaps). If any gap exists at SL-T, then SL-A < SL-T. |
-
----
-
-## Zone
-A logical grouping of components and assets with a **uniform security target**
-(SL-T). The fundamental unit of threat analysis in IEC 62443-3-2. Defined in
-`system.yaml`; threats are assigned to zones in `threat-model.yaml`.
+A logical boundary grouping components that share a common security posture and access model. Represented as a subgraph in the data flow diagram. A data flow that connects components in different trust zones crosses a trust boundary.
