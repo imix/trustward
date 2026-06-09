@@ -1,22 +1,30 @@
 # sectrack
 
-A YAML-based security modeling tool. Define your system, its threats, and your controls in plain text files — then generate data flow diagrams and threat model reports.
+Threat models that live next to your code.
+
+Define your system, its threats, and your security controls in plain text files. Generate data flow diagrams and threat model reports — in your editor, in CI, or on every pull request.
+
+---
+
+## Why
+
+- **Reviewable in PRs.** Threats and mitigations are text diffs. Your team can discuss risk in the same place they discuss code.
+- **Version-controlled history.** Git tells you when a threat was identified, when a mitigation was added, when residual risk was accepted — and by whom.
+- **No proprietary tooling.** No licenses, no accounts, no vendor lock-in. A directory of text files and a Docker image.
+- **CI/CD friendly.** The Docker image is the only runtime dependency. Run it in any pipeline that can pull a container.
 
 ---
 
 ## Quick start
 
 ```bash
-# Build the Docker image
+# Build the Docker image once
 docker build -t sectrack .
 
 # From your model directory
 cd example/fire-protection-system
 
-# Generate a Mermaid data flow diagram
-../../sectrack.sh diagram dataflow
-
-# Generate and render a threat model report to HTML
+# Render the threat model report to HTML
 ../../sectrack.sh render threat-model       # produces threat-model.html
 ```
 
@@ -24,17 +32,9 @@ cd example/fire-protection-system
 
 ## Project layout
 
-A sectrack project is a directory containing YAML files. The tool always starts from `system.yaml` and follows `imports:` declarations depth-first.
+The only required file is `system.yaml` — the entry point. Everything else is optional and can be split across as many files as you like, or kept in one. The tool starts from `system.yaml` and follows `imports:` declarations depth-first, merging all top-level keys into a single model.
 
-```
-my-system/
-  system.yaml          ← entry point: system metadata, assets, components,
-                          trust zones, data flows
-  threat-model.yaml    ← threats (imports system.yaml)
-  company.yaml         ← controls (imported by system.yaml or threat-model.yaml)
-```
-
-Files are containers for version management only. Any file can hold any combination of top-level keys. A single `system.yaml` with everything in it is valid. See [MODEL.md](MODEL.md) for the full schema.
+Split by concern, keep it flat, nest by subsystem — structure it however fits your repo. See [MODEL.md](MODEL.md) for the full schema.
 
 ---
 
@@ -42,47 +42,38 @@ Files are containers for version management only. Any file can hold any combinat
 
 ### `sectrack diagram dataflow`
 
-Prints a [Mermaid](https://mermaid.js.org) flowchart to stdout showing components grouped by trust zone and data flows as labeled edges.
+Prints a [Mermaid](https://mermaid.js.org) flowchart to stdout. Components are grouped by trust zone; data flows appear as labeled edges.
 
 ```bash
-sectrack diagram dataflow
+../../sectrack.sh diagram dataflow
 ```
 
-Pipe to a file or embed directly in Markdown.
+### `sectrack report threat-model`
 
-### `sectrack report threat-model [--pdf]`
-
-Prints a [Quarto](https://quarto.org) document (`.qmd`) to stdout. Use `sectrack.sh render` to generate and render in one step:
+Generates and renders a threat model report in one step:
 
 ```bash
-./sectrack.sh render threat-model    # produces threat-model.html
-./sectrack.sh render threat-model --pdf
+../../sectrack.sh render threat-model    # produces threat-model.html
+../../sectrack.sh render threat-model --pdf
 ```
-
-Or manually:
-
-```bash
-sectrack report threat-model > report.qmd
-quarto render report.qmd
-```
-
-Add `--pdf` to include a PDF target in the front matter (requires Chrome headless).
 
 ### `sectrack template export threat-model`
 
-Writes the built-in report template to `./templates/threat-model.tmpl` as a starting point for customization.
+Writes the built-in report template to `./templates/threat-model.tmpl`. Edit it to customise the report — sectrack picks it up automatically on the next render.
 
 ```bash
-sectrack template export threat-model
+../../sectrack.sh template export threat-model
 # edit templates/threat-model.tmpl
-# subsequent report runs will use your version automatically
+../../sectrack.sh render threat-model
 ```
 
 ---
 
-## Template customization
+## Customising the report
 
-Report templates are [Go `text/template`](https://pkg.go.dev/text/template) files. The template has access to:
+Place a [Go `text/template`](https://pkg.go.dev/text/template) file at `templates/threat-model.tmpl` in your model directory and sectrack will use it instead of the built-in one. The built-in template is at `tool/internal/quarto/templates/threat-model.tmpl` — or export it as a starting point:
+
+The template receives:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -91,11 +82,12 @@ Report templates are [Go `text/template`](https://pkg.go.dev/text/template) file
 | `.Version` | string | SemVer |
 | `.Description` | string | System description |
 | `.Threats` | `[]Threat` | All threats |
-| `.Controls` | `map[string]string` | Control ID → title |
-| `.Diagram` | string | Rendered Mermaid diagram |
+| `.Controls` | `map[string]string` | Control ID → title (for inline references) |
+| `.ControlList` | `[]Control` | Full control objects (for a controls section) |
+| `.Diagram` | string | Rendered Mermaid diagram source |
 | `.PDF` | bool | Whether PDF output was requested |
 
-Built-in template functions: `controlTitle <controls> <id>`, `join <sep> <list>`, `upper <string>`.
+Built-in template functions: `controlTitle <controls> <id>`, `join <sep> <list>`, `upper <string>`, `trim <string>`.
 
 To change the Mermaid theme, edit the `format:` block in the template front matter:
 
@@ -108,6 +100,23 @@ format:
 
 ---
 
+## Using in CI
+
+The Docker image is self-contained — it's the only runtime dependency. A minimal GitHub Actions step:
+
+```yaml
+- name: Render threat model
+  run: |
+    docker build -t sectrack .
+    cd my-system && ../../sectrack.sh render threat-model
+- uses: actions/upload-artifact@v4
+  with:
+    name: threat-model
+    path: my-system/threat-model.html
+```
+
+---
+
 ## Building from source
 
 ```bash
@@ -116,7 +125,7 @@ go build -o sectrack ./cmd/sectrack/
 go test ./...
 ```
 
-Requires Go 1.25+. The Docker image also includes [Quarto](https://quarto.org) for rendering.
+Requires Go 1.21+. The Docker image also bundles [Quarto](https://quarto.org) for rendering.
 
 ---
 
