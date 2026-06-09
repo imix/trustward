@@ -1,0 +1,55 @@
+---
+title: "Threat Model — {{ .Title }}"
+date: "{{ .Date }}"
+version: "{{ .Version }}"
+format:
+  html:
+    toc: true
+    theme: cosmo
+{{ if .PDF -}}
+  pdf:
+    toc: true
+{{ end -}}
+---
+
+## System Overview
+
+{{ .Description }}
+
+## Data Flow Diagram
+
+```{mermaid}
+{{ .Diagram }}
+```
+
+## Threats
+
+### Summary
+
+| Severity | ID | Title | Target | Residual Risk |
+|---|---|---|---|---|
+{{ range .Threats -}}
+| {{ .Severity }} | {{ .ID }} | {{ .Title }} | {{ .Target }} | {{ .ResidualRisk }} |
+{{ end }}
+
+### Details
+{{ range .Threats }}
+#### {{ .Title }}
+
+| Field | Value |
+|---|---|
+| **ID** | `{{ .ID }}` |
+| **Type** | {{ .Type }} |
+| **Target** | `{{ .Target }}` |
+{{ if .Asset -}}
+| **Asset** | `{{ .Asset }}` |
+{{ end -}}
+| **Severity** | {{ .Severity }} |
+| **Residual Risk** | {{ .ResidualRisk }} |
+{{ if .Mitigations -}}
+| **Mitigations** | {{ range $i, $m := .Mitigations }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $m }}{{ end }} |
+{{ else -}}
+| **Mitigations** | none |
+{{ end }}
+{{ .Notes }}
+{{ end -}}

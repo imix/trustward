@@ -1,8 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"text/template"
 
 	"github.com/spf13/cobra"
 
@@ -10,6 +13,8 @@ import (
 	"sectrack/internal/project"
 	"sectrack/internal/quarto"
 )
+
+const threatModelTmplPath = "templates/threat-model.tmpl"
 
 func main() {
 	root := &cobra.Command{
@@ -39,7 +44,17 @@ func main() {
 	threatModelCmd.Flags().Bool("pdf", false, "include PDF format in the Quarto front matter (requires Chrome headless)")
 	reportCmd.AddCommand(threatModelCmd)
 
-	root.AddCommand(diagramCmd, reportCmd)
+	templateCmd := &cobra.Command{
+		Use:   "template",
+		Short: "Manage report templates",
+	}
+	templateCmd.AddCommand(&cobra.Command{
+		Use:   "export threat-model",
+		Short: "Write the built-in threat model template to " + threatModelTmplPath,
+		RunE:  runTemplateExport,
+	})
+
+	root.AddCommand(diagramCmd, reportCmd, templateCmd)
 
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
@@ -60,12 +75,43 @@ func runThreatModelReport(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("loading project: %w", err)
 	}
+	tmpl, err := loadThreatModelTemplate()
+	if err != nil {
+		return fmt.Errorf("loading template: %w", err)
+	}
 	pdf, _ := cmd.Flags().GetBool("pdf")
 	diagram := mermaid.DataFlow(proj)
-	out, err := quarto.ThreatModel(proj, diagram, pdf)
+	out, err := quarto.ThreatModel(proj, tmpl, diagram, pdf)
 	if err != nil {
 		return fmt.Errorf("rendering report: %w", err)
 	}
 	fmt.Print(out)
 	return nil
+}
+
+func runTemplateExport(_ *cobra.Command, _ []string) error {
+	if _, err := os.Stat(threatModelTmplPath); err == nil {
+		return fmt.Errorf("%s already exists — delete it first if you want to reset it", threatModelTmplPath)
+	}
+	if err := os.MkdirAll(filepath.Dir(threatModelTmplPath), 0755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(threatModelTmplPath, quarto.DefaultTemplateContent(), 0644); err != nil {
+		return err
+	}
+	fmt.Printf("wrote %s\n", threatModelTmplPath)
+	return nil
+}
+
+// loadThreatModelTemplate returns a project-local template if one exists,
+// otherwise falls back to the built-in default.
+func loadThreatModelTemplate() (*template.Template, error) {
+	data, err := os.ReadFile(threatModelTmplPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return quarto.DefaultTemplate(), nil
+		}
+		return nil, err
+	}
+	return quarto.ParseTemplate(data)
 }

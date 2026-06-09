@@ -27,7 +27,7 @@ func render(t *testing.T, proj *model.Project, diagram string, pdf bool) string 
 	if proj == nil {
 		proj = &model.Project{}
 	}
-	out, err := quarto.ThreatModel(proj, diagram, pdf)
+	out, err := quarto.ThreatModel(proj, quarto.DefaultTemplate(), diagram, pdf)
 	if err != nil {
 		t.Fatalf("ThreatModel: %v", err)
 	}

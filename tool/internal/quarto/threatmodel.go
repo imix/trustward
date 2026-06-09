@@ -1,24 +1,18 @@
 package quarto
 
 import (
+	_ "embed"
 	"strings"
 	"text/template"
 
 	"sectrack/internal/model"
 )
 
-type threatModelData struct {
-	Title       string
-	Date        string
-	Version     string
-	Description string
-	Threats     []model.Threat
-	Controls    map[string]string
-	Diagram     string
-	PDF         bool
-}
+//go:embed templates/threat-model.tmpl
+var defaultTmplContent []byte
 
-var threatModelTmpl = template.Must(template.New("threat-model").Funcs(template.FuncMap{
+// funcMap is the set of functions available inside all threat model templates.
+var funcMap = template.FuncMap{
 	"join": strings.Join,
 	"controlTitle": func(controls map[string]string, id string) string {
 		if title, ok := controls[id]; ok {
@@ -27,64 +21,43 @@ var threatModelTmpl = template.Must(template.New("threat-model").Funcs(template.
 		return "`" + id + "`"
 	},
 	"upper": strings.ToUpper,
-}).Parse(`---
-title: "Threat Model — {{ .Title }}"
-date: "{{ .Date }}"
-version: "{{ .Version }}"
-format:
-  html:
-    toc: true
-    theme: cosmo
-{{ if .PDF -}}
-  pdf:
-    toc: true
-{{ end -}}
----
+}
 
-## System Overview
+// DefaultTemplateContent returns the raw bytes of the built-in threat model
+// template. Pass these to ParseTemplate, or write them to a file as a
+// customisation starting point.
+func DefaultTemplateContent() []byte {
+	return defaultTmplContent
+}
 
-{{ .Description }}
+// ParseTemplate compiles a threat model template from raw content.
+// The sectrack function set (controlTitle, join, upper) is registered
+// automatically so user templates can call the same helpers.
+func ParseTemplate(content []byte) (*template.Template, error) {
+	return template.New("threat-model").Funcs(funcMap).Parse(string(content))
+}
 
-## Data Flow Diagram
+// DefaultTemplate returns the compiled built-in threat model template.
+func DefaultTemplate() *template.Template {
+	return template.Must(ParseTemplate(defaultTmplContent))
+}
 
-` + "```{mermaid}" + `
-{{ .Diagram }}
-` + "```" + `
+// threatModelData is the context passed to every threat model template.
+// Field names are part of the template API — renaming them is a breaking change.
+type threatModelData struct {
+	Title       string
+	Date        string
+	Version     string
+	Description string
+	Threats     []model.Threat
+	Controls    map[string]string // id → title, for the controlTitle helper
+	Diagram     string
+	PDF         bool
+}
 
-## Threats
-
-### Summary
-
-| Severity | ID | Title | Target | Residual Risk |
-|---|---|---|---|---|
-{{ range .Threats -}}
-| {{ .Severity }} | {{ .ID }} | {{ .Title }} | {{ .Target }} | {{ .ResidualRisk }} |
-{{ end }}
-
-### Details
-{{ range .Threats }}
-#### {{ .Title }}
-
-| Field | Value |
-|---|---|
-| **ID** | ` + "`" + `{{ .ID }}` + "`" + ` |
-| **Type** | {{ .Type }} |
-| **Target** | ` + "`" + `{{ .Target }}` + "`" + ` |
-{{ if .Asset -}}
-| **Asset** | ` + "`" + `{{ .Asset }}` + "`" + ` |
-{{ end -}}
-| **Severity** | {{ .Severity }} |
-| **Residual Risk** | {{ .ResidualRisk }} |
-{{ if .Mitigations -}}
-| **Mitigations** | {{ range $i, $m := .Mitigations }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $m }}{{ end }} |
-{{ else -}}
-| **Mitigations** | none |
-{{ end }}
-{{ .Notes }}
-{{ end -}}
-`))
-
-func ThreatModel(proj *model.Project, diagram string, pdf bool) (string, error) {
+// ThreatModel renders a threat model report using the provided template.
+// Pass DefaultTemplate() or a template compiled with ParseTemplate().
+func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, pdf bool) (string, error) {
 	controls := make(map[string]string, len(proj.Controls))
 	for _, c := range proj.Controls {
 		controls[c.ID] = c.Title
@@ -104,7 +77,7 @@ func ThreatModel(proj *model.Project, diagram string, pdf bool) (string, error) 
 	data.Version = proj.Version.Semver
 
 	var b strings.Builder
-	if err := threatModelTmpl.Execute(&b, data); err != nil {
+	if err := tmpl.Execute(&b, data); err != nil {
 		return "", err
 	}
 	return b.String(), nil
