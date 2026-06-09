@@ -137,7 +137,7 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 
 	if hasAny(keys, "catalog") {
 		var v struct {
-			Catalog model.Catalog `yaml:"catalog"`
+			Catalog model.ControlCatalog `yaml:"catalog"`
 		}
 		if err := yaml.Unmarshal(data, &v); err != nil {
 			return fmt.Errorf("%s: catalog: %w", name, err)

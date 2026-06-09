@@ -65,7 +65,7 @@ type threatModelData struct {
 	ControlList         []model.Control
 	ControlComponents   map[string][]string // control id → component ids that implement it
 	ComponentList       []model.Component
-	CatalogList         []model.Catalog
+	CatalogList         []model.ControlCatalog
 	RequirementControls map[string][]string // "catalog-id::req-id" → control IDs
 	Diagram             string
 	PDF                 bool
