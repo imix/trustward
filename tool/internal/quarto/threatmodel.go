@@ -51,8 +51,9 @@ type threatModelData struct {
 	Version     string
 	Description string
 	Threats     []model.Threat
-	Controls    map[string]string // id → title, for the controlTitle helper
-	ControlList []model.Control   // full control objects for rendering a controls section
+	Controls           map[string]string   // id → title, for the controlTitle helper
+	ControlList        []model.Control     // full control objects for rendering a controls section
+	ControlComponents  map[string][]string // control id → component ids that implement it
 	Diagram     string
 	PDF         bool
 }
@@ -65,10 +66,18 @@ func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, p
 		controls[c.ID] = c.Title
 	}
 
+	controlComponents := make(map[string][]string)
+	for _, comp := range proj.Components {
+		for _, cid := range comp.Controls {
+			controlComponents[cid] = append(controlComponents[cid], comp.ID)
+		}
+	}
+
 	data := threatModelData{
-		Threats:     proj.Threats,
-		Controls:    controls,
-		ControlList: proj.Controls,
+		Threats:           proj.Threats,
+		Controls:          controls,
+		ControlList:       proj.Controls,
+		ControlComponents: controlComponents,
 		Diagram:     strings.TrimRight(diagram, "\n"),
 		PDF:         pdf,
 	}

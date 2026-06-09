@@ -56,9 +56,9 @@ format:
 {{ if .ControlList }}
 ## Controls
 
-| ID | Title | Description |
-|---|---|---|
+| ID | Title | Implemented by | Description |
+|---|---|---|---|
 {{ range .ControlList -}}
-| `{{ .ID }}` | {{ .Title }} | {{ .Description | trim }} |
+| `{{ .ID }}` | {{ .Title }} | {{ range $i, $c := (index $.ControlComponents .ID) }}{{ if $i }}, {{ end }}`{{ $c }}`{{ end }} | {{ .Description | trim }} |
 {{ end }}
 {{ end -}}
