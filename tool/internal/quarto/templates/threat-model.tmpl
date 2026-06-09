@@ -53,6 +53,9 @@ format:
 | Field | Value |
 |---|---|
 | **ID** | `{{ .ID }}` |
+{{ if .Ref -}}
+| **Pattern** | `{{ .Ref }}` |
+{{ end -}}
 | **Type** | {{ .Type }} |
 | **Target** | `{{ .Target }}` |
 {{ if .Asset -}}

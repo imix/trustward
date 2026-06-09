@@ -9,7 +9,8 @@ type Project struct {
 	Components []Component
 	TrustZones []TrustZone
 	DataFlows  []DataFlow
-	Threats    []Threat
-	Controls   []Control
-	Catalogs   []Catalog
+	Threats        []Threat
+	Controls       []Control
+	Catalogs       []Catalog
+	ThreatCatalogs []ThreatCatalog
 }

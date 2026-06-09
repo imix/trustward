@@ -5,6 +5,8 @@ version:
 imports:
   - path: "./company-catalog.yaml"
     version: 1.0.0
+  - path: "./stride-catalog.yaml"
+    version: 1.0.0
   - path: "./company.yaml"
     version: 1.0.0
   - path: "./threat-model.yaml"

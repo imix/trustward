@@ -1,0 +1,31 @@
+threat-catalog:
+  id: stride-ot
+  title: STRIDE Threats for OT / Embedded Systems
+  patterns:
+    - id: spoof-field-device
+      title: Spoof Field Device Signal
+      type: spoofing
+      severity: critical
+      notes: >
+        An attacker injects forged readings on an unauthenticated field bus,
+        causing the control unit to act on false data. Wire-level injection
+        is possible without physical device access if the bus is unprotected.
+        Mitigate with per-frame message authentication (e.g. keyed HMAC).
+
+    - id: tamper-alarm-logic
+      title: Tamper with Alarm Activation Logic
+      type: tampering
+      severity: critical
+      notes: >
+        An attacker with access to the operator interface modifies alarm
+        activation logic or suppresses an active alarm. Requires authenticated
+        access; mitigate with IAM, MFA, and audit logging.
+
+    - id: tamper-config
+      title: Tamper with System Configuration
+      type: tampering
+      severity: high
+      notes: >
+        An attacker modifies detection thresholds, zone assignments, or routing
+        configuration to degrade or disable the protection system. Mitigate
+        with access control and tamper-evident audit logging.

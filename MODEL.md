@@ -49,11 +49,23 @@ List of objects with:
 - `assets` — list of asset IDs carried by this flow (list of strings)
 - `description` — protocol, encryption, or technology details (string)
 
+#### `threat-catalog:` — threat pattern catalog (one per file)
+A single object defining reusable threat patterns. Threat entries reference patterns via `ref:` and inherit their fields.
+- `id` — unique identifier (string, kebab-case)
+- `title` — human-readable catalog name (string)
+- `patterns` — list of threat pattern objects:
+  - `id` — unique identifier within this catalog (string, kebab-case)
+  - `title` — threat pattern name (string)
+  - `type` — e.g. `spoofing`, `tampering`, `repudiation`, `disclosure`, `denial`, `elevation` (string)
+  - `severity` — default severity level (string)
+  - `notes` — description of the attack and generic mitigation guidance (string)
+
 #### `threats:` — list of threats
 Only treated as threat list when value is a YAML sequence (not a mapping). List of objects with:
 - `id` — unique identifier (string, kebab-case)
-- `title` — threat name (string)
-- `type` — e.g. `spoofing`, `tampering`, `repudiation`, `disclosure`, `denial`, `elevation` (string)
+- `ref` — optional reference to a threat catalog pattern in `catalog-id::pattern-id` form; inherited fields (`title`, `type`, `severity`, `notes`) are used when the instance field is empty (string, optional)
+- `title` — threat name; overrides catalog if set (string)
+- `type` — e.g. `spoofing`, `tampering`, `repudiation`, `disclosure`, `denial`, `elevation`; overrides catalog if set (string)
 - `target` — component ID or data-flow ID being attacked (string)
 - `asset` — asset ID at risk (string, optional)
 - `severity` — e.g. `low`, `medium`, `high`, `critical` (string)
@@ -95,6 +107,7 @@ List of objects with:
 | `threats[].asset` | asset ID | `assets[].id` |
 | `threats[].mitigations[]` | control IDs | `controls[].id` |
 | `controls[].ref` | `catalog-id::req-id` | `catalog.id` + `catalog.requirements[].id` |
+| `threats[].ref` | `catalog-id::pattern-id` | `threat-catalog.id` + `threat-catalog.patterns[].id` |
 | `catalog.requirements[].satisfies[]` | `catalog-id::req-id` | another `catalog.id` + `requirements[].id` |
 
 ---
@@ -106,6 +119,7 @@ The loader merges content from all imported files depth-first. Behavior by key:
 - `version:`, `imports:` — file-level metadata only
 - All list fields (`assets:`, `components:`, `trust-zones:`, `data-flows:`, `threats:`, `controls:`) — merged by appending
 - `catalog:` — each file contributes at most one catalog; all catalogs are collected into the project
+- `threat-catalog:` — same as above; threat refs are resolved after the full graph is loaded
 
 A single file can hold the entire model; splitting is purely for version management convenience.
 

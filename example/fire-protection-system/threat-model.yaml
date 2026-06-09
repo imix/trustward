@@ -8,27 +8,11 @@ imports:
   - path: "./system.yaml"
     version: 1.0.0
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Threat model
-#
-# Each threat entry:
-#   id          — unique identifier (kebab-case)
-#   title       — short human-readable description
-#   type        — references a threats.types[].id from company.yaml
-#   asset       — (optional) the asset directly threatened; references assets[].id
-#   target      — component or data-flow ID where the attack surface lives
-#   severity    — references threats.severity[].name from company.yaml
-#   mitigations — list of company control IDs that reduce the risk
-#   residualRisk — severity name after mitigations are applied
-#   notes       — rationale: why these mitigations, what gap remains
-# ─────────────────────────────────────────────────────────────────────────────
 threats:
   - id: threat-spoof-sensor-signal
-    title: Spoof sensor readings to suppress or trigger alarm
-    type: spoofing
+    ref: stride-ot::spoof-field-device
     asset: sensor-data
     target: flow-sensor-central
-    severity: critical
     mitigations:
       - comp-sensor-msg-auth
     residualRisk: high
@@ -40,11 +24,9 @@ threats:
       a tampered or replaced device.
 
   - id: threat-suppress-alarm
-    title: Suppress alarm activation on the central unit
-    type: tampering
+    ref: stride-ot::tamper-alarm-logic
     asset: alarm-activation
     target: central-unit
-    severity: critical
     mitigations:
       - comp-iam
     residualRisk: high
@@ -55,11 +37,9 @@ threats:
       and no device-level authentication requirement.
 
   - id: threat-modify-thresholds
-    title: Raise detection thresholds to prevent alarm triggering
-    type: tampering
+    ref: stride-ot::tamper-config
     asset: system-config
     target: central-unit
-    severity: high
     mitigations:
       - comp-iam
       - comp-audit-log

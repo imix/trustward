@@ -18,6 +18,7 @@ func Load(dir string) (*model.Project, error) {
 	if err := loadGraph(p, entry, visited); err != nil {
 		return nil, err
 	}
+	resolveThreatRefs(p)
 	return p, nil
 }
 
@@ -126,6 +127,16 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		}
 	}
 
+	if hasAny(keys, "threat-catalog") {
+		var v struct {
+			ThreatCatalog model.ThreatCatalog `yaml:"threat-catalog"`
+		}
+		yaml.Unmarshal(data, &v) //nolint:errcheck
+		if v.ThreatCatalog.ID != "" {
+			p.ThreatCatalogs = append(p.ThreatCatalogs, v.ThreatCatalog)
+		}
+	}
+
 	// Phase 3: follow imports relative to this file's directory.
 	var imported struct {
 		Imports []rawImport `yaml:"imports"`
@@ -139,6 +150,38 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 	}
 
 	return nil
+}
+
+// resolveThreatRefs fills in fields on threats that reference a catalog pattern.
+// Instance fields take precedence; catalog values are used only when the field is empty.
+func resolveThreatRefs(p *model.Project) {
+	patterns := make(map[string]model.ThreatPattern)
+	for _, cat := range p.ThreatCatalogs {
+		for _, pat := range cat.Patterns {
+			patterns[cat.ID+"::"+pat.ID] = pat
+		}
+	}
+	for i, t := range p.Threats {
+		if t.Ref == "" {
+			continue
+		}
+		pat, ok := patterns[t.Ref]
+		if !ok {
+			continue
+		}
+		if t.Title == "" {
+			p.Threats[i].Title = pat.Title
+		}
+		if t.Type == "" {
+			p.Threats[i].Type = pat.Type
+		}
+		if t.Severity == "" {
+			p.Threats[i].Severity = pat.Severity
+		}
+		if t.Notes == "" {
+			p.Threats[i].Notes = pat.Notes
+		}
+	}
 }
 
 func hasAny(keys map[string]interface{}, names ...string) bool {
