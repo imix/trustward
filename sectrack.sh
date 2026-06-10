@@ -16,7 +16,7 @@ IMAGE=${SECTRACK_IMAGE:-sectrack}
 if [[ "${1:-}" == "render" ]]; then
     report="${2:-threat-model}"
     qmd="${report}.qmd"
-    docker run --rm -v "$(pwd):/model" "$IMAGE" report "$report" > "$qmd"
+    docker run --rm -v "$(pwd):/model" "$IMAGE" report "$report" "${@:3}" > "$qmd"
     docker run --rm -v "$(pwd):/model" --entrypoint quarto "$IMAGE" render "$qmd"
 else
     docker run --rm -v "$(pwd):/model" "$IMAGE" "$@"

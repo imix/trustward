@@ -4,16 +4,9 @@ Threat models that live next to your code.
 
 Define your system, its threats, and your security controls in plain text files. Generate data flow diagrams and threat model reports — in your editor, in CI, or on every pull request.
 
----
-
-## Why
-
 - **Reviewable in PRs.** Threats and mitigations are text diffs. Your team can discuss risk in the same place they discuss code.
 - **Version-controlled history.** Git tells you when a threat was identified, when a mitigation was added, when residual risk was accepted — and by whom.
 - **No proprietary tooling.** No licenses, no accounts, no vendor lock-in. A directory of text files and a Docker image.
-- **CI/CD friendly.** The Docker image is the only runtime dependency. Run it in any pipeline that can pull a container.
-
----
 
 ## Quick start
 
@@ -21,57 +14,97 @@ Define your system, its threats, and your security controls in plain text files.
 # Build the Docker image once
 docker build -t sectrack .
 
-# From your model directory
+# Try it on the example model
 cd example/fire-protection-system
-
-# Render the threat model report to HTML
-../../sectrack.sh render threat-model       # produces threat-model.html
+../../sectrack.sh render                 # writes threat-model.html
+../../sectrack.sh diagram dataflow       # prints a Mermaid data flow diagram
 ```
 
----
+`sectrack.sh` wraps the Docker image and mounts the **current directory** as the model directory — always run it from the directory containing your `system.yaml`. The image is the only runtime dependency.
 
-## Project layout
+## Start your own model
 
-The only required file is `system.yaml` — the entry point. Everything else is optional and can be split across as many files as you like, or kept in one. The tool starts from `system.yaml` and follows `imports:` declarations depth-first, merging all top-level keys into a single model.
+A model directory needs exactly one file to begin with: `system.yaml`. This is enough to render a diagram and a report:
 
-Split by concern, keep it flat, nest by subsystem — structure it however fits your repo. See [MODEL.md](MODEL.md) for the full schema.
+```yaml
+version:
+  semver: 0.1.0
+  releasedate: 2026-06-10
 
----
+system:
+  id: my-system
+  title: My System
+  description: One paragraph on what the system does and who uses it.
+
+components:
+  - id: api-server
+    title: API Server
+    type: server
+    description: Serves the public API.
+
+  - id: database
+    title: Database
+    type: server
+    description: Stores user data.
+
+data-flows:
+  - id: flow-api-db
+    title: API → Database
+    connects: [api-server, database]
+    description: SQL over TLS.
+```
+
+```bash
+cd my-system
+/path/to/sectrack.sh diagram dataflow    # quick check that the model loads
+/path/to/sectrack.sh render              # threat-model.html
+```
+
+From there, grow the model incrementally:
+
+1. Add `assets:` and attach them to components and data flows — what is worth protecting.
+2. Add `trust-zones:` to group components by security boundary — they become subgraphs in the diagram.
+3. Add `threats:` (and the `controls:` that mitigate them) — they become the core of the report.
+4. When `system.yaml` gets large, split it into multiple files linked via `imports:`. The loader starts at `system.yaml`, follows imports depth-first, and merges all top-level keys into a single model. Split by concern, nest by subsystem — any structure works.
+
+[MODEL.md](MODEL.md) documents every key. [example/fire-protection-system](example/fire-protection-system) is a complete model using imports, catalogs, threats, and controls.
 
 ## Commands
 
-### `sectrack diagram dataflow`
+Run all commands from your model directory.
 
-Prints a [Mermaid](https://mermaid.js.org) flowchart to stdout. Components are grouped by trust zone; data flows appear as labeled edges.
+### `sectrack.sh render [report] [flags]`
 
-```bash
-../../sectrack.sh diagram dataflow
-```
-
-### `sectrack report threat-model`
-
-Generates and renders a threat model report in one step:
+Generates and renders a report in one step. The report type defaults to `threat-model`:
 
 ```bash
-../../sectrack.sh render threat-model    # produces threat-model.html
-../../sectrack.sh render threat-model --pdf
+sectrack.sh render                       # writes threat-model.html
+sectrack.sh render threat-model --pdf    # also writes threat-model.pdf
 ```
 
-### `sectrack template export threat-model`
+Under the hood this runs `sectrack report threat-model` (which prints a Quarto `.qmd` document to stdout) and then renders it with Quarto. The intermediate `threat-model.qmd` and `threat-model_files/` directory are by-products — add them and the rendered output to `.gitignore` if you only want them as CI artifacts.
 
-Writes the built-in report template to `./templates/threat-model.tmpl`. Edit it to customise the report — sectrack picks it up automatically on the next render.
+### `sectrack.sh diagram dataflow`
+
+Prints a [Mermaid](https://mermaid.js.org) flowchart to stdout. Components are grouped by trust zone; data flows appear as labeled edges. Paste it into anything that renders Mermaid — Markdown files, [mermaid.live](https://mermaid.live), wikis.
 
 ```bash
-../../sectrack.sh template export threat-model
-# edit templates/threat-model.tmpl
-../../sectrack.sh render threat-model
+sectrack.sh diagram dataflow
 ```
 
----
+### `sectrack.sh template export threat-model`
+
+Writes the built-in report template to `templates/threat-model.tmpl` in your model directory, as a starting point for customisation (see below). Refuses to overwrite an existing file.
 
 ## Customising the report
 
-Place a [Go `text/template`](https://pkg.go.dev/text/template) file at `templates/threat-model.tmpl` in your model directory and sectrack will use it instead of the built-in one. The built-in template is at `tool/internal/quarto/templates/threat-model.tmpl` — or export it as a starting point:
+If `templates/threat-model.tmpl` exists in your model directory, sectrack uses it instead of the built-in template. It's a [Go `text/template`](https://pkg.go.dev/text/template) file. Export the built-in one and edit from there:
+
+```bash
+sectrack.sh template export threat-model
+# edit templates/threat-model.tmpl
+sectrack.sh render
+```
 
 The template receives:
 
@@ -89,33 +122,22 @@ The template receives:
 
 Built-in template functions: `controlTitle <controls> <id>`, `join <sep> <list>`, `upper <string>`, `trim <string>`.
 
-To change the Mermaid theme, edit the `format:` block in the template front matter:
-
-```yaml
-format:
-  html:
-    mermaid:
-      theme: neutral   # default | neutral | dark | forest | base
-```
-
----
+The template's front matter is regular Quarto config — theme, table of contents, Mermaid theme, and output formats are all controlled there.
 
 ## Using in CI
 
-The Docker image is self-contained — it's the only runtime dependency. A minimal GitHub Actions step:
+A minimal GitHub Actions step, assuming your model lives in `my-system/` and `sectrack.sh` at the repo root:
 
 ```yaml
 - name: Render threat model
   run: |
     docker build -t sectrack .
-    cd my-system && ../../sectrack.sh render threat-model
+    cd my-system && ../sectrack.sh render
 - uses: actions/upload-artifact@v4
   with:
     name: threat-model
     path: my-system/threat-model.html
 ```
-
----
 
 ## Building from source
 
@@ -125,9 +147,7 @@ go build -o sectrack ./cmd/sectrack/
 go test ./...
 ```
 
-Requires Go 1.21+. The Docker image also bundles [Quarto](https://quarto.org) for rendering.
-
----
+Requires Go 1.25+. The Docker image also bundles [Quarto](https://quarto.org) for rendering; the bare binary only generates diagrams and `.qmd` documents.
 
 ## Reference
 
