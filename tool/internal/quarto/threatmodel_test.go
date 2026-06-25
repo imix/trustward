@@ -34,6 +34,41 @@ func render(t *testing.T, proj *model.Project, diagram string, pdf bool) string 
 	return out
 }
 
+func TestThreatModel_EN40000ClauseStructure(t *testing.T) {
+	proj := &model.Project{
+		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
+		Assets:     []model.Asset{{ID: "a", Type: "data"}},
+		Components: []model.Component{{ID: "cu", Title: "Central Unit"}},
+		Controls:   []model.Control{{ID: "ctrl-a", Title: "Control A"}},
+		Threats:    []model.Threat{{ID: "t", Title: "T", Target: "cu", Likelihood: "low", Impact: "low"}},
+	}
+
+	got := render(t, proj, "flowchart TD", false)
+
+	// Headings mirror prEN 40000-1-2 §6 clause numbering, in clause order.
+	ordered := []string{
+		"## 6.2 Product Context",
+		"## 6.3 Risk Acceptance Criteria and Methodology",
+		"## 6.5 Risk Assessment",
+		"### 6.5.2 Asset and Cybersecurity Objective Identification",
+		"### 6.5.3 Threat Identification",
+		"### 6.5.4 Risk Register",
+		"## 6.6 Risk Treatment",
+	}
+	last := -1
+	for _, h := range ordered {
+		i := strings.Index(got, h)
+		if i < 0 {
+			t.Errorf("missing heading %q", h)
+			continue
+		}
+		if i < last {
+			t.Errorf("heading %q is out of clause order", h)
+		}
+		last = i
+	}
+}
+
 func TestThreatModel_RiskRegister(t *testing.T) {
 	proj := &model.Project{
 		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
@@ -94,7 +129,8 @@ func TestThreatModel_CybersecurityObjectives(t *testing.T) {
 func TestThreatModel_NoObjectivesNoSection(t *testing.T) {
 	got := render(t, &model.Project{Assets: []model.Asset{{ID: "a", Type: "data"}}}, "", false)
 
-	assertNotContains(t, got, "Cybersecurity Objectives")
+	// the §6.5.2 clause heading is always present; the objectives subsection is not
+	assertNotContains(t, got, "#### Cybersecurity Objectives")
 }
 
 func TestThreatModel_FrontMatterMeta(t *testing.T) {
@@ -130,8 +166,8 @@ func TestThreatModel_ThreatSummaryRow(t *testing.T) {
 
 	got := render(t, proj, "", false)
 
-	// threats are grouped by target; summary table omits target column
-	assertContains(t, got, "### comp-a")
+	// threats are grouped by target under §6.5.3; summary table omits target column
+	assertContains(t, got, "#### comp-a")
 	assertContains(t, got, "| critical |")
 	assertContains(t, got, "| Spoof sensor |")
 	assertContains(t, got, "| high |")
