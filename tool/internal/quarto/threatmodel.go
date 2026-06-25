@@ -60,12 +60,15 @@ type threatModelData struct {
 	Description         string
 	Logo                string
 	AssetList           []model.Asset
-	AssetComponents     map[string][]string // asset id → component ids that hold it
-	ThreatGroups        []ThreatGroup       // threats grouped by target, in encounter order
-	ThreatList          []model.Threat      // flat list, for the risk register
-	RiskLevels          map[string]string   // threat id → computed risk level
-	RiskPolicySet       bool                // a risk-policy is declared → show register
-	Controls            map[string]string   // id → title, for the controlTitle helper
+	AssetComponents     map[string][]string  // asset id → component ids that hold it
+	ThreatGroups        []ThreatGroup        // threats grouped by target, in encounter order
+	ThreatList          []model.Threat       // flat list, for the risk register
+	RiskLevels          map[string]string    // threat id → computed risk level
+	RiskEval            map[string]risk.Eval // threat id → evaluation vs acceptance criteria
+	RiskMethod          string               // scoring method (risk-policy)
+	RiskAccept          []string             // accepted risk levels (risk-policy)
+	RiskPolicySet       bool                 // a risk-policy is declared → show register
+	Controls            map[string]string    // id → title, for the controlTitle helper
 	ControlList         []model.Control
 	ControlComponents   map[string][]string // control id → component ids that implement it
 	ComponentList       []model.Component
@@ -142,6 +145,9 @@ func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, p
 		ThreatGroups:        groups,
 		ThreatList:          proj.Threats,
 		RiskLevels:          risk.Score(proj),
+		RiskEval:            risk.Evaluate(proj),
+		RiskMethod:          proj.RiskPolicy.Method,
+		RiskAccept:          proj.RiskPolicy.Accept,
 		RiskPolicySet:       proj.RiskPolicy.Set,
 		Controls:            controls,
 		ControlList:         proj.Controls,

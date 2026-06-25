@@ -71,6 +71,27 @@ func TestScore(t *testing.T) {
 	}
 }
 
+func TestEvaluate(t *testing.T) {
+	p := &model.Project{
+		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
+		Threats: []model.Threat{
+			{ID: "accepted", Likelihood: "low", Impact: "low"},                                     // low ∈ accept
+			{ID: "treated", Likelihood: "high", Impact: "high", Treatment: "mitigate", Owner: "a"}, // critical, but treated
+			{ID: "open", Likelihood: "high", Impact: "high"},                                       // critical, untreated
+		},
+	}
+	e := Evaluate(p)
+	if !e["accepted"].Accepted || e["accepted"].Open() {
+		t.Errorf("accepted: %+v", e["accepted"])
+	}
+	if !e["treated"].Treated || e["treated"].Open() {
+		t.Errorf("treated: %+v", e["treated"])
+	}
+	if !e["open"].Open() {
+		t.Errorf("open should be open: %+v", e["open"])
+	}
+}
+
 func TestScore_ETSIMethod(t *testing.T) {
 	p := &model.Project{
 		RiskPolicy: model.RiskPolicy{Method: "etsi-tvra", Set: true},

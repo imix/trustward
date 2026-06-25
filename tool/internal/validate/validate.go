@@ -182,18 +182,11 @@ func checkRisk(c *checker, p *model.Project) {
 	if !p.RiskPolicy.Set {
 		return // no policy declared → no CRA gate
 	}
-	accept := make(map[string]bool, len(p.RiskPolicy.Accept))
-	for _, lvl := range p.RiskPolicy.Accept {
-		accept[lvl] = true
-	}
-	levels := risk.Score(p)
+	eval := risk.Evaluate(p)
 	for _, t := range p.Threats {
-		if accept[levels[t.ID]] {
-			continue
-		}
-		if t.Treatment == "" || t.Owner == "" {
+		if e := eval[t.ID]; e.Open() {
 			c.add(fmt.Sprintf("threat %q", t.ID),
-				fmt.Sprintf("%s risk is not accepted and needs a treatment + owner", levels[t.ID]))
+				fmt.Sprintf("%s risk is not accepted and needs a treatment + owner", e.Level))
 		}
 	}
 }

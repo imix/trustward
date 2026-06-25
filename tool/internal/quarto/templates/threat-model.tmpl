@@ -72,15 +72,20 @@ format:
 {{ end -}}
 {{ end -}}
 {{ if .RiskPolicySet }}
+## Risk Acceptance Criteria and Methodology
+
+Risk is scored using the **{{ if .RiskMethod }}{{ .RiskMethod }}{{ else }}qualitative{{ end }}** method. A risk is **accepted** without treatment when its level is one of: {{ range $i, $l := .RiskAccept }}{{ if $i }}, {{ end }}`{{ $l }}`{{ end }}{{ if not .RiskAccept }}(none defined){{ end }}. Any risk above the acceptance criteria must record a treatment decision (mitigate / accept / transfer / avoid) and an owner.
+
 ## Risk Register
 
-Risk level is computed from likelihood × impact. A risk not in the acceptance
-criteria must carry a treatment decision and an owner.
+Risk estimation and evaluation per threat. **Open** risks are above the
+acceptance criteria with no treatment recorded.
 
-| Threat | Target | Likelihood | Impact | Risk | Treatment | Owner | Decided | Residual |
-|---|---|---|---|---|---|---|---|---|
+| Threat | Target | Likelihood | Impact | Risk | Evaluation | Treatment | Owner | Decided | Residual |
+|---|---|---|---|---|---|---|---|---|---|
 {{ range .ThreatList -}}
-| [`{{ .ID }}`](#{{ .ID }}) | `{{ .Target }}` | {{ .Likelihood }} | {{ .Impact }} | {{ index $.RiskLevels .ID }} | {{ .Treatment }} | {{ .Owner }} | {{ .Decided }} | {{ .ResidualRisk }} |
+{{- $e := index $.RiskEval .ID -}}
+| [`{{ .ID }}`](#{{ .ID }}) | `{{ .Target }}` | {{ .Likelihood }} | {{ .Impact }} | {{ $e.Level }} | {{ if $e.Accepted }}accepted{{ else if $e.Treated }}treated{{ else }}**open**{{ end }} | {{ .Treatment }} | {{ .Owner }} | {{ .Decided }} | {{ .ResidualRisk }} |
 {{ end }}
 {{ end -}}
 {{ if .ComponentList }}
@@ -94,7 +99,10 @@ criteria must carry a treatment decision and an owner.
 {{ end -}}
 {{ range .CatalogList }}
 {{ $cat := . -}}
-## Compliance: {{ .Title }}
+## Compliance Evidence: {{ .Title }}
+
+Control coverage of {{ .Title }} requirements — evidence of risk treatment
+(CRA / prEN 40000-1-2 §6.6). A **gap** is a requirement with no implementing control.
 
 | Requirement | Title | Status | Control |
 |---|---|---|---|

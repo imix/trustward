@@ -59,6 +59,38 @@ func scorerFor(method string) Scorer {
 	}
 }
 
+// Eval is the evaluation of one threat's risk against the acceptance criteria
+// (prEN 40000-1-2 §6.5.5).
+type Eval struct {
+	Level    string // computed risk level
+	Accepted bool   // level is within the policy's acceptance criteria
+	Treated  bool   // a treatment decision and owner are recorded
+}
+
+// Open reports a risk that is neither accepted nor treated — a CRA gap.
+func (e Eval) Open() bool { return !e.Accepted && !e.Treated }
+
+// Evaluate scores every threat and judges it against the risk-policy's
+// acceptance criteria. This is the single definition of "open risk" shared by
+// the validator (the CRA gate) and the report (risk evaluation section).
+func Evaluate(p *model.Project) map[string]Eval {
+	levels := Score(p)
+	accept := make(map[string]bool, len(p.RiskPolicy.Accept))
+	for _, lvl := range p.RiskPolicy.Accept {
+		accept[lvl] = true
+	}
+	out := make(map[string]Eval, len(p.Threats))
+	for _, t := range p.Threats {
+		lvl := levels[t.ID]
+		out[t.ID] = Eval{
+			Level:    lvl,
+			Accepted: accept[lvl],
+			Treated:  t.Treatment != "" && t.Owner != "",
+		}
+	}
+	return out
+}
+
 // Score returns each threat's computed risk level, keyed by threat ID.
 // The policy's method scores each threat; when it cannot (inputs absent or
 // invalid), the threat's severity is used (back-compat with pre-risk models).

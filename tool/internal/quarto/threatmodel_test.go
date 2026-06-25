@@ -53,6 +53,25 @@ func TestThreatModel_RiskRegister(t *testing.T) {
 	assertContains(t, got, "alice")    // owner
 }
 
+func TestThreatModel_CRASections(t *testing.T) {
+	proj := &model.Project{
+		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
+		Components: []model.Component{{ID: "cu", Title: "Central Unit"}},
+		Threats: []model.Threat{
+			{ID: "t-open", Title: "Untreated", Target: "cu", Likelihood: "high", Impact: "high"}, // critical, open
+			{ID: "t-ok", Title: "Low", Target: "cu", Likelihood: "low", Impact: "low"},           // low, accepted
+		},
+	}
+	got := render(t, proj, "", false)
+
+	// §6.3 methodology + acceptance criteria
+	assertContains(t, got, "Risk Acceptance Criteria")
+	assertContains(t, got, "qualitative") // method
+	// §6.5.5 evaluation status visible in the register
+	assertContains(t, got, "accepted")
+	assertContains(t, got, "open")
+}
+
 func TestThreatModel_FrontMatterMeta(t *testing.T) {
 	proj := &model.Project{
 		Version:    model.Version{Semver: "1.2.3", ReleaseDate: "2026-06-09"},

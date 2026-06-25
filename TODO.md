@@ -13,11 +13,17 @@ Phase 2 done: the `risk.Scorer` seam now has a second profile, `etsi-tvra`
 block sum to an attack potential that maps inversely to likelihood, then the
 shared matrix. Selected via `risk-policy.method: etsi-tvra`.
 
+Phase 3 done: the report is shaped to the prEN 40000-1-2 §6 process — a Risk
+Acceptance Criteria and Methodology section (§6.3, from the risk-policy), a Risk
+Register with an Evaluation column marking each risk accepted/treated/**open**
+(§6.5.4–5), and the control→requirement coverage reframed as Compliance Evidence
+(§6.6). The "open risk" rule is defined once in `risk.Evaluate` and shared by the
+report and the validate CRA gate.
+
 Remaining:
-- **CRA report shaping** — structure the report to prEN 40000-1-2 §6.2–6.7 and
-  fold in the control→requirement coverage as compliance evidence.
 - **Register polish** — the risk register's Likelihood column is blank for
-  etsi-tvra threats (likelihood is computed); show the attack-potential band there.
+  etsi-tvra threats (likelihood is computed); show the derived likelihood or the
+  attack-potential band there. Needs the Scorer to expose the likelihood it used.
 
 ## Diagram scale
 
