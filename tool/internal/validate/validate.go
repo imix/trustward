@@ -17,6 +17,13 @@ var validTreatments = map[string]bool{
 	"mitigate": true, "accept": true, "transfer": true, "avoid": true,
 }
 
+// validObjectiveTypes are the CIA-scale properties a cybersecurity objective
+// may protect (prEN 40000-1-2 §6.5.2).
+var validObjectiveTypes = map[string]bool{
+	"confidentiality": true, "integrity": true, "availability": true,
+	"authenticity": true, "accountability": true,
+}
+
 // Issue is a single referential-integrity finding.
 type Issue struct {
 	Subject string // the entity holding the bad reference, e.g. `threat "threat-x"`
@@ -62,6 +69,7 @@ func Check(p *model.Project) []Issue {
 	c := &checker{}
 
 	assets := idSet(c, "asset", p.Assets, func(a model.Asset) string { return a.ID })
+	objectives := idSet(c, "objective", p.Objectives, func(o model.Objective) string { return o.ID })
 	controls := idSet(c, "control", p.Controls, func(ct model.Control) string { return ct.ID })
 	components := idSet(c, "component", p.Components, func(cp model.Component) string { return cp.ID })
 	flows := idSet(c, "data flow", p.DataFlows, func(f model.DataFlow) string { return f.ID })
@@ -78,6 +86,22 @@ func Check(p *model.Project) []Issue {
 	for _, cat := range p.Catalogs {
 		for _, req := range cat.Requirements {
 			requirements[cat.ID+"::"+req.ID] = true
+		}
+	}
+
+	for _, o := range p.Objectives {
+		if o.Type != "" && !validObjectiveTypes[o.Type] {
+			c.add(fmt.Sprintf("objective %q", o.ID),
+				fmt.Sprintf("type %q is not a CIA-scale property (confidentiality/integrity/availability/authenticity/accountability)", o.Type))
+		}
+	}
+
+	for _, a := range p.Assets {
+		subject := fmt.Sprintf("asset %q", a.ID)
+		for _, o := range a.Objectives {
+			if !objectives[o] {
+				c.add(subject, fmt.Sprintf("objective %q does not match any objective", o))
+			}
 		}
 	}
 
@@ -141,6 +165,11 @@ func Check(p *model.Project) []Issue {
 		for _, m := range t.Mitigations {
 			if !controls[m] {
 				c.add(subject, fmt.Sprintf("mitigation %q does not match any control", m))
+			}
+		}
+		for _, o := range t.Violates {
+			if !objectives[o] {
+				c.add(subject, fmt.Sprintf("violates %q does not match any objective", o))
 			}
 		}
 	}

@@ -108,6 +108,41 @@ func TestCheck_NoRiskPolicyNoGate(t *testing.T) {
 	}
 }
 
+func TestCheck_ObjectiveRefsMustResolve(t *testing.T) {
+	p := &model.Project{
+		Objectives: []model.Objective{{ID: "obj-conf", Type: "confidentiality"}},
+		Assets:     []model.Asset{{ID: "asset-a", Objectives: []string{"obj-conf", "obj-missing"}}},
+		Threats:    []model.Threat{{ID: "threat-a", Violates: []string{"obj-gone"}}},
+	}
+
+	issues := validate.Check(p)
+
+	if !issueMentioning(issues, "asset", "obj-missing") {
+		t.Errorf("want unresolved asset objective issue, got %v", issues)
+	}
+	if !issueMentioning(issues, "threat-a", "obj-gone") {
+		t.Errorf("want unresolved threat violates issue, got %v", issues)
+	}
+}
+
+func TestCheck_ObjectiveTypeMustBeInCIAScale(t *testing.T) {
+	p := &model.Project{
+		Objectives: []model.Objective{
+			{ID: "obj-ok", Type: "integrity"},
+			{ID: "obj-bad", Type: "speed"},
+		},
+	}
+
+	issues := validate.Check(p)
+
+	if !issueMentioning(issues, "objective", "speed") {
+		t.Errorf("want invalid objective type issue, got %v", issues)
+	}
+	if issueMentioning(issues, "obj-ok", "type") {
+		t.Errorf("valid CIA type must not be flagged, got %v", issues)
+	}
+}
+
 func TestCheck_ThreatMitigationMustMatchControl(t *testing.T) {
 	p := &model.Project{
 		Controls: []model.Control{{ID: "ctrl-a"}},

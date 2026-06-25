@@ -25,7 +25,15 @@ List of objects with:
 - `id` — unique identifier (string, kebab-case)
 - `type` — e.g. `user-data`, `config`, `firmware`, `function` (string)
 - `classification` — e.g. `public`, `internal`, `confidential`, `restricted` (string, optional)
+- `objectives` — cybersecurity objectives this asset must uphold (list of objective IDs, optional)
 - `description` — asset purpose and sensitivity context (string)
+
+#### `objectives:` — cybersecurity objectives (prEN 40000-1-2 §6.5.2)
+List of objects with:
+- `id` — unique identifier (string, kebab-case)
+- `title` — human-readable name (string)
+- `type` — the CIA-scale property protected: `confidentiality` \| `integrity` \| `availability` \| `authenticity` \| `accountability` (string)
+- `description` — what the objective protects and why (string)
 
 #### `components:` — list of system components
 List of objects with:
@@ -68,6 +76,7 @@ Only treated as threat list when value is a YAML sequence (not a mapping). List 
 - `type` — e.g. `spoofing`, `tampering`, `repudiation`, `disclosure`, `denial`, `elevation`; overrides catalog if set (string)
 - `target` — component ID or data-flow ID being attacked (string)
 - `asset` — asset ID at risk (string, optional)
+- `violates` — cybersecurity objectives this threat violates (list of objective IDs, optional)
 - `severity` — e.g. `low`, `medium`, `high`, `critical` (string)
 - `likelihood` — `low` \| `medium` \| `high`; with `impact`, drives the computed risk level (string, optional)
 - `impact` — `low` \| `medium` \| `high` (string, optional)
@@ -128,6 +137,8 @@ List of objects with:
 
 | Source | Field | Target |
 |--------|-------|--------|
+| `assets[].objectives[]` | objective IDs | `objectives[].id` |
+| `threats[].violates[]` | objective IDs | `objectives[].id` |
 | `components[].assets[]` | asset IDs | `assets[].id` |
 | `trust-zones[].members[]` | component IDs | `components[].id` |
 | `data-flows[].connects[]` | component IDs | `components[].id` |
@@ -147,7 +158,7 @@ The loader merges content from all imported files depth-first. Behavior by key:
 - `system:` — first occurrence wins; subsequent declarations ignored
 - `risk-policy:` — first occurrence wins; subsequent declarations ignored
 - `version:`, `imports:` — file-level metadata only
-- All list fields (`assets:`, `components:`, `trust-zones:`, `data-flows:`, `threats:`, `controls:`) — merged by appending
+- All list fields (`assets:`, `objectives:`, `components:`, `trust-zones:`, `data-flows:`, `threats:`, `controls:`) — merged by appending
 - `catalog:` — each file contributes at most one catalog; all catalogs are collected into the project
 - `threat-catalog:` — same as above; threat refs are resolved after the full graph is loaded
 

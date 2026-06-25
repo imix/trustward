@@ -28,6 +28,17 @@ A technical or organizational measure that reduces the likelihood or impact of a
 
 ---
 
+## Cybersecurity Objective
+
+A property an [Asset](#asset) must uphold, named on a CIA scale
+(`confidentiality`, `integrity`, `availability`, `authenticity`,
+`accountability`). Objectives are defined at the project level and referenced
+from assets (`objectives:`) and from threats that breach them (`violates:`).
+They make the objective→asset→threat trace explicit, per prEN 40000-1-2 §6.5.2
+("Asset and cybersecurity objective identification").
+
+---
+
 ## Data Flow
 
 A communication path between exactly two components. Data flows carry assets across the network. When a data flow connects components in different trust zones it crosses a trust boundary — a signal that additional scrutiny may be warranted.
