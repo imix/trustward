@@ -62,14 +62,16 @@ auditability of the scales.
 
 ---
 
-## Phase D — Full EN 40000 report format  ·  priority: HIGH (depends on A)
+## Phase D — Full EN 40000 report format  ·  **DONE**
 
-Phase 3 added the missing §6 *sections* into sectrack's existing layout (System
-Overview → Data Flow → Assets → Threats → Acceptance Criteria → Register →
-Compliance). This item adopts the prEN 40000-1-2 **format**: restructure the
-report so its headings mirror the standard's clause structure and numbering, so
-the rendered document reads as an EN 40000 risk-management record an assessor can
-map clause-by-clause.
+The report now adopts the prEN 40000-1-2 **format**: headings mirror the clause
+structure and numbering (6.2 Product Context → 6.3 Acceptance Criteria →
+6.5 Risk Assessment with 6.5.2/6.5.3/6.5.4 → 6.6 Risk Treatment → 6.7 Monitoring
+and Review), so the rendered document reads as an EN 40000 risk-management record
+an assessor can map clause-by-clause. Shipped across: slice 1 (reorder +
+clause-number headings, `76c0db3`); slice 2 (§6.5.2 objectives, delivered by
+Phase A); slice 3 (§6.7 from an optional `risk-policy.review` field, placeholder
+when absent).
 
 **Target structure (clause → sectrack content)**
 - **6.2 Product context** — system overview, components, trust zones, data flow diagram
@@ -150,8 +152,8 @@ discussion: threats hit a technical asset, incidents are the downstream harm).
 
 1. ~~**B — Attack-potential band**~~ — **done** (`f35b5aa`); `Basis`/band note deferred.
 2. ~~**A — Objectives**~~ — **done**; closes the CRA §6.5.2 gap and unblocks D's §6.5.2.
-3. **D — Full EN 40000 report format** (turns the output into a clause-mapped
-   conformance artifact; the strongest CRA-presentation win).
+3. ~~**D — Full EN 40000 report format**~~ — **done**; the output is now a
+   clause-mapped conformance artifact.
 4. **C1–C6** as specific needs arise — none are required for CRA conformance on
    their own; they round out ETSI fidelity.
 

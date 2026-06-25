@@ -9,6 +9,10 @@ version:
 risk-policy:
   method: qualitative
   accept: [low]
+  review: >
+    Reviewed quarterly by the OT security lead, and out-of-cycle on any change
+    to the alarm logic, firmware, or network topology. Open risks are tracked
+    to closure in the issue tracker.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Asset vocabulary

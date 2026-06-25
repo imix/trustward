@@ -106,6 +106,9 @@ A single object (CRA / prEN 40000-1-2 §6.3):
   - `qualitative` (default) — 3×3 likelihood×impact matrix → `low`/`medium`/`high`/`critical`
   - `etsi-tvra` — ETSI attack-potential; reads each threat's `attack` block
 - `accept` — risk levels acceptable without treatment (list of strings)
+- `review` — the risk monitoring and review cadence: how often risks are
+  reviewed, by whom, and what triggers an out-of-cycle review (string, optional).
+  Rendered as the report's §6.7 section; a placeholder is shown when absent.
 
 When a `risk-policy` is present, validation enforces the **CRA gate**: any threat
 whose computed risk level is not in `accept` must declare a `treatment` and an

@@ -133,6 +133,32 @@ func TestThreatModel_NoObjectivesNoSection(t *testing.T) {
 	assertNotContains(t, got, "#### Cybersecurity Objectives")
 }
 
+func TestThreatModel_MonitoringAndReview(t *testing.T) {
+	proj := &model.Project{
+		RiskPolicy: model.RiskPolicy{
+			Method: "qualitative", Accept: []string{"low"}, Set: true,
+			Review: "Reviewed quarterly by the OT security lead.",
+		},
+	}
+
+	got := render(t, proj, "", false)
+
+	assertContains(t, got, "## 6.7 Risk Monitoring and Review")
+	assertContains(t, got, "Reviewed quarterly by the OT security lead.")
+}
+
+func TestThreatModel_MonitoringAndReviewPlaceholder(t *testing.T) {
+	// Policy set but no review cadence stated: the clause still renders, with a placeholder.
+	proj := &model.Project{
+		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
+	}
+
+	got := render(t, proj, "", false)
+
+	assertContains(t, got, "## 6.7 Risk Monitoring and Review")
+	assertContains(t, got, "No risk monitoring and review cadence")
+}
+
 func TestThreatModel_FrontMatterMeta(t *testing.T) {
 	proj := &model.Project{
 		Version:    model.Version{Semver: "1.2.3", ReleaseDate: "2026-06-09"},

@@ -68,6 +68,7 @@ type threatModelData struct {
 	RiskEval            map[string]risk.Eval // threat id → computed score + evaluation vs acceptance criteria
 	RiskMethod          string               // scoring method (risk-policy)
 	RiskAccept          []string             // accepted risk levels (risk-policy)
+	RiskReview          string               // monitoring and review cadence (§6.7)
 	RiskPolicySet       bool                 // a risk-policy is declared → show register
 	Controls            map[string]string    // id → title, for the controlTitle helper
 	ControlList         []model.Control
@@ -157,6 +158,7 @@ func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, p
 		RiskEval:            risk.Evaluate(proj),
 		RiskMethod:          proj.RiskPolicy.Method,
 		RiskAccept:          proj.RiskPolicy.Accept,
+		RiskReview:          proj.RiskPolicy.Review,
 		RiskPolicySet:       proj.RiskPolicy.Set,
 		Controls:            controls,
 		ControlList:         proj.Controls,

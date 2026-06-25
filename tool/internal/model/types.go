@@ -123,5 +123,6 @@ type AttackPotential struct {
 type RiskPolicy struct {
 	Method string   `yaml:"method"` // scoring profile; "" = qualitative
 	Accept []string `yaml:"accept"` // risk levels acceptable without treatment
+	Review string   `yaml:"review"` // monitoring and review cadence (§6.7)
 	Set    bool     `yaml:"-"`      // true once a risk-policy: block was loaded
 }
