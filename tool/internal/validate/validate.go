@@ -155,16 +155,15 @@ func Check(p *model.Project) []Issue {
 // an owner. The gate only applies when a risk-policy is declared, so models
 // that don't use the risk layer are unaffected.
 func checkRisk(c *checker, p *model.Project) {
-	method := p.RiskPolicy.Method
 	for _, t := range p.Threats {
 		subject := fmt.Sprintf("threat %q", t.ID)
 		if t.Treatment != "" && !validTreatments[t.Treatment] {
 			c.add(subject, fmt.Sprintf("treatment %q is not one of mitigate/accept/transfer/avoid", t.Treatment))
 		}
-		if t.Likelihood != "" && !risk.InScale(method, t.Likelihood) {
+		if t.Likelihood != "" && !risk.InScale(t.Likelihood) {
 			c.add(subject, fmt.Sprintf("likelihood %q is not a valid scale value", t.Likelihood))
 		}
-		if t.Impact != "" && !risk.InScale(method, t.Impact) {
+		if t.Impact != "" && !risk.InScale(t.Impact) {
 			c.add(subject, fmt.Sprintf("impact %q is not a valid scale value", t.Impact))
 		}
 		if a := t.Attack; a != nil {

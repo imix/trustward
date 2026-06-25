@@ -55,8 +55,8 @@ func (Qualitative) Score(t model.Threat) Score {
 }
 
 // InScale reports whether v is a valid likelihood/impact value (qualitative scale).
-func InScale(method, v string) bool {
-	_, ok := rank[v] // method reserved; only the qualitative scale exists here
+func InScale(v string) bool {
+	_, ok := rank[v]
 	return ok
 }
 
