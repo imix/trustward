@@ -167,6 +167,14 @@ A minimal GitHub Actions step, assuming your model lives in `my-system/` and `tr
     path: my-system/threat-model.html
 ```
 
+## Installing the binary
+
+```bash
+go install github.com/imix/trustward/cmd/trustward@latest
+```
+
+This puts the `trustward` binary on your `PATH` (under `$(go env GOPATH)/bin`). Like any bare binary it generates diagrams and `.qmd` documents but does **not** render — rendering needs Quarto, which only the Docker image bundles. Use it for `validate` in CI and for diagram generation; use `trustward.sh` (Docker) when you want rendered HTML/PDF.
+
 ## Building from source
 
 ```bash
