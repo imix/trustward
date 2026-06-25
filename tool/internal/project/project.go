@@ -41,149 +41,104 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 	if err != nil {
 		return fmt.Errorf("%s: %w", filepath.Base(abs), err)
 	}
-
 	name := filepath.Base(abs)
 
-	// Phase 1: detect content type from top-level keys.
-	var keys map[string]interface{}
-	if err := yaml.Unmarshal(data, &keys); err != nil {
+	// Parse the file once into its top-level nodes; decode each key on demand.
+	var nodes map[string]yaml.Node
+	if err := yaml.Unmarshal(data, &nodes); err != nil {
 		return fmt.Errorf("%s: parsing: %w", name, err)
 	}
 
-	// Phase 2: unmarshal and merge by content type.
-	if hasAny(keys, "version") && p.Version.Semver == "" {
-		var v struct {
-			Version model.Version `yaml:"version"`
-		}
-		if err := yaml.Unmarshal(data, &v); err != nil {
-			return fmt.Errorf("%s: version: %w", name, err)
-		}
-		p.Version = v.Version
-	}
-
-	if hasAny(keys, "system") && p.SystemMeta == nil {
-		var v struct {
-			SystemMeta *model.SystemMeta `yaml:"system"`
-		}
-		if err := yaml.Unmarshal(data, &v); err != nil {
-			return fmt.Errorf("%s: system: %w", name, err)
-		}
-		p.SystemMeta = v.SystemMeta
-	}
-
-	if hasAny(keys, "assets") {
-		var v struct {
-			Assets []model.Asset `yaml:"assets"`
-		}
-		if err := yaml.Unmarshal(data, &v); err != nil {
-			return fmt.Errorf("%s: assets: %w", name, err)
-		}
-		p.Assets = append(p.Assets, v.Assets...)
-	}
-
-	if hasAny(keys, "components") {
-		var v struct {
-			Components []model.Component `yaml:"components"`
-		}
-		if err := yaml.Unmarshal(data, &v); err != nil {
-			return fmt.Errorf("%s: components: %w", name, err)
-		}
-		p.Components = append(p.Components, v.Components...)
-	}
-
-	if hasAny(keys, "trust-zones") {
-		var v struct {
-			TrustZones []model.TrustZone `yaml:"trust-zones"`
-		}
-		if err := yaml.Unmarshal(data, &v); err != nil {
-			return fmt.Errorf("%s: trust-zones: %w", name, err)
-		}
-		p.TrustZones = append(p.TrustZones, v.TrustZones...)
-	}
-
-	if hasAny(keys, "data-flows") {
-		var v struct {
-			DataFlows []model.DataFlow `yaml:"data-flows"`
-		}
-		if err := yaml.Unmarshal(data, &v); err != nil {
-			return fmt.Errorf("%s: data-flows: %w", name, err)
-		}
-		p.DataFlows = append(p.DataFlows, v.DataFlows...)
-	}
-
-	// "threats" is a list in a threat model but a mapping in company vocabulary.
-	// Only treat it as threats when the value is a sequence.
-	if v, ok := keys["threats"]; ok {
-		if _, isList := v.([]interface{}); isList {
-			var f struct {
-				Threats []model.Threat `yaml:"threats"`
-			}
-			if err := yaml.Unmarshal(data, &f); err != nil {
-				return fmt.Errorf("%s: threats: %w", name, err)
-			}
-			p.Threats = append(p.Threats, f.Threats...)
-		}
-	}
-
-	if hasAny(keys, "risk-policy") && !p.RiskPolicy.Set {
-		var v struct {
-			RiskPolicy model.RiskPolicy `yaml:"risk-policy"`
-		}
-		if err := yaml.Unmarshal(data, &v); err != nil {
-			return fmt.Errorf("%s: risk-policy: %w", name, err)
-		}
-		v.RiskPolicy.Set = true
-		p.RiskPolicy = v.RiskPolicy
-	}
-
-	if hasAny(keys, "controls") {
-		var v struct {
-			Controls []model.Control `yaml:"controls"`
-		}
-		if err := yaml.Unmarshal(data, &v); err != nil {
-			return fmt.Errorf("%s: controls: %w", name, err)
-		}
-		p.Controls = append(p.Controls, v.Controls...)
-	}
-
-	if hasAny(keys, "catalog") {
-		var v struct {
-			Catalog model.ControlCatalog `yaml:"catalog"`
-		}
-		if err := yaml.Unmarshal(data, &v); err != nil {
-			return fmt.Errorf("%s: catalog: %w", name, err)
-		}
-		if v.Catalog.ID != "" {
-			p.Catalogs = append(p.Catalogs, v.Catalog)
-		}
-	}
-
-	if hasAny(keys, "threat-catalog") {
-		var v struct {
-			ThreatCatalog model.ThreatCatalog `yaml:"threat-catalog"`
-		}
-		if err := yaml.Unmarshal(data, &v); err != nil {
-			return fmt.Errorf("%s: threat-catalog: %w", name, err)
-		}
-		if v.ThreatCatalog.ID != "" {
-			p.ThreatCatalogs = append(p.ThreatCatalogs, v.ThreatCatalog)
-		}
-	}
-
-	// Phase 3: follow imports relative to this file's directory.
-	var imported struct {
-		Imports []rawImport `yaml:"imports"`
-	}
-	if err := yaml.Unmarshal(data, &imported); err != nil {
-		return fmt.Errorf("%s: imports: %w", name, err)
-	}
-	dir := filepath.Dir(abs)
-	for _, imp := range imported.Imports {
-		if err := loadGraph(p, filepath.Join(dir, imp.Path), visited); err != nil {
+	// List keys merge by appending every file's contribution.
+	for _, err := range []error{
+		mergeList(&p.Assets, nodes, "assets", name),
+		mergeList(&p.Components, nodes, "components", name),
+		mergeList(&p.TrustZones, nodes, "trust-zones", name),
+		mergeList(&p.DataFlows, nodes, "data-flows", name),
+		mergeList(&p.Controls, nodes, "controls", name),
+	} {
+		if err != nil {
 			return err
 		}
 	}
 
+	// Singletons: first occurrence in the graph wins.
+	if n, ok := nodes["version"]; ok && p.Version.Semver == "" {
+		if err := n.Decode(&p.Version); err != nil {
+			return fmt.Errorf("%s: version: %w", name, err)
+		}
+	}
+	if n, ok := nodes["system"]; ok && p.SystemMeta == nil {
+		if err := n.Decode(&p.SystemMeta); err != nil {
+			return fmt.Errorf("%s: system: %w", name, err)
+		}
+	}
+	if n, ok := nodes["risk-policy"]; ok && !p.RiskPolicy.Set {
+		if err := n.Decode(&p.RiskPolicy); err != nil {
+			return fmt.Errorf("%s: risk-policy: %w", name, err)
+		}
+		p.RiskPolicy.Set = true
+	}
+
+	// "threats" is a list in a threat model but a mapping in company vocabulary.
+	// Only treat it as threats when the value is a sequence.
+	if n, ok := nodes["threats"]; ok && n.Kind == yaml.SequenceNode {
+		var threats []model.Threat
+		if err := n.Decode(&threats); err != nil {
+			return fmt.Errorf("%s: threats: %w", name, err)
+		}
+		p.Threats = append(p.Threats, threats...)
+	}
+
+	// Catalogs: each file contributes at most one; skip if it has no id.
+	if n, ok := nodes["catalog"]; ok {
+		var cat model.ControlCatalog
+		if err := n.Decode(&cat); err != nil {
+			return fmt.Errorf("%s: catalog: %w", name, err)
+		}
+		if cat.ID != "" {
+			p.Catalogs = append(p.Catalogs, cat)
+		}
+	}
+	if n, ok := nodes["threat-catalog"]; ok {
+		var tc model.ThreatCatalog
+		if err := n.Decode(&tc); err != nil {
+			return fmt.Errorf("%s: threat-catalog: %w", name, err)
+		}
+		if tc.ID != "" {
+			p.ThreatCatalogs = append(p.ThreatCatalogs, tc)
+		}
+	}
+
+	// Follow imports relative to this file's directory.
+	if n, ok := nodes["imports"]; ok {
+		var imports []rawImport
+		if err := n.Decode(&imports); err != nil {
+			return fmt.Errorf("%s: imports: %w", name, err)
+		}
+		dir := filepath.Dir(abs)
+		for _, imp := range imports {
+			if err := loadGraph(p, filepath.Join(dir, imp.Path), visited); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// mergeList decodes a list-valued top-level key, if present, and appends it to
+// dst — the single place the list-merge rule lives. An absent key is a no-op.
+func mergeList[T any](dst *[]T, nodes map[string]yaml.Node, key, name string) error {
+	n, ok := nodes[key]
+	if !ok {
+		return nil
+	}
+	var items []T
+	if err := n.Decode(&items); err != nil {
+		return fmt.Errorf("%s: %s: %w", name, key, err)
+	}
+	*dst = append(*dst, items...)
 	return nil
 }
 
@@ -217,13 +172,4 @@ func resolveThreatRefs(p *model.Project) {
 			p.Threats[i].Notes = pat.Notes
 		}
 	}
-}
-
-func hasAny(keys map[string]interface{}, names ...string) bool {
-	for _, name := range names {
-		if _, ok := keys[name]; ok {
-			return true
-		}
-	}
-	return false
 }
