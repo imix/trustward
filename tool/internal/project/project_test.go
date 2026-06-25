@@ -63,6 +63,43 @@ data-flows:
 	}
 }
 
+func TestLoad_ObjectivesAndAssetUpholdAndThreatViolates(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "system.yaml", `
+objectives:
+  - id: obj-confidentiality
+    title: Sensor data confidentiality
+    type: confidentiality
+    description: Readings must not leak
+assets:
+  - id: asset-readings
+    type: telemetry
+    objectives: [obj-confidentiality]
+threats:
+  - id: threat-leak
+    title: Eavesdrop readings
+    violates: [obj-confidentiality]
+`)
+
+	proj, err := project.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if got := len(proj.Objectives); got != 1 {
+		t.Fatalf("Objectives: want 1, got %d", got)
+	}
+	if o := proj.Objectives[0]; o.ID != "obj-confidentiality" || o.Type != "confidentiality" {
+		t.Errorf("Objectives[0]: want id/type confidentiality, got %q/%q", o.ID, o.Type)
+	}
+	if got := proj.Assets[0].Objectives; len(got) != 1 || got[0] != "obj-confidentiality" {
+		t.Errorf("Assets[0].Objectives: want [obj-confidentiality], got %v", got)
+	}
+	if got := proj.Threats[0].Violates; len(got) != 1 || got[0] != "obj-confidentiality" {
+		t.Errorf("Threats[0].Violates: want [obj-confidentiality], got %v", got)
+	}
+}
+
 func TestLoad_ImportsCompanyControls(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "system.yaml", `

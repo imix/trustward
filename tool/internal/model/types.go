@@ -13,10 +13,20 @@ type SystemMeta struct {
 }
 
 type Asset struct {
-	ID             string `yaml:"id"`
-	Type           string `yaml:"type"`
-	Classification string `yaml:"classification"`
-	Description    string `yaml:"description"`
+	ID             string   `yaml:"id"`
+	Type           string   `yaml:"type"`
+	Classification string   `yaml:"classification"`
+	Objectives     []string `yaml:"objectives"` // cybersecurity objectives this asset must uphold
+	Description    string   `yaml:"description"`
+}
+
+// Objective is a cybersecurity objective an asset must uphold (prEN 40000-1-2
+// §6.5.2). Type names a CIA-scale property the objective protects.
+type Objective struct {
+	ID          string `yaml:"id"`
+	Title       string `yaml:"title"`
+	Type        string `yaml:"type"` // confidentiality|integrity|availability|authenticity|accountability
+	Description string `yaml:"description"`
 }
 
 type Component struct {
@@ -85,6 +95,7 @@ type Threat struct {
 	Type         string           `yaml:"type"`
 	Asset        string           `yaml:"asset"`
 	Target       string           `yaml:"target"`
+	Violates     []string         `yaml:"violates"` // cybersecurity objectives this threat violates
 	Severity     string           `yaml:"severity"`
 	Likelihood   string           `yaml:"likelihood"` // qualitative: low|medium|high
 	Impact       string           `yaml:"impact"`     // qualitative: low|medium|high

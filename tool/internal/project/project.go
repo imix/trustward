@@ -52,6 +52,7 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 	// List keys merge by appending every file's contribution.
 	for _, err := range []error{
 		mergeList(&p.Assets, nodes, "assets", name),
+		mergeList(&p.Objectives, nodes, "objectives", name),
 		mergeList(&p.Components, nodes, "components", name),
 		mergeList(&p.TrustZones, nodes, "trust-zones", name),
 		mergeList(&p.DataFlows, nodes, "data-flows", name),

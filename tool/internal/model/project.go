@@ -6,6 +6,7 @@ type Project struct {
 	Version        Version
 	SystemMeta     *SystemMeta
 	Assets         []Asset
+	Objectives     []Objective
 	Components     []Component
 	TrustZones     []TrustZone
 	DataFlows      []DataFlow
