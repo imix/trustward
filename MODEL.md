@@ -74,17 +74,28 @@ Only treated as threat list when value is a YAML sequence (not a mapping). List 
 - `treatment` — risk treatment decision: `mitigate` \| `accept` \| `transfer` \| `avoid` (string, optional)
 - `owner` — who signed off the treatment decision (string, optional)
 - `decided` — ISO date of the treatment sign-off (string, optional)
+- `attack` — ETSI attack-potential factors, used by the `etsi-tvra` method (object, optional):
+  - `expertise` — `layman` \| `proficient` \| `expert` \| `multiple-experts`
+  - `knowledge` — `public` \| `restricted` \| `sensitive` \| `critical`
+  - `opportunity` — `unlimited` \| `easy` \| `moderate` \| `difficult` \| `none`
+  - `equipment` — `standard` \| `specialised` \| `bespoke` \| `multiple-bespoke`
 - `mitigations` — list of control IDs that reduce risk (list of strings)
 - `residualRisk` — severity after mitigations applied (string)
 - `notes` — rationale, mitigation justification, residual risk explanation (string)
 
-When `likelihood` and `impact` are both set, the computed risk level is
-`likelihood × impact` per the `risk-policy` method; otherwise the tool falls
-back to `severity`.
+How the risk level is computed depends on the `risk-policy` method:
+- `qualitative` — from `likelihood` × `impact`.
+- `etsi-tvra` — the `attack` factors sum to an attack potential (ETSI TS 102 165-1
+  clause 6.6.3), which maps inversely to a likelihood (harder attack → less
+  likely), then combined with `impact`.
+
+When the method's inputs are absent or invalid, the tool falls back to `severity`.
 
 #### `risk-policy:` — scoring method and risk acceptance criteria (first occurrence wins)
 A single object (CRA / prEN 40000-1-2 §6.3):
-- `method` — scoring profile; `qualitative` (default) is a 3×3 likelihood×impact matrix → `low`/`medium`/`high`/`critical` (string)
+- `method` — scoring profile (string):
+  - `qualitative` (default) — 3×3 likelihood×impact matrix → `low`/`medium`/`high`/`critical`
+  - `etsi-tvra` — ETSI attack-potential; reads each threat's `attack` block
 - `accept` — risk levels acceptable without treatment (list of strings)
 
 When a `risk-policy` is present, validation enforces the **CRA gate**: any threat

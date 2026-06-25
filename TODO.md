@@ -8,12 +8,16 @@ The risk level is computed (`internal/risk`, qualitative 3×3 matrix) and
 `validate` enforces the CRA gate: every non-accepted risk needs a treatment
 and an owner. The report shows a risk register.
 
+Phase 2 done: the `risk.Scorer` seam now has a second profile, `etsi-tvra`
+(`internal/risk/etsi.go`) — attack-potential factors on a threat's `attack`
+block sum to an attack potential that maps inversely to likelihood, then the
+shared matrix. Selected via `risk-policy.method: etsi-tvra`.
+
 Remaining:
-- **Pluggable scoring profiles** — the `risk.Scorer` seam exists with one
-  (`qualitative`) implementation. Add an ETSI attack-potential profile selected
-  via `risk-policy.method`.
 - **CRA report shaping** — structure the report to prEN 40000-1-2 §6.2–6.7 and
   fold in the control→requirement coverage as compliance evidence.
+- **Register polish** — the risk register's Likelihood column is blank for
+  etsi-tvra threats (likelihood is computed); show the attack-potential band there.
 
 ## Diagram scale
 

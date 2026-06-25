@@ -46,6 +46,24 @@ func TestCheck_RiskFieldsValidated(t *testing.T) {
 	}
 }
 
+func TestCheck_AttackFactorsValidated(t *testing.T) {
+	p := &model.Project{
+		RiskPolicy: model.RiskPolicy{Method: "etsi-tvra", Accept: []string{"low"}, Set: true},
+		Threats: []model.Threat{{
+			ID:        "threat-x",
+			Impact:    "high",
+			Treatment: "mitigate", Owner: "alice",
+			Attack: &model.AttackPotential{
+				Expertise: "wizard", // not a valid factor value
+				Knowledge: "public", Opportunity: "easy", Equipment: "standard",
+			},
+		}},
+	}
+	if !issueMentioning(validate.Check(p), "threat-x", "expertise") {
+		t.Errorf("want invalid attack-factor issue, got %v", validate.Check(p))
+	}
+}
+
 func TestCheck_CRAGate(t *testing.T) {
 	// risk-policy accepts only "low"; a high risk with no treatment is an open gap.
 	base := model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true}

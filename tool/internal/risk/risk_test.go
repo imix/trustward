@@ -6,8 +6,7 @@ import (
 	"sectrack/internal/model"
 )
 
-func TestQualitativeLevel(t *testing.T) {
-	q := Qualitative{}
+func TestLevelMatrix(t *testing.T) {
 	cases := []struct {
 		likelihood, impact, want string
 	}{
@@ -20,8 +19,37 @@ func TestQualitativeLevel(t *testing.T) {
 		{"bogus", "high", ""}, // unknown input -> no level
 	}
 	for _, c := range cases {
-		if got := q.Level(c.likelihood, c.impact); got != c.want {
-			t.Errorf("Level(%q,%q) = %q, want %q", c.likelihood, c.impact, got, c.want)
+		if got := level(c.likelihood, c.impact); got != c.want {
+			t.Errorf("level(%q,%q) = %q, want %q", c.likelihood, c.impact, got, c.want)
+		}
+	}
+}
+
+func TestETSILevel(t *testing.T) {
+	e := ETSI{}
+	atk := func(exp, kn, op, eq string) *model.AttackPotential {
+		return &model.AttackPotential{Expertise: exp, Knowledge: kn, Opportunity: op, Equipment: eq}
+	}
+	cases := []struct {
+		name   string
+		threat model.Threat
+		want   string
+	}{
+		// easy attack (sum 0) → high likelihood × high impact → critical
+		{"easy/high-impact", model.Threat{Impact: "high",
+			Attack: atk("layman", "public", "unlimited", "standard")}, "critical"},
+		// hard attack (expert+critical+difficult+bespoke = 6+11+10+7 = 34) → low likelihood × high impact → medium
+		{"hard/high-impact", model.Threat{Impact: "high",
+			Attack: atk("expert", "critical", "difficult", "bespoke")}, "medium"},
+		// no attack block → unscored
+		{"no-attack", model.Threat{Impact: "high"}, ""},
+		// invalid factor → unscored
+		{"bad-factor", model.Threat{Impact: "high",
+			Attack: atk("wizard", "public", "easy", "standard")}, ""},
+	}
+	for _, c := range cases {
+		if got := e.Level(c.threat); got != c.want {
+			t.Errorf("%s: ETSI.Level = %q, want %q", c.name, got, c.want)
 		}
 	}
 }
@@ -40,5 +68,23 @@ func TestScore(t *testing.T) {
 	}
 	if got["legacy"] != "medium" {
 		t.Errorf("legacy (severity fallback): want medium, got %q", got["legacy"])
+	}
+}
+
+func TestScore_ETSIMethod(t *testing.T) {
+	p := &model.Project{
+		RiskPolicy: model.RiskPolicy{Method: "etsi-tvra", Set: true},
+		Threats: []model.Threat{
+			{ID: "etsi", Impact: "high",
+				Attack: &model.AttackPotential{Expertise: "layman", Knowledge: "public", Opportunity: "unlimited", Equipment: "standard"}},
+			{ID: "noattack", Severity: "low"}, // no attack block → severity fallback
+		},
+	}
+	got := Score(p)
+	if got["etsi"] != "critical" {
+		t.Errorf("etsi-scored: want critical, got %q", got["etsi"])
+	}
+	if got["noattack"] != "low" {
+		t.Errorf("no attack block: want severity fallback low, got %q", got["noattack"])
 	}
 }

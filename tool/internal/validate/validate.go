@@ -167,6 +167,16 @@ func checkRisk(c *checker, p *model.Project) {
 		if t.Impact != "" && !risk.InScale(method, t.Impact) {
 			c.add(subject, fmt.Sprintf("impact %q is not a valid scale value", t.Impact))
 		}
+		if a := t.Attack; a != nil {
+			for factor, value := range map[string]string{
+				"expertise": a.Expertise, "knowledge": a.Knowledge,
+				"opportunity": a.Opportunity, "equipment": a.Equipment,
+			} {
+				if value != "" && !risk.InAttackScale(factor, value) {
+					c.add(subject, fmt.Sprintf("attack %s %q is not a valid scale value", factor, value))
+				}
+			}
+		}
 	}
 
 	if !p.RiskPolicy.Set {

@@ -79,21 +79,31 @@ type ThreatCatalog struct {
 }
 
 type Threat struct {
-	ID           string   `yaml:"id"`
-	Ref          string   `yaml:"ref"`
-	Title        string   `yaml:"title"`
-	Type         string   `yaml:"type"`
-	Asset        string   `yaml:"asset"`
-	Target       string   `yaml:"target"`
-	Severity     string   `yaml:"severity"`
-	Likelihood   string   `yaml:"likelihood"` // qualitative: low|medium|high
-	Impact       string   `yaml:"impact"`     // qualitative: low|medium|high
-	Treatment    string   `yaml:"treatment"`  // mitigate|accept|transfer|avoid
-	Owner        string   `yaml:"owner"`      // who signed off the treatment decision
-	Decided      string   `yaml:"decided"`    // ISO sign-off date
-	Mitigations  []string `yaml:"mitigations"`
-	ResidualRisk string   `yaml:"residualRisk"`
-	Notes        string   `yaml:"notes"`
+	ID           string           `yaml:"id"`
+	Ref          string           `yaml:"ref"`
+	Title        string           `yaml:"title"`
+	Type         string           `yaml:"type"`
+	Asset        string           `yaml:"asset"`
+	Target       string           `yaml:"target"`
+	Severity     string           `yaml:"severity"`
+	Likelihood   string           `yaml:"likelihood"` // qualitative: low|medium|high
+	Impact       string           `yaml:"impact"`     // qualitative: low|medium|high
+	Treatment    string           `yaml:"treatment"`  // mitigate|accept|transfer|avoid
+	Owner        string           `yaml:"owner"`      // who signed off the treatment decision
+	Decided      string           `yaml:"decided"`    // ISO sign-off date
+	Attack       *AttackPotential `yaml:"attack"`     // ETSI attack-potential factors (etsi-tvra method)
+	Mitigations  []string         `yaml:"mitigations"`
+	ResidualRisk string           `yaml:"residualRisk"`
+	Notes        string           `yaml:"notes"`
+}
+
+// AttackPotential holds the ETSI TS 102 165-1 attacker factors (clause 6.6.3),
+// used by the etsi-tvra scoring method to derive a likelihood.
+type AttackPotential struct {
+	Expertise   string `yaml:"expertise"`
+	Knowledge   string `yaml:"knowledge"`
+	Opportunity string `yaml:"opportunity"`
+	Equipment   string `yaml:"equipment"`
 }
 
 // RiskPolicy declares the scoring method and the risk acceptance criteria

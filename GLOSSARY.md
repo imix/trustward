@@ -10,6 +10,12 @@ Data, configuration, firmware, or capability that has value and could be targete
 
 ---
 
+## Attack Potential
+
+A measure of how hard an attack is, per ETSI TS 102 165-1 (TVRA) clause 6.6.3: the sum of four attacker factors — expertise, knowledge, opportunity, and equipment. Used by the `etsi-tvra` scoring method, where a higher attack potential maps to a *lower* [Likelihood](#likelihood) (a harder attack is less likely).
+
+---
+
 ## Component
 
 A physical or logical node in the system — a device, server, PLC, HMI, or application. Components host assets and are placed into trust zones. Data flows connect pairs of components.

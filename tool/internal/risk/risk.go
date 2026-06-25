@@ -1,23 +1,23 @@
-// Package risk computes a risk level from a threat's likelihood and impact.
-// The scoring method is pluggable via Scorer so a model can select, e.g., a
-// qualitative matrix today and an ETSI attack-potential profile later.
+// Package risk computes a risk level for a threat. The scoring method is
+// pluggable via Scorer: a qualitative likelihood×impact matrix (default) or an
+// ETSI attack-potential profile, selected by the project's risk-policy method.
 package risk
 
 import "sectrack/internal/model"
 
-// Scorer turns a likelihood and an impact into a risk level.
+// Scorer computes the risk level for a threat from whatever inputs its method
+// needs (read from the threat). It returns "" when the inputs are absent or
+// invalid, so Score can fall back to the threat's severity.
 type Scorer interface {
-	Level(likelihood, impact string) string
+	Level(t model.Threat) string
 }
 
 // rank maps the qualitative scale to a weight; product bands give the level.
 var rank = map[string]int{"low": 1, "medium": 2, "high": 3}
 
-// Qualitative is a 3×3 likelihood×impact matrix → {low,medium,high,critical}.
-// Unknown inputs yield "" so validation can flag them as out of scale.
-type Qualitative struct{}
-
-func (Qualitative) Level(likelihood, impact string) string {
+// level is the shared likelihood×impact matrix → {low,medium,high,critical}.
+// Both the qualitative and ETSI methods end here once they have a likelihood.
+func level(likelihood, impact string) string {
 	l, ok1 := rank[likelihood]
 	i, ok2 := rank[impact]
 	if !ok1 || !ok2 {
@@ -35,9 +35,14 @@ func (Qualitative) Level(likelihood, impact string) string {
 	}
 }
 
-// InScale reports whether v is a valid likelihood/impact value for the method.
+// Qualitative scores from an explicit likelihood and impact on the threat.
+type Qualitative struct{}
+
+func (Qualitative) Level(t model.Threat) string { return level(t.Likelihood, t.Impact) }
+
+// InScale reports whether v is a valid likelihood/impact value (qualitative scale).
 func InScale(method, v string) bool {
-	_, ok := rank[v] // qualitative scale; method reserved for future profiles
+	_, ok := rank[v] // method reserved; only the qualitative scale exists here
 	return ok
 }
 
@@ -47,14 +52,16 @@ func scorerFor(method string) Scorer {
 	switch method {
 	case "", "qualitative":
 		return Qualitative{}
+	case "etsi-tvra":
+		return ETSI{}
 	default:
 		return nil
 	}
 }
 
 // Score returns each threat's computed risk level, keyed by threat ID.
-// A threat with explicit likelihood+impact is scored by the policy's method;
-// otherwise it falls back to its severity (back-compat with pre-risk models).
+// The policy's method scores each threat; when it cannot (inputs absent or
+// invalid), the threat's severity is used (back-compat with pre-risk models).
 func Score(p *model.Project) map[string]string {
 	s := scorerFor(p.RiskPolicy.Method)
 	if s == nil {
@@ -62,11 +69,11 @@ func Score(p *model.Project) map[string]string {
 	}
 	out := make(map[string]string, len(p.Threats))
 	for _, t := range p.Threats {
-		if t.Likelihood != "" && t.Impact != "" {
-			out[t.ID] = s.Level(t.Likelihood, t.Impact)
-		} else {
-			out[t.ID] = t.Severity
+		lvl := s.Level(t)
+		if lvl == "" {
+			lvl = t.Severity
 		}
+		out[t.ID] = lvl
 	}
 	return out
 }
