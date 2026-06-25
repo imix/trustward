@@ -119,13 +119,18 @@ Writes the built-in report template to `templates/threat-model.tmpl` in your mod
 
 ## Customising the report
 
-If `templates/threat-model.tmpl` exists in your model directory, sectrack uses it instead of the built-in template. It's a [Go `text/template`](https://pkg.go.dev/text/template) file. Export the built-in one and edit from there:
+For anything beyond a quick look, **export the template and own it** — it's where your branding and document framing live, and most real deployments need both. The built-in template renders out of the box (and prints a reminder pointing you here), but exporting is the recommended first step for a model you'll keep:
 
 ```bash
 sectrack.sh template export threat-model
 # edit templates/threat-model.tmpl
 sectrack.sh render
 ```
+
+If `templates/threat-model.tmpl` exists in your model directory, sectrack uses it instead of the built-in. It's a [Go `text/template`](https://pkg.go.dev/text/template) file. Customise it for:
+
+- **Branding** — theme, fonts, logo treatment, and title-block styling (all in the Quarto front matter).
+- **Document framing** — sectrack owns the threat model and risk assessment; the report is one artifact in a larger conformance set. The system design, asset inventory, and other documents live elsewhere. Add a "Related documents" section that **links out** to them rather than reproducing them here — keeping a single source of truth for each and avoiding drift.
 
 The template receives:
 

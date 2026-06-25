@@ -133,6 +133,7 @@ func loadThreatModelTemplate() (*template.Template, error) {
 	data, err := os.ReadFile(threatModelTmplPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
+			fmt.Fprintln(os.Stderr, "note: using the built-in report template — run 'sectrack template export threat-model' to customize branding and link out to your system-design docs")
 			return quarto.DefaultTemplate(), nil
 		}
 		return nil, err
