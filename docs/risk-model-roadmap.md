@@ -16,11 +16,14 @@ Priority reflects CRA relevance, not ETSI completeness for its own sake.
 
 ---
 
-## Phase A — Cybersecurity objectives  ·  priority: HIGH (real CRA gap)
+## Phase A — Cybersecurity objectives  ·  **DONE**
 
 prEN 40000-1-2 §6.5.2 is "Asset **and cybersecurity objective** identification".
-sectrack models assets but not objectives — this is a genuine CRA-fidelity gap,
-not just an ETSI nicety.
+sectrack now models objectives: the `Objective` type (CIA-scale `type`),
+`Asset.objectives[]`, and `Threat.violates[]`. Shipped across three slices —
+model+loader, validate (ref resolution + CIA scale), and an "Assets and
+Cybersecurity Objectives" report section (§6.5.2). MODEL.md, GLOSSARY.md, and
+the fire-protection example were updated.
 
 **Design**
 - New `Objective{ID, Title, Type, Description}` where `Type` ∈ CIA scale
@@ -146,7 +149,7 @@ discussion: threats hit a technical asset, incidents are the downstream harm).
 ## Recommended order
 
 1. ~~**B — Attack-potential band**~~ — **done** (`f35b5aa`); `Basis`/band note deferred.
-2. **A — Objectives** (closes a CRA §6.5.2 gap; prerequisite for D's §6.5.2).
+2. ~~**A — Objectives**~~ — **done**; closes the CRA §6.5.2 gap and unblocks D's §6.5.2.
 3. **D — Full EN 40000 report format** (turns the output into a clause-mapped
    conformance artifact; the strongest CRA-presentation win).
 4. **C1–C6** as specific needs arise — none are required for CRA conformance on

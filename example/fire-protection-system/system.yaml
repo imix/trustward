@@ -27,16 +27,19 @@ assets:
   - id: alarm-activation
     type: function
     classification: restricted
+    objectives: [obj-alarm-availability, obj-alarm-integrity]
     description: Triggering of the fire alarm — activates sirens and signals evacuation
 
   - id: sensor-data
     type: user-data
     classification: internal
+    objectives: [obj-readings-integrity]
     description: Real-time smoke and heat readings from the detection sensor
 
   - id: system-config
     type: config
     classification: confidential
+    objectives: [obj-config-confidentiality, obj-config-integrity]
     description: >
       Threshold values, zone assignments, and alarm routing configuration
       stored on the central unit
@@ -44,12 +47,48 @@ assets:
   - id: panel-firmware
     type: firmware
     classification: confidential
+    objectives: [obj-firmware-authenticity]
     description: Firmware running on the control panel
 
   - id: central-unit-firmware
     type: firmware
     classification: confidential
+    objectives: [obj-firmware-authenticity]
     description: Firmware running on the central unit
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Cybersecurity objectives (prEN 40000-1-2 §6.5.2)
+# ─────────────────────────────────────────────────────────────────────────────
+objectives:
+  - id: obj-alarm-availability
+    title: Alarm availability
+    type: availability
+    description: A genuine fire condition must always reach occupants as an alarm
+
+  - id: obj-alarm-integrity
+    title: Alarm integrity
+    type: integrity
+    description: The alarm must reflect real sensor state — no spurious or suppressed activations
+
+  - id: obj-readings-integrity
+    title: Sensor reading integrity
+    type: integrity
+    description: Smoke and heat readings must be trustworthy and unaltered in transit
+
+  - id: obj-config-confidentiality
+    title: Configuration confidentiality
+    type: confidentiality
+    description: Thresholds and routing must not be disclosed to unauthorised parties
+
+  - id: obj-config-integrity
+    title: Configuration integrity
+    type: integrity
+    description: Only authorised operators may change thresholds, zones, or routing
+
+  - id: obj-firmware-authenticity
+    title: Firmware authenticity
+    type: authenticity
+    description: Devices must run only firmware whose origin is verifiably the vendor
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Components

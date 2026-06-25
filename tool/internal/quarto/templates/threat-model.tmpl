@@ -38,6 +38,17 @@ format:
 | `{{ .ID }}` | {{ .Type }} | {{ .Classification }} | {{ range $i, $c := (index $.AssetComponents .ID) }}{{ if $i }}, {{ end }}`{{ $c }}`{{ end }} | {{ .Description | trim }} |
 {{ end }}
 {{ end -}}
+{{ if .ObjectiveList }}
+## Cybersecurity Objectives
+
+Per prEN 40000-1-2 §6.5.2 — the CIA-scale objectives the assets must uphold.
+
+| ID | Title | Type | Upheld by | Description |
+|---|---|---|---|---|
+{{ range .ObjectiveList -}}
+| `{{ .ID }}` | {{ .Title }} | {{ .Type }} | {{ range $i, $a := (index $.ObjectiveAssets .ID) }}{{ if $i }}, {{ end }}`{{ $a }}`{{ end }} | {{ .Description | trim }} |
+{{ end }}
+{{ end -}}
 ## Threats
 {{ range .ThreatGroups }}
 ### {{ .TargetTitle }}

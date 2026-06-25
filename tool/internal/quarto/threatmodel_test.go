@@ -72,6 +72,31 @@ func TestThreatModel_CRASections(t *testing.T) {
 	assertContains(t, got, "open")
 }
 
+func TestThreatModel_CybersecurityObjectives(t *testing.T) {
+	proj := &model.Project{
+		Objectives: []model.Objective{
+			{ID: "obj-conf", Title: "Reading confidentiality", Type: "confidentiality", Description: "No leaks"},
+		},
+		Assets: []model.Asset{
+			{ID: "asset-readings", Type: "telemetry", Objectives: []string{"obj-conf"}},
+		},
+	}
+
+	got := render(t, proj, "", false)
+
+	assertContains(t, got, "Cybersecurity Objectives") // §6.5.2 section
+	assertContains(t, got, "obj-conf")
+	assertContains(t, got, "Reading confidentiality") // title
+	assertContains(t, got, "confidentiality")         // CIA type
+	assertContains(t, got, "asset-readings")          // upheld-by trace
+}
+
+func TestThreatModel_NoObjectivesNoSection(t *testing.T) {
+	got := render(t, &model.Project{Assets: []model.Asset{{ID: "a", Type: "data"}}}, "", false)
+
+	assertNotContains(t, got, "Cybersecurity Objectives")
+}
+
 func TestThreatModel_FrontMatterMeta(t *testing.T) {
 	proj := &model.Project{
 		Version:    model.Version{Semver: "1.2.3", ReleaseDate: "2026-06-09"},

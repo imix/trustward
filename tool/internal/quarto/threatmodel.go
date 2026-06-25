@@ -61,6 +61,8 @@ type threatModelData struct {
 	Logo                string
 	AssetList           []model.Asset
 	AssetComponents     map[string][]string  // asset id → component ids that hold it
+	ObjectiveList       []model.Objective    // cybersecurity objectives (§6.5.2)
+	ObjectiveAssets     map[string][]string  // objective id → asset ids that uphold it
 	ThreatGroups        []ThreatGroup        // threats grouped by target, in encounter order
 	ThreatList          []model.Threat       // flat list, for the risk register
 	RiskEval            map[string]risk.Eval // threat id → computed score + evaluation vs acceptance criteria
@@ -106,6 +108,13 @@ func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, p
 		}
 	}
 
+	objectiveAssets := make(map[string][]string)
+	for _, a := range proj.Assets {
+		for _, oid := range a.Objectives {
+			objectiveAssets[oid] = append(objectiveAssets[oid], a.ID)
+		}
+	}
+
 	compTitles := make(map[string]string, len(proj.Components))
 	for _, c := range proj.Components {
 		t := c.Title
@@ -141,6 +150,8 @@ func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, p
 	data := threatModelData{
 		AssetList:           proj.Assets,
 		AssetComponents:     assetComponents,
+		ObjectiveList:       proj.Objectives,
+		ObjectiveAssets:     objectiveAssets,
 		ThreatGroups:        groups,
 		ThreatList:          proj.Threats,
 		RiskEval:            risk.Evaluate(proj),

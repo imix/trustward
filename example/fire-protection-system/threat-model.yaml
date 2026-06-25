@@ -13,6 +13,7 @@ threats:
     ref: stride-ot::spoof-field-device
     asset: sensor-data
     target: flow-sensor-central
+    violates: [obj-readings-integrity]
     likelihood: medium
     impact: high
     treatment: mitigate
@@ -32,6 +33,7 @@ threats:
     ref: stride-ot::tamper-alarm-logic
     asset: alarm-activation
     target: central-unit
+    violates: [obj-alarm-availability, obj-alarm-integrity]
     likelihood: medium
     impact: high
     treatment: mitigate
@@ -50,6 +52,7 @@ threats:
     ref: stride-ot::tamper-config
     asset: system-config
     target: central-unit
+    violates: [obj-config-integrity]
     likelihood: low
     impact: high
     treatment: mitigate
