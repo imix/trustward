@@ -147,8 +147,9 @@ func TestThreatModel_MonitoringAndReview(t *testing.T) {
 	assertContains(t, got, "Reviewed quarterly by the OT security lead.")
 }
 
-func TestThreatModel_MonitoringAndReviewPlaceholder(t *testing.T) {
-	// Policy set but no review cadence stated: the clause still renders, with a placeholder.
+func TestThreatModel_MonitoringAndReviewEmpty(t *testing.T) {
+	// Policy set but no review cadence: the clause heading still renders (like other
+	// narrative sections), with no special-case placeholder text.
 	proj := &model.Project{
 		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
 	}
@@ -156,7 +157,7 @@ func TestThreatModel_MonitoringAndReviewPlaceholder(t *testing.T) {
 	got := render(t, proj, "", false)
 
 	assertContains(t, got, "## 6.7 Risk Monitoring and Review")
-	assertContains(t, got, "No risk monitoring and review cadence")
+	assertNotContains(t, got, "No risk monitoring and review cadence")
 }
 
 func TestThreatModel_FrontMatterMeta(t *testing.T) {

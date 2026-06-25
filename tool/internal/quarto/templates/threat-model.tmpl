@@ -143,5 +143,5 @@ Control coverage of {{ .Title }} requirements — evidence of risk treatment
 {{ if .RiskPolicySet }}
 ## 6.7 Risk Monitoring and Review
 
-{{ if .RiskReview }}{{ .RiskReview | trim }}{{ else }}_No risk monitoring and review cadence defined. State the review interval, its owner, and what triggers an out-of-cycle review (prEN 40000-1-2 §6.7)._{{ end }}
+{{ .RiskReview | trim }}
 {{ end -}}
