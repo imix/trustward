@@ -16,3 +16,6 @@ example/tmp/
 # IDEs
 .idea/
 .vscode/
+
+# prEN 40000 draft standard — not redistributable
+en4000.txt

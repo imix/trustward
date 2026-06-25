@@ -34,9 +34,33 @@ The set of YAML files reachable from `system.yaml` by following `imports:` decla
 
 ---
 
+## Impact
+
+The magnitude of harm if a threat is realised, rated qualitatively (`low`, `medium`, `high`). Combined with [Likelihood](#likelihood) to compute the risk level.
+
+---
+
+## Likelihood
+
+How probable it is that a threat is realised, rated qualitatively (`low`, `medium`, `high`). Combined with [Impact](#impact) to compute the risk level.
+
+---
+
 ## Project
 
 The accumulated security model for a directory: all assets, components, trust zones, data flows, threats, and controls merged from the import graph. The unit of work for all `sectrack` commands.
+
+---
+
+## Risk
+
+The combination of [Likelihood](#likelihood) and [Impact](#impact) for a threat in its context. The risk *level* is computed by the [Risk Policy](#risk-policy)'s method (the default qualitative method is a 3×3 matrix → `low`/`medium`/`high`/`critical`). A risk above the acceptance criteria must carry a [Treatment](#treatment) decision and an owner.
+
+---
+
+## Risk Policy
+
+The project-level declaration of how risk is scored (`method`) and which risk levels are acceptable without treatment (`accept`). Corresponds to the risk acceptance criteria of CRA / prEN 40000-1-2 §6.3. When present, it activates the CRA gate in `validate`: every non-accepted risk needs a treatment and an owner.
 
 ---
 
@@ -61,6 +85,12 @@ The component or data flow a threat is directed at. A threat against a component
 ## Threat
 
 A potential attack scenario: what could go wrong, against which target, with what severity, and what controls reduce the risk. Threats are typed (spoofing, tampering, repudiation, disclosure, denial, elevation) and have an explicit residual risk assessment.
+
+---
+
+## Treatment
+
+The decision on how to handle a risk: `mitigate` (apply controls), `accept` (tolerate it), `transfer` (e.g. insure or outsource), or `avoid` (remove the feature or context). Recorded with an owner and a sign-off date. Required by the CRA gate for any risk above the acceptance criteria.
 
 ---
 

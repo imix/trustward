@@ -13,4 +13,5 @@ type Project struct {
 	Controls       []Control
 	Catalogs       []ControlCatalog
 	ThreatCatalogs []ThreatCatalog
+	RiskPolicy     RiskPolicy
 }

@@ -69,9 +69,27 @@ Only treated as threat list when value is a YAML sequence (not a mapping). List 
 - `target` — component ID or data-flow ID being attacked (string)
 - `asset` — asset ID at risk (string, optional)
 - `severity` — e.g. `low`, `medium`, `high`, `critical` (string)
+- `likelihood` — `low` \| `medium` \| `high`; with `impact`, drives the computed risk level (string, optional)
+- `impact` — `low` \| `medium` \| `high` (string, optional)
+- `treatment` — risk treatment decision: `mitigate` \| `accept` \| `transfer` \| `avoid` (string, optional)
+- `owner` — who signed off the treatment decision (string, optional)
+- `decided` — ISO date of the treatment sign-off (string, optional)
 - `mitigations` — list of control IDs that reduce risk (list of strings)
 - `residualRisk` — severity after mitigations applied (string)
 - `notes` — rationale, mitigation justification, residual risk explanation (string)
+
+When `likelihood` and `impact` are both set, the computed risk level is
+`likelihood × impact` per the `risk-policy` method; otherwise the tool falls
+back to `severity`.
+
+#### `risk-policy:` — scoring method and risk acceptance criteria (first occurrence wins)
+A single object (CRA / prEN 40000-1-2 §6.3):
+- `method` — scoring profile; `qualitative` (default) is a 3×3 likelihood×impact matrix → `low`/`medium`/`high`/`critical` (string)
+- `accept` — risk levels acceptable without treatment (list of strings)
+
+When a `risk-policy` is present, validation enforces the **CRA gate**: any threat
+whose computed risk level is not in `accept` must declare a `treatment` and an
+`owner`. Models without a `risk-policy` are unaffected.
 
 #### `catalog:` — requirement catalog (one per file)
 A single object defining a named set of requirements used for gap analysis and compliance mapping:
@@ -116,6 +134,7 @@ List of objects with:
 
 The loader merges content from all imported files depth-first. Behavior by key:
 - `system:` — first occurrence wins; subsequent declarations ignored
+- `risk-policy:` — first occurrence wins; subsequent declarations ignored
 - `version:`, `imports:` — file-level metadata only
 - All list fields (`assets:`, `components:`, `trust-zones:`, `data-flows:`, `threats:`, `controls:`) — merged by appending
 - `catalog:` — each file contributes at most one catalog; all catalogs are collected into the project

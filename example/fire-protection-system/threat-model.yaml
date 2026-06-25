@@ -13,6 +13,11 @@ threats:
     ref: stride-ot::spoof-field-device
     asset: sensor-data
     target: flow-sensor-central
+    likelihood: medium
+    impact: high
+    treatment: mitigate
+    owner: ot-security-lead
+    decided: "2026-06-09"
     mitigations:
       - comp-sensor-msg-auth
     residualRisk: high
@@ -27,6 +32,11 @@ threats:
     ref: stride-ot::tamper-alarm-logic
     asset: alarm-activation
     target: central-unit
+    likelihood: medium
+    impact: high
+    treatment: mitigate
+    owner: ot-security-lead
+    decided: "2026-06-09"
     mitigations:
       - comp-iam
     residualRisk: high
@@ -40,6 +50,11 @@ threats:
     ref: stride-ot::tamper-config
     asset: system-config
     target: central-unit
+    likelihood: low
+    impact: high
+    treatment: mitigate
+    owner: ot-security-lead
+    decided: "2026-06-09"
     mitigations:
       - comp-iam
       - comp-audit-log

@@ -71,6 +71,18 @@ format:
 {{ .Notes }}
 {{ end -}}
 {{ end -}}
+{{ if .RiskPolicySet }}
+## Risk Register
+
+Risk level is computed from likelihood × impact. A risk not in the acceptance
+criteria must carry a treatment decision and an owner.
+
+| Threat | Target | Likelihood | Impact | Risk | Treatment | Owner | Decided | Residual |
+|---|---|---|---|---|---|---|---|---|
+{{ range .ThreatList -}}
+| [`{{ .ID }}`](#{{ .ID }}) | `{{ .Target }}` | {{ .Likelihood }} | {{ .Impact }} | {{ index $.RiskLevels .ID }} | {{ .Treatment }} | {{ .Owner }} | {{ .Decided }} | {{ .ResidualRisk }} |
+{{ end }}
+{{ end -}}
 {{ if .ComponentList }}
 ## Components
 

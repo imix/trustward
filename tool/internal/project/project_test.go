@@ -117,6 +117,49 @@ threats:
 	}
 }
 
+func TestLoad_ThreatRiskFieldsAndPolicy(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "system.yaml", `
+imports:
+  - path: "./extra.yaml"
+risk-policy:
+  method: qualitative
+  accept: [low]
+threats:
+  - id: threat-a
+    likelihood: high
+    impact: high
+    treatment: mitigate
+    owner: alice
+    decided: "2026-06-25"
+`)
+	// later file's risk-policy must be ignored (first wins)
+	writeFile(t, dir, "extra.yaml", `
+risk-policy:
+  method: etsi-tvra
+  accept: [low, medium]
+`)
+
+	proj, err := project.Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if !proj.RiskPolicy.Set || proj.RiskPolicy.Method != "qualitative" {
+		t.Errorf("RiskPolicy: want qualitative/set, got %+v", proj.RiskPolicy)
+	}
+	if len(proj.RiskPolicy.Accept) != 1 || proj.RiskPolicy.Accept[0] != "low" {
+		t.Errorf("RiskPolicy.Accept: want [low] (first wins), got %v", proj.RiskPolicy.Accept)
+	}
+	if len(proj.Threats) != 1 {
+		t.Fatalf("Threats: want 1, got %d", len(proj.Threats))
+	}
+	th := proj.Threats[0]
+	if th.Likelihood != "high" || th.Impact != "high" || th.Treatment != "mitigate" ||
+		th.Owner != "alice" || th.Decided != "2026-06-25" {
+		t.Errorf("threat risk fields not parsed: %+v", th)
+	}
+}
+
 func TestLoad_CycleDetection(t *testing.T) {
 	dir := t.TempDir()
 	// system.yaml imports threats.yaml; threats.yaml imports back to system.yaml
@@ -225,9 +268,9 @@ func TestLoad_MalformedKeyReturnsError(t *testing.T) {
 		name string
 		yaml string
 	}{
-		{"assets wrong type",     "assets: \"not a list\""},
+		{"assets wrong type", "assets: \"not a list\""},
 		{"components wrong type", "components: 42"},
-		{"controls wrong type",   "controls: true"},
+		{"controls wrong type", "controls: true"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

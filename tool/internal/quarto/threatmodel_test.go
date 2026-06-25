@@ -34,6 +34,25 @@ func render(t *testing.T, proj *model.Project, diagram string, pdf bool) string 
 	return out
 }
 
+func TestThreatModel_RiskRegister(t *testing.T) {
+	proj := &model.Project{
+		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
+		Components: []model.Component{{ID: "central-unit", Title: "Central Unit"}},
+		Threats: []model.Threat{{
+			ID: "threat-x", Title: "Config Tampering", Target: "central-unit",
+			Likelihood: "high", Impact: "high", // -> critical
+			Treatment: "mitigate", Owner: "alice", ResidualRisk: "medium",
+		}},
+	}
+	got := render(t, proj, "", false)
+
+	assertContains(t, got, "Risk Register")
+	assertContains(t, got, "threat-x")
+	assertContains(t, got, "critical") // computed risk level
+	assertContains(t, got, "mitigate") // treatment
+	assertContains(t, got, "alice")    // owner
+}
+
 func TestThreatModel_FrontMatterMeta(t *testing.T) {
 	proj := &model.Project{
 		Version:    model.Version{Semver: "1.2.3", ReleaseDate: "2026-06-09"},

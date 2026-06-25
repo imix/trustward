@@ -67,6 +67,8 @@ From there, grow the model incrementally:
 3. Add `threats:` (and the `controls:` that mitigate them) — they become the core of the report.
 4. When `system.yaml` gets large, split it into multiple files linked via `imports:`. The loader starts at `system.yaml`, follows imports depth-first, and merges all top-level keys into a single model. Split by concern, nest by subsystem — any structure works.
 
+Run `sectrack.sh validate` as you go — it catches typos in cross-references (a threat mitigated by a control that doesn't exist, a flow connecting a renamed component) that would otherwise silently produce wrong reports.
+
 [MODEL.md](MODEL.md) documents every key. [example/fire-protection-system](example/fire-protection-system) is a complete model using imports, catalogs, threats, and controls.
 
 ## Commands
@@ -91,6 +93,25 @@ Prints a [Mermaid](https://mermaid.js.org) flowchart to stdout. Components are g
 ```bash
 sectrack.sh diagram dataflow
 ```
+
+### `sectrack.sh validate`
+
+Checks the referential integrity of the model and exits non-zero if anything is broken — made for CI and pre-commit hooks:
+
+```bash
+sectrack.sh validate
+```
+
+It verifies that every cross-reference resolves to a declared ID:
+
+- threat `target` → a component or data flow; threat `asset` → an asset; threat `mitigations` → controls; threat `ref` → a threat catalog pattern
+- component `assets` → assets; component `controls` → controls
+- trust zone `members` → components
+- data flow `connects` → exactly two components; data flow `assets` → assets
+- control `ref` → a control catalog requirement
+- every entity has an `id`, and IDs are unique within each entity kind
+
+Requirement `satisfies` entries are deliberately **not** checked — they may point at external standards (e.g. `iec-62443-sl2::SR-1.1`) that are not part of the model.
 
 ### `sectrack.sh template export threat-model`
 
@@ -129,10 +150,12 @@ The template's front matter is regular Quarto config — theme, table of content
 A minimal GitHub Actions step, assuming your model lives in `my-system/` and `sectrack.sh` at the repo root:
 
 ```yaml
-- name: Render threat model
+- name: Validate and render threat model
   run: |
     docker build -t sectrack .
-    cd my-system && ../sectrack.sh render
+    cd my-system
+    ../sectrack.sh validate
+    ../sectrack.sh render
 - uses: actions/upload-artifact@v4
   with:
     name: threat-model

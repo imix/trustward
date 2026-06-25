@@ -86,7 +86,21 @@ type Threat struct {
 	Asset        string   `yaml:"asset"`
 	Target       string   `yaml:"target"`
 	Severity     string   `yaml:"severity"`
+	Likelihood   string   `yaml:"likelihood"` // qualitative: low|medium|high
+	Impact       string   `yaml:"impact"`     // qualitative: low|medium|high
+	Treatment    string   `yaml:"treatment"`  // mitigate|accept|transfer|avoid
+	Owner        string   `yaml:"owner"`      // who signed off the treatment decision
+	Decided      string   `yaml:"decided"`    // ISO sign-off date
 	Mitigations  []string `yaml:"mitigations"`
 	ResidualRisk string   `yaml:"residualRisk"`
 	Notes        string   `yaml:"notes"`
+}
+
+// RiskPolicy declares the scoring method and the risk acceptance criteria
+// (CRA / prEN 40000-1-2 §6.3). When present, the CRA gate applies: any risk
+// whose computed level is not in Accept must carry a treatment + owner.
+type RiskPolicy struct {
+	Method string   `yaml:"method"` // scoring profile; "" = qualitative
+	Accept []string `yaml:"accept"` // risk levels acceptable without treatment
+	Set    bool     `yaml:"-"`      // true once a risk-policy: block was loaded
 }

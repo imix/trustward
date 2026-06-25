@@ -1,11 +1,19 @@
 # TODO
 
-## Risk management
+## Risk management — done (Phase 1)
 
-A threat describes what could go wrong. A risk is a formal assessment of
-likelihood × impact for a specific threat in a specific context, leading to
-a treatment decision (mitigate, accept, transfer, avoid) with a named owner
-and sign-off date. This needs design before implementation.
+Threats now carry `likelihood`/`impact`/`treatment`/`owner`/`decided`; a
+project-level `risk-policy` sets the scoring method and acceptance criteria.
+The risk level is computed (`internal/risk`, qualitative 3×3 matrix) and
+`validate` enforces the CRA gate: every non-accepted risk needs a treatment
+and an owner. The report shows a risk register.
+
+Remaining:
+- **Pluggable scoring profiles** — the `risk.Scorer` seam exists with one
+  (`qualitative`) implementation. Add an ETSI attack-potential profile selected
+  via `risk-policy.method`.
+- **CRA report shaping** — structure the report to prEN 40000-1-2 §6.2–6.7 and
+  fold in the control→requirement coverage as compliance evidence.
 
 ## Diagram scale
 

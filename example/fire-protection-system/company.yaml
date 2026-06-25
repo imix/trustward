@@ -3,6 +3,14 @@ version:
   releasedate: 2026-06-09
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Risk policy — scoring method and acceptance criteria (CRA / prEN 40000-1-2 §6.3)
+# Any risk whose computed level is not accepted must carry a treatment + owner.
+# ─────────────────────────────────────────────────────────────────────────────
+risk-policy:
+  method: qualitative
+  accept: [low]
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Asset vocabulary
 # ─────────────────────────────────────────────────────────────────────────────
 asset:

@@ -6,6 +6,7 @@ import (
 	"text/template"
 
 	"sectrack/internal/model"
+	"sectrack/internal/risk"
 )
 
 //go:embed templates/threat-model.tmpl
@@ -61,6 +62,9 @@ type threatModelData struct {
 	AssetList           []model.Asset
 	AssetComponents     map[string][]string // asset id → component ids that hold it
 	ThreatGroups        []ThreatGroup       // threats grouped by target, in encounter order
+	ThreatList          []model.Threat      // flat list, for the risk register
+	RiskLevels          map[string]string   // threat id → computed risk level
+	RiskPolicySet       bool                // a risk-policy is declared → show register
 	Controls            map[string]string   // id → title, for the controlTitle helper
 	ControlList         []model.Control
 	ControlComponents   map[string][]string // control id → component ids that implement it
@@ -136,6 +140,9 @@ func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, p
 		AssetList:           proj.Assets,
 		AssetComponents:     assetComponents,
 		ThreatGroups:        groups,
+		ThreatList:          proj.Threats,
+		RiskLevels:          risk.Score(proj),
+		RiskPolicySet:       proj.RiskPolicy.Set,
 		Controls:            controls,
 		ControlList:         proj.Controls,
 		ControlComponents:   controlComponents,

@@ -12,6 +12,7 @@ import (
 	"sectrack/internal/mermaid"
 	"sectrack/internal/project"
 	"sectrack/internal/quarto"
+	"sectrack/internal/validate"
 )
 
 const threatModelTmplPath = "templates/threat-model.tmpl"
@@ -54,7 +55,14 @@ func main() {
 		RunE:  runTemplateExport,
 	})
 
-	root.AddCommand(diagramCmd, reportCmd, templateCmd)
+	validateCmd := &cobra.Command{
+		Use:          "validate",
+		Short:        "Check referential integrity of the security model",
+		RunE:         runValidate,
+		SilenceUsage: true,
+	}
+
+	root.AddCommand(diagramCmd, reportCmd, templateCmd, validateCmd)
 
 	if err := root.Execute(); err != nil {
 		os.Exit(1)
@@ -86,6 +94,22 @@ func runThreatModelReport(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("rendering report: %w", err)
 	}
 	fmt.Print(out)
+	return nil
+}
+
+func runValidate(_ *cobra.Command, _ []string) error {
+	proj, err := project.Load(".")
+	if err != nil {
+		return fmt.Errorf("loading project: %w", err)
+	}
+	issues := validate.Check(proj)
+	for _, issue := range issues {
+		fmt.Fprintln(os.Stderr, issue)
+	}
+	if len(issues) > 0 {
+		return fmt.Errorf("%d validation issue(s)", len(issues))
+	}
+	fmt.Println("model is consistent")
 	return nil
 }
 

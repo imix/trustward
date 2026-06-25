@@ -125,6 +125,17 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		}
 	}
 
+	if hasAny(keys, "risk-policy") && !p.RiskPolicy.Set {
+		var v struct {
+			RiskPolicy model.RiskPolicy `yaml:"risk-policy"`
+		}
+		if err := yaml.Unmarshal(data, &v); err != nil {
+			return fmt.Errorf("%s: risk-policy: %w", name, err)
+		}
+		v.RiskPolicy.Set = true
+		p.RiskPolicy = v.RiskPolicy
+	}
+
 	if hasAny(keys, "controls") {
 		var v struct {
 			Controls []model.Control `yaml:"controls"`
