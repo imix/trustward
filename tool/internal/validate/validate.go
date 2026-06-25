@@ -8,8 +8,8 @@ package validate
 import (
 	"fmt"
 
-	"sectrack/internal/model"
-	"sectrack/internal/risk"
+	"github.com/imix/trustward/internal/model"
+	"github.com/imix/trustward/internal/risk"
 )
 
 // validTreatments are the CRA risk treatment decisions (prEN 40000-1-2 §6.6).

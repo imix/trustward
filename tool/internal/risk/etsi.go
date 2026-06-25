@@ -1,6 +1,6 @@
 package risk
 
-import "sectrack/internal/model"
+import "github.com/imix/trustward/internal/model"
 
 // ETSI scores using the attack-potential method of ETSI TS 102 165-1 (TVRA):
 // the four attacker factors sum to an attack potential, which maps (inversely)

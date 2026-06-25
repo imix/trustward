@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"sectrack/internal/mermaid"
-	"sectrack/internal/model"
+	"github.com/imix/trustward/internal/mermaid"
+	"github.com/imix/trustward/internal/model"
 )
 
 func assertContains(t *testing.T, got, want string) {

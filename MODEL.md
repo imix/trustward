@@ -2,7 +2,7 @@
 
 ### Top-level keys
 
-Any `.yaml` file in a sectrack project can contain any combination of the following top-level keys. All files are linked via `imports:`. The loader starts at `system.yaml` and follows the import graph depth-first.
+Any `.yaml` file in a trustward project can contain any combination of the following top-level keys. All files are linked via `imports:`. The loader starts at `system.yaml` and follows the import graph depth-first.
 
 #### `version:`
 - `semver` — SemVer string, e.g. `"0.1.0"` (string)

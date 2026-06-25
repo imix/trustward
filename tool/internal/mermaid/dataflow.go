@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"sectrack/internal/model"
+	"github.com/imix/trustward/internal/model"
 )
 
 type colorSpec struct{ fill, stroke, text string }

@@ -3,8 +3,8 @@ package validate_test
 import (
 	"testing"
 
-	"sectrack/internal/project"
-	"sectrack/internal/validate"
+	"github.com/imix/trustward/internal/project"
+	"github.com/imix/trustward/internal/validate"
 )
 
 // The shipped example model is the reference for what a correct project

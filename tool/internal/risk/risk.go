@@ -3,7 +3,7 @@
 // ETSI attack-potential profile, selected by the project's risk-policy method.
 package risk
 
-import "sectrack/internal/model"
+import "github.com/imix/trustward/internal/model"
 
 // Score is one threat's computed risk: the level, and the likelihood that
 // produced it — declared (qualitative) or derived from attack potential

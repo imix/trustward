@@ -1,6 +1,6 @@
 # Glossary
 
-Domain terms used in sectrack models and documentation.
+Domain terms used in trustward models and documentation.
 
 ---
 
@@ -65,7 +65,7 @@ How probable it is that a threat is realised, rated qualitatively (`low`, `mediu
 
 ## Project
 
-The accumulated security model for a directory: all assets, components, trust zones, data flows, threats, and controls merged from the import graph. The unit of work for all `sectrack` commands.
+The accumulated security model for a directory: all assets, components, trust zones, data flows, threats, and controls merged from the import graph. The unit of work for all `trustward` commands.
 
 ---
 

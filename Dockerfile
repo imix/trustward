@@ -1,10 +1,10 @@
-# Stage 1: build the sectrack CLI
+# Stage 1: build the trustward CLI
 FROM golang:1.26-alpine AS builder
 WORKDIR /build
 COPY tool/ .
-RUN go build -o sectrack ./cmd/sectrack/
+RUN go build -o trustward ./cmd/trustward/
 
-# Stage 2: Quarto runtime + sectrack binary
+# Stage 2: Quarto runtime + trustward binary
 FROM ubuntu:24.04
 
 ARG QUARTO_VERSION=1.9.38
@@ -19,9 +19,9 @@ RUN curl -fsSL "https://github.com/quarto-dev/quarto-cli/releases/download/v${QU
     && dpkg -i /tmp/quarto.deb \
     && rm /tmp/quarto.deb
 
-COPY --from=builder /build/sectrack /usr/local/bin/sectrack
+COPY --from=builder /build/trustward /usr/local/bin/trustward
 
 WORKDIR /model
 
-ENTRYPOINT ["/usr/local/bin/sectrack"]
+ENTRYPOINT ["/usr/local/bin/trustward"]
 CMD ["--help"]

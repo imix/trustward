@@ -5,8 +5,8 @@ import (
 	"strings"
 	"text/template"
 
-	"sectrack/internal/model"
-	"sectrack/internal/risk"
+	"github.com/imix/trustward/internal/model"
+	"github.com/imix/trustward/internal/risk"
 )
 
 //go:embed templates/threat-model.tmpl
@@ -33,7 +33,7 @@ func DefaultTemplateContent() []byte {
 }
 
 // ParseTemplate compiles a threat model template from raw content.
-// The sectrack function set (controlTitle, join, upper) is registered
+// The trustward function set (controlTitle, join, upper) is registered
 // automatically so user templates can call the same helpers.
 func ParseTemplate(content []byte) (*template.Template, error) {
 	return template.New("threat-model").Funcs(funcMap).Parse(string(content))

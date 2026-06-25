@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"sectrack/internal/project"
+	"github.com/imix/trustward/internal/project"
 )
 
 func writeFile(t *testing.T, dir, name, content string) {

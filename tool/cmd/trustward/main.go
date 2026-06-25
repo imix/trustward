@@ -9,17 +9,17 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"sectrack/internal/mermaid"
-	"sectrack/internal/project"
-	"sectrack/internal/quarto"
-	"sectrack/internal/validate"
+	"github.com/imix/trustward/internal/mermaid"
+	"github.com/imix/trustward/internal/project"
+	"github.com/imix/trustward/internal/quarto"
+	"github.com/imix/trustward/internal/validate"
 )
 
 const threatModelTmplPath = "templates/threat-model.tmpl"
 
 func main() {
 	root := &cobra.Command{
-		Use:   "sectrack",
+		Use:   "trustward",
 		Short: "Security model tooling for YAML-based threat models",
 	}
 
@@ -133,7 +133,7 @@ func loadThreatModelTemplate() (*template.Template, error) {
 	data, err := os.ReadFile(threatModelTmplPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			fmt.Fprintln(os.Stderr, "note: using the built-in report template — run 'sectrack template export threat-model' to customize branding and link out to your system-design docs")
+			fmt.Fprintln(os.Stderr, "note: using the built-in report template — run 'trustward template export threat-model' to customize branding and link out to your system-design docs")
 			return quarto.DefaultTemplate(), nil
 		}
 		return nil, err

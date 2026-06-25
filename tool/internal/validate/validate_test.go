@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"sectrack/internal/model"
-	"sectrack/internal/validate"
+	"github.com/imix/trustward/internal/model"
+	"github.com/imix/trustward/internal/validate"
 )
 
 // issueMentioning reports whether some issue's text contains all wants.

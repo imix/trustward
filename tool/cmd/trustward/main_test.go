@@ -8,10 +8,10 @@ import (
 	"testing"
 )
 
-// buildBinary compiles sectrack into a temp dir and returns its path.
+// buildBinary compiles trustward into a temp dir and returns its path.
 func buildBinary(t *testing.T) string {
 	t.Helper()
-	bin := filepath.Join(t.TempDir(), "sectrack")
+	bin := filepath.Join(t.TempDir(), "trustward")
 	cmd := exec.Command("go", "build", "-o", bin, ".")
 	out, err := cmd.CombinedOutput()
 	if err != nil {

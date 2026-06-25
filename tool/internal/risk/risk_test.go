@@ -3,7 +3,7 @@ package risk
 import (
 	"testing"
 
-	"sectrack/internal/model"
+	"github.com/imix/trustward/internal/model"
 )
 
 func TestLevelMatrix(t *testing.T) {

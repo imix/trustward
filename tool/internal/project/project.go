@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/imix/trustward/internal/model"
 	"gopkg.in/yaml.v3"
-	"sectrack/internal/model"
 )
 
 // Load reads system.yaml from dir and follows its import graph depth-first,

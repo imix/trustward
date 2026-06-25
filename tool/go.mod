@@ -1,4 +1,4 @@
-module sectrack
+module github.com/imix/trustward
 
 go 1.25.0
 
