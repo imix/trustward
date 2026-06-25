@@ -7,9 +7,9 @@ sectrack. Each item is **additive** — new model types, loader merges, validate
 checks, and report sections — reusing the established patterns:
 
 - model types in `tool/internal/model/types.go`, `Project` in `project.go`
-- loader merge in `tool/internal/project/project.go` (`hasAny` + append; singletons first-wins)
+- loader merge in `tool/internal/project/project.go` (generic `mergeList` for list keys; singletons first-wins)
 - validation in `tool/internal/validate/validate.go` (`idSet`, ref checks, `checkRisk`)
-- scoring seam in `tool/internal/risk/` (`Scorer`, `Score`, `Evaluate`)
+- scoring seam in `tool/internal/risk/` (`Scorer.Score`, `Evaluate` as the single entry point; `MethodKnown`)
 - report in `tool/internal/quarto/threatmodel.go` + `templates/threat-model.tmpl`
 
 Priority reflects CRA relevance, not ETSI completeness for its own sake.
@@ -39,22 +39,23 @@ not just an ETSI nicety.
 
 ---
 
-## Phase B — Attack-potential band in the register  ·  priority: MEDIUM (polish, already in TODO)
+## Phase B — Attack-potential band in the register  ·  **DONE** (`f35b5aa`)
 
-For `etsi-tvra` threats the register's Likelihood column is blank — likelihood is
-computed, not stated. Surface the derived likelihood and the attack-potential band.
+For `etsi-tvra` threats the register's Likelihood column was blank — likelihood is
+computed, not stated. The seam was widened and the derived likelihood now shows.
 
-**Design**
-- Widen the `Scorer` seam: `Level(t) string` → `Assess(t) Score` where
-  `Score{Likelihood, Level, Basis string}` (`Basis` e.g. `"attack potential: Moderate (10)"`
-  for ETSI, empty for qualitative). `Score()`/`Evaluate()` adapt; the matrix is unchanged.
-- Report: register shows the computed Likelihood and a Basis note for ETSI rows.
+**Shipped**
+- The `Scorer` seam is `Score(t) Score` where `Score{Level, Likelihood}`. `risk.Eval`
+  embeds `Score`; the standalone `Score(p)` map folded into `Evaluate` (single entry
+  point). The matrix is unchanged.
+- Report: the register's Likelihood column shows the derived likelihood for ETSI rows
+  (high/medium/low), consistent with qualitative rows.
 
-**Slices**: (1) widen seam + adapt both scorers (refactor, keep green); (2) register shows band.
-**Files**: risk.go, etsi.go, threatmodel.go + template.
-
-> This is the third seam refinement; justified because the report genuinely needs
-> the intermediate likelihood, not just the final level.
+**Deliberately omitted**: the `Basis` field (e.g. `"attack potential: Moderate (10)"`).
+"Derived likelihood only" was chosen over "likelihood + AP band" — the band is the
+ETSI-specific extra. Add it back as a `Basis`/band column if an assessor needs the
+attack-potential number surfaced; otherwise the appendix in C6 already covers
+auditability of the scales.
 
 ---
 
@@ -144,8 +145,8 @@ discussion: threats hit a technical asset, incidents are the downstream harm).
 
 ## Recommended order
 
-1. **A — Objectives** (closes a CRA §6.5.2 gap; prerequisite for D's §6.5.2).
-2. **B — Attack-potential band** (small; can fold into D's register).
+1. ~~**B — Attack-potential band**~~ — **done** (`f35b5aa`); `Basis`/band note deferred.
+2. **A — Objectives** (closes a CRA §6.5.2 gap; prerequisite for D's §6.5.2).
 3. **D — Full EN 40000 report format** (turns the output into a clause-mapped
    conformance artifact; the strongest CRA-presentation win).
 4. **C1–C6** as specific needs arise — none are required for CRA conformance on
