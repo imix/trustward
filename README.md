@@ -2,7 +2,7 @@
 
 Threat models that live next to your code.
 
-Define your system, its threats, and your security controls in plain text files. Generate data flow diagrams and threat model reports — in your editor, in CI, or on every pull request.
+Define your system — its assets, cybersecurity objectives, threats, and controls — in plain text. trustward renders data flow diagrams and a risk-management report shaped to the CRA / prEN 40000-1-2 §6 process, in your editor, in CI, or on every pull request. (A *ward* is a guarded zone; trust zones are what the model maps.)
 
 - **Reviewable in PRs.** Threats and mitigations are text diffs. Your team can discuss risk in the same place they discuss code.
 - **Version-controlled history.** Git tells you when a threat was identified, when a mitigation was added, when residual risk was accepted — and by whom.
