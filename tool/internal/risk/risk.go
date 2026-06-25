@@ -82,9 +82,9 @@ func scorerFor(method string) Scorer {
 // (prEN 40000-1-2 §6.5.5). It embeds Score, so e.Level and e.Likelihood read
 // straight through.
 type Eval struct {
-	Score           // computed level + likelihood
-	Accepted bool   // level is within the policy's acceptance criteria
-	Treated  bool   // a treatment decision and owner are recorded
+	Score         // computed level + likelihood
+	Accepted bool // level is within the policy's acceptance criteria
+	Treated  bool // a treatment decision and owner are recorded
 }
 
 // Open reports a risk that is neither accepted nor treated — a CRA gap.
