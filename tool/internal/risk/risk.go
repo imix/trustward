@@ -60,6 +60,11 @@ func InScale(v string) bool {
 	return ok
 }
 
+// MethodKnown reports whether a risk-policy method names a real scoring
+// profile. Empty means the default (qualitative). The validator uses this to
+// reject a typo'd method before it silently scores as qualitative.
+func MethodKnown(method string) bool { return scorerFor(method) != nil }
+
 // scorerFor returns the scorer for a policy method. Empty defaults to
 // qualitative; unknown methods return nil so callers can report it.
 func scorerFor(method string) Scorer {

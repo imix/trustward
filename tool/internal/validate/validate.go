@@ -155,6 +155,9 @@ func Check(p *model.Project) []Issue {
 // an owner. The gate only applies when a risk-policy is declared, so models
 // that don't use the risk layer are unaffected.
 func checkRisk(c *checker, p *model.Project) {
+	if p.RiskPolicy.Set && !risk.MethodKnown(p.RiskPolicy.Method) {
+		c.add("risk-policy", fmt.Sprintf("method %q is not a known scoring profile (qualitative, etsi-tvra)", p.RiskPolicy.Method))
+	}
 	for _, t := range p.Threats {
 		subject := fmt.Sprintf("threat %q", t.ID)
 		if t.Treatment != "" && !validTreatments[t.Treatment] {

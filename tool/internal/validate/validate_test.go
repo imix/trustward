@@ -64,6 +64,17 @@ func TestCheck_AttackFactorsValidated(t *testing.T) {
 	}
 }
 
+func TestCheck_UnknownRiskPolicyMethodRejected(t *testing.T) {
+	// A typo'd method must be rejected, not silently scored as qualitative.
+	p := &model.Project{
+		RiskPolicy: model.RiskPolicy{Method: "etsi-tvra-typo", Set: true},
+		Threats:    []model.Threat{{ID: "threat-x", Severity: "low"}},
+	}
+	if !issueMentioning(validate.Check(p), "risk-policy", "method") {
+		t.Errorf("want unknown-method issue, got %v", validate.Check(p))
+	}
+}
+
 func TestCheck_CRAGate(t *testing.T) {
 	// risk-policy accepts only "low"; a high risk with no treatment is an open gap.
 	base := model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true}
