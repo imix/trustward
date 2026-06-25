@@ -48,13 +48,29 @@ func TestETSILevel(t *testing.T) {
 			Attack: atk("wizard", "public", "easy", "standard")}, ""},
 	}
 	for _, c := range cases {
-		if got := e.Level(c.threat); got != c.want {
-			t.Errorf("%s: ETSI.Level = %q, want %q", c.name, got, c.want)
+		if got := e.Score(c.threat).Level; got != c.want {
+			t.Errorf("%s: ETSI.Score().Level = %q, want %q", c.name, got, c.want)
 		}
 	}
 }
 
-func TestScore(t *testing.T) {
+// The derived likelihood must be surfaced, not discarded: an easy attack
+// (sum 0) bands to "high", a hard one to "low".
+func TestETSILikelihoodSurfaced(t *testing.T) {
+	atk := func(exp, kn, op, eq string) *model.AttackPotential {
+		return &model.AttackPotential{Expertise: exp, Knowledge: kn, Opportunity: op, Equipment: eq}
+	}
+	easy := ETSI{}.Score(model.Threat{Impact: "high", Attack: atk("layman", "public", "unlimited", "standard")})
+	if easy.Likelihood != "high" {
+		t.Errorf("easy attack: want derived likelihood high, got %q", easy.Likelihood)
+	}
+	hard := ETSI{}.Score(model.Threat{Impact: "high", Attack: atk("expert", "critical", "difficult", "bespoke")})
+	if hard.Likelihood != "low" {
+		t.Errorf("hard attack: want derived likelihood low, got %q", hard.Likelihood)
+	}
+}
+
+func TestEvaluateLevels(t *testing.T) {
 	p := &model.Project{
 		RiskPolicy: model.RiskPolicy{Method: "qualitative", Set: true},
 		Threats: []model.Threat{
@@ -62,12 +78,15 @@ func TestScore(t *testing.T) {
 			{ID: "legacy", Severity: "medium"},                 // -> medium via fallback
 		},
 	}
-	got := Score(p)
-	if got["scored"] != "critical" {
-		t.Errorf("scored: want critical, got %q", got["scored"])
+	got := Evaluate(p)
+	if got["scored"].Level != "critical" {
+		t.Errorf("scored: want critical, got %q", got["scored"].Level)
 	}
-	if got["legacy"] != "medium" {
-		t.Errorf("legacy (severity fallback): want medium, got %q", got["legacy"])
+	if got["scored"].Likelihood != "high" {
+		t.Errorf("scored: want likelihood high, got %q", got["scored"].Likelihood)
+	}
+	if got["legacy"].Level != "medium" {
+		t.Errorf("legacy (severity fallback): want medium, got %q", got["legacy"].Level)
 	}
 }
 
@@ -101,11 +120,11 @@ func TestScore_ETSIMethod(t *testing.T) {
 			{ID: "noattack", Severity: "low"}, // no attack block → severity fallback
 		},
 	}
-	got := Score(p)
-	if got["etsi"] != "critical" {
-		t.Errorf("etsi-scored: want critical, got %q", got["etsi"])
+	got := Evaluate(p)
+	if got["etsi"].Level != "critical" {
+		t.Errorf("etsi-scored: want critical, got %q", got["etsi"].Level)
 	}
-	if got["noattack"] != "low" {
-		t.Errorf("no attack block: want severity fallback low, got %q", got["noattack"])
+	if got["noattack"].Level != "low" {
+		t.Errorf("no attack block: want severity fallback low, got %q", got["noattack"].Level)
 	}
 }

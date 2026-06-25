@@ -20,10 +20,12 @@ Register with an Evaluation column marking each risk accepted/treated/**open**
 (§6.6). The "open risk" rule is defined once in `risk.Evaluate` and shared by the
 report and the validate CRA gate.
 
-Remaining:
-- **Register polish** — the risk register's Likelihood column is blank for
-  etsi-tvra threats (likelihood is computed); show the derived likelihood or the
-  attack-potential band there. Needs the Scorer to expose the likelihood it used.
+Phase 4 done: **Register polish** — `Scorer` now returns a `risk.Score`
+(`{Level, Likelihood}`) instead of a bare level, so the derived likelihood is
+no longer discarded. `risk.Eval` embeds `Score`; `risk.Evaluate` is the single
+scoring entry point (the standalone `Score(p)` map and the report's redundant
+`RiskLevels` are gone). The register's Likelihood column shows the derived
+likelihood for etsi-tvra threats (was blank).
 
 ## Diagram scale
 

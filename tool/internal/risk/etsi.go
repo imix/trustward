@@ -28,19 +28,20 @@ func InAttackScale(factor, value string) bool {
 	return ok
 }
 
-func (ETSI) Level(t model.Threat) string {
+func (ETSI) Score(t model.Threat) Score {
 	a := t.Attack
 	if a == nil {
-		return ""
+		return Score{}
 	}
 	e, ok1 := etsiExpertise[a.Expertise]
 	k, ok2 := etsiKnowledge[a.Knowledge]
 	o, ok3 := etsiOpportunity[a.Opportunity]
 	q, ok4 := etsiEquipment[a.Equipment]
 	if !ok1 || !ok2 || !ok3 || !ok4 {
-		return "" // invalid/missing factor → unscored; validation reports it
+		return Score{} // invalid/missing factor → unscored; validation reports it
 	}
-	return level(attackPotentialLikelihood(e+k+o+q), t.Impact)
+	lk := attackPotentialLikelihood(e + k + o + q)
+	return Score{Level: level(lk, t.Impact), Likelihood: lk}
 }
 
 // attackPotentialLikelihood maps the attack-potential sum (banded per clause

@@ -5,11 +5,19 @@ package risk
 
 import "sectrack/internal/model"
 
-// Scorer computes the risk level for a threat from whatever inputs its method
-// needs (read from the threat). It returns "" when the inputs are absent or
-// invalid, so Score can fall back to the threat's severity.
+// Score is one threat's computed risk: the level, and the likelihood that
+// produced it — declared (qualitative) or derived from attack potential
+// (etsi-tvra). An empty Level means the inputs were absent or invalid, so the
+// caller can fall back to the threat's severity.
+type Score struct {
+	Level      string
+	Likelihood string
+}
+
+// Scorer computes the Score for a threat from whatever inputs its method
+// needs (read from the threat).
 type Scorer interface {
-	Level(t model.Threat) string
+	Score(t model.Threat) Score
 }
 
 // rank maps the qualitative scale to a weight; product bands give the level.
@@ -38,7 +46,13 @@ func level(likelihood, impact string) string {
 // Qualitative scores from an explicit likelihood and impact on the threat.
 type Qualitative struct{}
 
-func (Qualitative) Level(t model.Threat) string { return level(t.Likelihood, t.Impact) }
+func (Qualitative) Score(t model.Threat) Score {
+	lvl := level(t.Likelihood, t.Impact)
+	if lvl == "" {
+		return Score{} // unscorable → caller falls back to severity
+	}
+	return Score{Level: lvl, Likelihood: t.Likelihood}
+}
 
 // InScale reports whether v is a valid likelihood/impact value (qualitative scale).
 func InScale(method, v string) bool {
@@ -59,10 +73,11 @@ func scorerFor(method string) Scorer {
 	}
 }
 
-// Eval is the evaluation of one threat's risk against the acceptance criteria
-// (prEN 40000-1-2 §6.5.5).
+// Eval is one threat's computed Score judged against the acceptance criteria
+// (prEN 40000-1-2 §6.5.5). It embeds Score, so e.Level and e.Likelihood read
+// straight through.
 type Eval struct {
-	Level    string // computed risk level
+	Score           // computed level + likelihood
 	Accepted bool   // level is within the policy's acceptance criteria
 	Treated  bool   // a treatment decision and owner are recorded
 }
@@ -71,41 +86,30 @@ type Eval struct {
 func (e Eval) Open() bool { return !e.Accepted && !e.Treated }
 
 // Evaluate scores every threat and judges it against the risk-policy's
-// acceptance criteria. This is the single definition of "open risk" shared by
-// the validator (the CRA gate) and the report (risk evaluation section).
+// acceptance criteria — the single entry point shared by the validator (the
+// CRA gate) and the report (risk register). The policy's method scores each
+// threat; when it cannot (inputs absent or invalid), the threat's severity is
+// used as the level (back-compat with pre-risk models).
 func Evaluate(p *model.Project) map[string]Eval {
-	levels := Score(p)
+	s := scorerFor(p.RiskPolicy.Method)
+	if s == nil {
+		s = Qualitative{}
+	}
 	accept := make(map[string]bool, len(p.RiskPolicy.Accept))
 	for _, lvl := range p.RiskPolicy.Accept {
 		accept[lvl] = true
 	}
 	out := make(map[string]Eval, len(p.Threats))
 	for _, t := range p.Threats {
-		lvl := levels[t.ID]
+		sc := s.Score(t)
+		if sc.Level == "" {
+			sc.Level = t.Severity
+		}
 		out[t.ID] = Eval{
-			Level:    lvl,
-			Accepted: accept[lvl],
+			Score:    sc,
+			Accepted: accept[sc.Level],
 			Treated:  t.Treatment != "" && t.Owner != "",
 		}
-	}
-	return out
-}
-
-// Score returns each threat's computed risk level, keyed by threat ID.
-// The policy's method scores each threat; when it cannot (inputs absent or
-// invalid), the threat's severity is used (back-compat with pre-risk models).
-func Score(p *model.Project) map[string]string {
-	s := scorerFor(p.RiskPolicy.Method)
-	if s == nil {
-		s = Qualitative{}
-	}
-	out := make(map[string]string, len(p.Threats))
-	for _, t := range p.Threats {
-		lvl := s.Level(t)
-		if lvl == "" {
-			lvl = t.Severity
-		}
-		out[t.ID] = lvl
 	}
 	return out
 }

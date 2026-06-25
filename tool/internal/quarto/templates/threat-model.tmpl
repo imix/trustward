@@ -85,7 +85,7 @@ acceptance criteria with no treatment recorded.
 |---|---|---|---|---|---|---|---|---|---|
 {{ range .ThreatList -}}
 {{- $e := index $.RiskEval .ID -}}
-| [`{{ .ID }}`](#{{ .ID }}) | `{{ .Target }}` | {{ .Likelihood }} | {{ .Impact }} | {{ $e.Level }} | {{ if $e.Accepted }}accepted{{ else if $e.Treated }}treated{{ else }}**open**{{ end }} | {{ .Treatment }} | {{ .Owner }} | {{ .Decided }} | {{ .ResidualRisk }} |
+| [`{{ .ID }}`](#{{ .ID }}) | `{{ .Target }}` | {{ $e.Likelihood }} | {{ .Impact }} | {{ $e.Level }} | {{ if $e.Accepted }}accepted{{ else if $e.Treated }}treated{{ else }}**open**{{ end }} | {{ .Treatment }} | {{ .Owner }} | {{ .Decided }} | {{ .ResidualRisk }} |
 {{ end }}
 {{ end -}}
 {{ if .ComponentList }}
