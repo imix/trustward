@@ -29,12 +29,14 @@ func main() {
 	diagramCmd.AddCommand(&cobra.Command{
 		Use:   "dataflow",
 		Short: "Render a Mermaid data flow diagram",
+		Args:  cobra.NoArgs,
 		RunE:  runDataflow,
 	})
 
 	reportCmd := &cobra.Command{
 		Use:   "report",
 		Short: "Render the Quarto risk-management report",
+		Args:  cobra.NoArgs,
 		RunE:  runReport,
 	}
 	reportCmd.Flags().Bool("pdf", false, "include PDF format in the Quarto front matter (requires Chrome headless)")
@@ -53,6 +55,7 @@ func main() {
 	validateCmd := &cobra.Command{
 		Use:          "validate",
 		Short:        "Check referential integrity of the security model",
+		Args:         cobra.NoArgs,
 		RunE:         runValidate,
 		SilenceUsage: true,
 	}
