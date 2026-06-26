@@ -26,5 +26,9 @@ COPY --from=builder /build/trustward /usr/local/bin/trustward
 
 WORKDIR /model
 
+# Don't run as root. ubuntu:24.04 ships a 'ubuntu' user at uid 1000; trustward.sh
+# overrides this with the host uid at runtime so mounted output is owned by you.
+USER ubuntu
+
 ENTRYPOINT ["/usr/local/bin/trustward"]
 CMD ["--help"]
