@@ -132,6 +132,25 @@ If `report.tmpl` exists in your model directory, trustward uses it instead of th
 - **Branding** — theme, fonts, logo treatment, and title-block styling (all in the Quarto front matter).
 - **Document framing** — trustward owns the threat model and risk assessment; the report is one artifact in a larger conformance set. The system design, asset inventory, and other documents live elsewhere. Add a "Related documents" section that **links out** to them rather than reproducing them here — keeping a single source of truth for each and avoiding drift.
 
+### Two starting points: the default, or a standard-shaped shell
+
+The built-in template (`template export`) is **model-driven only**: every section is populated from your YAML, nothing manual, and the headings are standard-agnostic (Pandoc numbers them). It renders for any model regardless of the standard you're targeting.
+
+But a conformance report also needs **manual narrative that isn't threat-modeling data** — product description, intended use and users, operational environment, assumptions. That content belongs in the template (your owned doc shell), not in the model. To save you scaffolding it, [`example/report-templates/`](example/report-templates) ships **standard-shaped shells**: the full structure a given standard expects, with those manual sections as `_fill in_` prompts wrapping the same model includes.
+
+```bash
+cp /path/to/trustward/example/report-templates/en40000.tmpl report.tmpl
+# fill in the _fill in_ prompts, then render
+trustward.sh render
+```
+
+| Shell | Shape |
+|---|---|
+| `en40000.tmpl` | prEN 40000-1-2 §6 with explicit clause numbers (6.2 Product Context … 6.7 Monitoring) and the §6.2 manual context subsections |
+| `iec62443.tmpl` | IEC 62443-4-2 component assessment — scope, security context (SL-T, zones/conduits), and requirement coverage, auto-numbered |
+
+Pick the one matching your target, or use the minimal default and add only what you need.
+
 The template receives:
 
 | Field | Type | Description |

@@ -1,0 +1,148 @@
+---
+title: "Component Security Assessment — {{ .Title }}"
+subtitle: "Version {{ .Version }}"
+date: "{{ .Date }}"
+number-sections: true  # IEC 62443-4-2 has no fixed clause numbering; let Pandoc number
+format:
+  html:
+    toc: true
+    theme: cosmo
+{{ if .PDF -}}
+  pdf:
+    toc: true
+{{ end -}}
+---
+
+{{ if .Logo }}
+![]({{ .Logo }}){width=320px fig-align="center"}
+
+{{ end -}}
+{{ "{{< pagebreak >}}" }}
+
+> **Document control** — Classification: _fill in_ · Owner: _fill in_ · Status: _draft_.
+> This shell frames the model as an IEC 62443-4-2 component assessment. Replace
+> every _fill in_ prompt before issuing.
+
+## Scope and Component Under Consideration
+
+{{ .Description }}
+
+> _Fill in: the component/product boundary being assessed, its essential functions, and what is explicitly out of scope._
+
+### Components
+{{ if .ComponentList }}
+| Component | Type | Controls |
+|---|---|---|
+{{ range .ComponentList -}}
+| {{ if .Title }}{{ .Title }}{{ else }}`{{ .ID }}`{{ end }} | {{ .Type }} | {{ range $i, $c := .Controls }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $c }}{{ end }} |
+{{ end }}
+{{ end -}}
+### Data Flow Diagram
+
+```{mermaid}
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#dce8f5', 'primaryBorderColor': '#5b8db8', 'lineColor': '#555555', 'secondaryColor': '#b8d4f0', 'tertiaryColor': '#c8e8c0', 'clusterBkg': '#b8d4f0', 'clusterBorder': '#5b8db8'}}}%%
+{{ .Diagram }}
+```
+
+## Security Context
+
+> _Fill in: the target security level (SL-T) per foundational requirement, the zones and conduits the component is deployed into, and the threat environment assumed (IEC 62443-3-2)._
+
+> _Fill in: the system-level security capabilities the component relies on from its host/zone (the compensating-countermeasures assumption)._
+
+{{ if .AssetList }}
+## Assets and Security Objectives
+
+| ID | Type | Classification | Hosted on | Description |
+|---|---|---|---|---|
+{{ range .AssetList -}}
+| `{{ .ID }}` | {{ .Type }} | {{ .Classification }} | {{ range $i, $c := (index $.AssetComponents .ID) }}{{ if $i }}, {{ end }}`{{ $c }}`{{ end }} | {{ .Description | trim }} |
+{{ end }}
+{{ if .ObjectiveList }}
+The CIA-scale objectives the assets must uphold:
+
+| ID | Title | Type | Upheld by | Description |
+|---|---|---|---|---|
+{{ range .ObjectiveList -}}
+| `{{ .ID }}` | {{ .Title }} | {{ .Type }} | {{ range $i, $a := (index $.ObjectiveAssets .ID) }}{{ if $i }}, {{ end }}`{{ $a }}`{{ end }} | {{ .Description | trim }} |
+{{ end }}
+{{ end -}}
+{{ end -}}
+## Threat Analysis
+{{ range .ThreatGroups }}
+### {{ .TargetTitle }}
+
+| Severity | ID | Title | Residual Risk |
+|---|---|---|---|
+{{ range .Threats -}}
+| {{ .Severity }} | [`{{ .ID }}`](#{{ .ID }}) | {{ .Title }} | {{ .ResidualRisk }} |
+{{ end }}
+{{ range .Threats }}
+#### {{ .Title }} {#{{ .ID }}}
+
+| Field | Value |
+|---|---|
+| **ID** | `{{ .ID }}` |
+{{ if .Ref -}}
+| **Pattern** | `{{ .Ref }}` |
+{{ end -}}
+| **Type** | {{ .Type }} |
+| **Target** | `{{ .Target }}` |
+{{ if .Asset -}}
+| **Asset** | `{{ .Asset }}` |
+{{ end -}}
+| **Severity** | {{ .Severity }} |
+| **Residual Risk** | {{ .ResidualRisk }} |
+{{ if .Mitigations -}}
+| **Mitigations** | {{ range $i, $m := .Mitigations }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $m }}{{ end }} |
+{{ else -}}
+| **Mitigations** | none |
+{{ end }}
+{{ .Notes }}
+{{ end -}}
+{{ end -}}
+## Component Requirements and Coverage
+
+> _Fill in: map the controls below to the IEC 62443-4-2 component requirements (CR/EDR/HDR/NDR) for your target SL, and justify any requirement met by a compensating countermeasure rather than the component itself._
+{{ range .CatalogList }}
+{{ $cat := . -}}
+### Requirement Coverage: {{ .Title }}
+
+A **gap** is a requirement with no implementing control.
+
+| Requirement | Title | Status | Control |
+|---|---|---|---|
+{{ range .Requirements -}}
+{{- $key := printf "%s::%s" $cat.ID .ID -}}
+{{- $controls := index $.RequirementControls $key -}}
+| `{{ .ID }}` | {{ .Title }} | {{ if $controls }}covered{{ else }}**gap**{{ end }} | {{ range $i, $c := $controls }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $c }}{{ end }} |
+{{ end }}
+{{ end -}}
+{{ if .ControlList }}
+### Security Controls
+
+| ID | Title | Implemented by | Evidence | Description |
+|---|---|---|---|---|
+{{ range .ControlList -}}
+| `{{ .ID }}` | {{ .Title }} | {{ range $i, $c := (index $.ControlComponents .ID) }}{{ if $i }}, {{ end }}`{{ $c }}`{{ end }} | {{ range $i, $e := .Evidence }}{{ if $i }}, {{ end }}{{ $e }}{{ end }} | {{ .Description | trim }} |
+{{ end }}
+{{ end -}}
+{{ if .RiskPolicySet }}
+## Risk Register
+
+Risk estimation and evaluation per threat. **Open** risks are above the
+acceptance criteria with no treatment recorded.
+
+| Threat | Target | Likelihood | Impact | Risk | Evaluation | Treatment | Owner | Decided | Residual |
+|---|---|---|---|---|---|---|---|---|---|
+{{ range .ThreatList -}}
+{{- $e := index $.RiskEval .ID -}}
+| [`{{ .ID }}`](#{{ .ID }}) | `{{ .Target }}` | {{ $e.Likelihood }} | {{ .Impact }} | {{ $e.Level }} | {{ if $e.Accepted }}accepted{{ else if $e.Treated }}treated{{ else }}**open**{{ end }} | {{ .Treatment }} | {{ .Owner }} | {{ .Decided }} | {{ .ResidualRisk }} |
+{{ end }}
+{{ end -}}
+## Operation, Monitoring and Maintenance
+
+{{ if .RiskPolicySet }}{{ .RiskReview | trim }}
+
+{{ end -}}
+> _Fill in: patch/update process, security event monitoring, and end-of-life handling for the component._

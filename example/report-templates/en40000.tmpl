@@ -1,0 +1,167 @@
+---
+title: "Threat Model — {{ .Title }}"
+subtitle: "Version {{ .Version }}"
+date: "{{ .Date }}"
+number-sections: false  # this shell carries explicit prEN 40000-1-2 §6 clause numbers
+format:
+  html:
+    toc: true
+    theme: cosmo
+{{ if .PDF -}}
+  pdf:
+    toc: true
+{{ end -}}
+---
+
+{{ if .Logo }}
+![]({{ .Logo }}){width=320px fig-align="center"}
+
+{{ end -}}
+{{ "{{< pagebreak >}}" }}
+
+> **Document control** — Classification: _fill in_ · Owner: _fill in_ · Status: _draft_.
+> Replace this block and every _fill in_ prompt below before issuing the report.
+
+## 6.2 Product Context
+
+### Product overview
+
+{{ .Description }}
+
+> _Fill in: the product's purpose, market context, and how operators use it day to day._
+
+### Intended use and users
+
+> _Fill in: the intended use, the operators/users and their roles, and any constraints on use._
+
+### Operational environment
+
+> _Fill in: deployment networks, physical siting, and trust assumptions about connected systems._
+
+### Assumptions and dependencies
+
+> _Fill in: security-relevant assumptions and external dependencies the product relies on (a hardened host, a trusted time source, …)._
+
+### Components
+{{ if .ComponentList }}
+| Component | Type | Controls |
+|---|---|---|
+{{ range .ComponentList -}}
+| {{ if .Title }}{{ .Title }}{{ else }}`{{ .ID }}`{{ end }} | {{ .Type }} | {{ range $i, $c := .Controls }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $c }}{{ end }} |
+{{ end }}
+{{ end -}}
+### Data Flow Diagram
+
+```{mermaid}
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#dce8f5', 'primaryBorderColor': '#5b8db8', 'lineColor': '#555555', 'secondaryColor': '#b8d4f0', 'tertiaryColor': '#c8e8c0', 'clusterBkg': '#b8d4f0', 'clusterBorder': '#5b8db8'}}}%%
+{{ .Diagram }}
+```
+
+{{ if .RiskPolicySet }}
+## 6.3 Risk Acceptance Criteria and Methodology
+
+Risk is scored using the **{{ if .RiskMethod }}{{ .RiskMethod }}{{ else }}qualitative{{ end }}** method. A risk is **accepted** without treatment when its level is one of: {{ range $i, $l := .RiskAccept }}{{ if $i }}, {{ end }}`{{ $l }}`{{ end }}{{ if not .RiskAccept }}(none defined){{ end }}. Any risk above the acceptance criteria must record a treatment decision (mitigate / accept / transfer / avoid) and an owner.
+
+{{ end -}}
+## 6.5 Risk Assessment
+
+### 6.5.2 Asset and Cybersecurity Objective Identification
+{{ if .AssetList }}
+#### Assets
+
+| ID | Type | Classification | Hosted on | Description |
+|---|---|---|---|---|
+{{ range .AssetList -}}
+| `{{ .ID }}` | {{ .Type }} | {{ .Classification }} | {{ range $i, $c := (index $.AssetComponents .ID) }}{{ if $i }}, {{ end }}`{{ $c }}`{{ end }} | {{ .Description | trim }} |
+{{ end }}
+{{ end -}}
+{{ if .ObjectiveList }}
+#### Cybersecurity Objectives
+
+The CIA-scale objectives the assets must uphold.
+
+| ID | Title | Type | Upheld by | Description |
+|---|---|---|---|---|
+{{ range .ObjectiveList -}}
+| `{{ .ID }}` | {{ .Title }} | {{ .Type }} | {{ range $i, $a := (index $.ObjectiveAssets .ID) }}{{ if $i }}, {{ end }}`{{ $a }}`{{ end }} | {{ .Description | trim }} |
+{{ end }}
+{{ end -}}
+### 6.5.3 Threat Identification
+{{ range .ThreatGroups }}
+#### {{ .TargetTitle }}
+
+| Severity | ID | Title | Residual Risk |
+|---|---|---|---|
+{{ range .Threats -}}
+| {{ .Severity }} | [`{{ .ID }}`](#{{ .ID }}) | {{ .Title }} | {{ .ResidualRisk }} |
+{{ end }}
+{{ range .Threats }}
+##### {{ .Title }} {#{{ .ID }}}
+
+| Field | Value |
+|---|---|
+| **ID** | `{{ .ID }}` |
+{{ if .Ref -}}
+| **Pattern** | `{{ .Ref }}` |
+{{ end -}}
+| **Type** | {{ .Type }} |
+| **Target** | `{{ .Target }}` |
+{{ if .Asset -}}
+| **Asset** | `{{ .Asset }}` |
+{{ end -}}
+| **Severity** | {{ .Severity }} |
+| **Residual Risk** | {{ .ResidualRisk }} |
+{{ if .Mitigations -}}
+| **Mitigations** | {{ range $i, $m := .Mitigations }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $m }}{{ end }} |
+{{ else -}}
+| **Mitigations** | none |
+{{ end }}
+{{ .Notes }}
+{{ end -}}
+{{ end -}}
+{{ if .RiskPolicySet }}
+### 6.5.4 Risk Register
+
+Risk estimation (§6.5.4) and evaluation (§6.5.5) per threat. **Open** risks are
+above the acceptance criteria with no treatment recorded.
+
+| Threat | Target | Likelihood | Impact | Risk | Evaluation | Treatment | Owner | Decided | Residual |
+|---|---|---|---|---|---|---|---|---|---|
+{{ range .ThreatList -}}
+{{- $e := index $.RiskEval .ID -}}
+| [`{{ .ID }}`](#{{ .ID }}) | `{{ .Target }}` | {{ $e.Likelihood }} | {{ .Impact }} | {{ $e.Level }} | {{ if $e.Accepted }}accepted{{ else if $e.Treated }}treated{{ else }}**open**{{ end }} | {{ .Treatment }} | {{ .Owner }} | {{ .Decided }} | {{ .ResidualRisk }} |
+{{ end }}
+{{ end -}}
+{{ if or .CatalogList .ControlList }}
+## 6.6 Risk Treatment
+{{ range .CatalogList }}
+{{ $cat := . -}}
+### Compliance Evidence: {{ .Title }}
+
+Control coverage of {{ .Title }} requirements — evidence of risk treatment.
+A **gap** is a requirement with no implementing control.
+
+| Requirement | Title | Status | Control |
+|---|---|---|---|
+{{ range .Requirements -}}
+{{- $key := printf "%s::%s" $cat.ID .ID -}}
+{{- $controls := index $.RequirementControls $key -}}
+| `{{ .ID }}` | {{ .Title }} | {{ if $controls }}covered{{ else }}**gap**{{ end }} | {{ range $i, $c := $controls }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $c }}{{ end }} |
+{{ end }}
+{{ end -}}
+{{ if .ControlList }}
+### Controls
+
+| ID | Title | Implemented by | Evidence | Description |
+|---|---|---|---|---|
+{{ range .ControlList -}}
+| `{{ .ID }}` | {{ .Title }} | {{ range $i, $c := (index $.ControlComponents .ID) }}{{ if $i }}, {{ end }}`{{ $c }}`{{ end }} | {{ range $i, $e := .Evidence }}{{ if $i }}, {{ end }}{{ $e }}{{ end }} | {{ .Description | trim }} |
+{{ end }}
+{{ end -}}
+{{ end -}}
+## 6.7 Risk Monitoring and Review
+
+{{ if .RiskPolicySet }}{{ .RiskReview | trim }}
+
+{{ end -}}
+> _Fill in: review triggers and cadence beyond the policy statement, and who signs off on residual risk._
