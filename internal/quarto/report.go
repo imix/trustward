@@ -9,10 +9,10 @@ import (
 	"github.com/imix/trustward/internal/risk"
 )
 
-//go:embed templates/threat-model.tmpl
+//go:embed templates/report.tmpl
 var defaultTmplContent []byte
 
-// funcMap is the set of functions available inside all threat model templates.
+// funcMap is the set of functions available inside all report templates.
 var funcMap = template.FuncMap{
 	"join": strings.Join,
 	"trim": strings.TrimSpace,
@@ -25,21 +25,21 @@ var funcMap = template.FuncMap{
 	"upper": strings.ToUpper,
 }
 
-// DefaultTemplateContent returns the raw bytes of the built-in threat model
+// DefaultTemplateContent returns the raw bytes of the built-in report
 // template. Pass these to ParseTemplate, or write them to a file as a
 // customisation starting point.
 func DefaultTemplateContent() []byte {
 	return defaultTmplContent
 }
 
-// ParseTemplate compiles a threat model template from raw content.
+// ParseTemplate compiles a report template from raw content.
 // The trustward function set (controlTitle, join, upper) is registered
 // automatically so user templates can call the same helpers.
 func ParseTemplate(content []byte) (*template.Template, error) {
-	return template.New("threat-model").Funcs(funcMap).Parse(string(content))
+	return template.New("report").Funcs(funcMap).Parse(string(content))
 }
 
-// DefaultTemplate returns the compiled built-in threat model template.
+// DefaultTemplate returns the compiled built-in report template.
 func DefaultTemplate() *template.Template {
 	return template.Must(ParseTemplate(defaultTmplContent))
 }
@@ -51,9 +51,9 @@ type ThreatGroup struct {
 	Threats     []model.Threat
 }
 
-// threatModelData is the context passed to every threat model template.
+// reportData is the context passed to every report template.
 // Field names are part of the template API — renaming them is a breaking change.
-type threatModelData struct {
+type reportData struct {
 	Title               string
 	Date                string
 	Version             string
@@ -80,9 +80,9 @@ type threatModelData struct {
 	PDF                 bool
 }
 
-// ThreatModel renders a threat model report using the provided template.
+// Report renders the risk-management report using the provided template.
 // Pass DefaultTemplate() or a template compiled with ParseTemplate().
-func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, pdf bool) (string, error) {
+func Report(proj *model.Project, tmpl *template.Template, diagram string, pdf bool) (string, error) {
 	controls := make(map[string]string, len(proj.Controls))
 	for _, c := range proj.Controls {
 		controls[c.ID] = c.Title
@@ -148,7 +148,7 @@ func ThreatModel(proj *model.Project, tmpl *template.Template, diagram string, p
 		})
 	}
 
-	data := threatModelData{
+	data := reportData{
 		AssetList:           proj.Assets,
 		AssetComponents:     assetComponents,
 		ObjectiveList:       proj.Objectives,

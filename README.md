@@ -16,7 +16,7 @@ docker build -t trustward .
 
 # Try it on the example model
 cd example/fire-protection-system
-../../trustward.sh render                 # writes threat-model.html
+../../trustward.sh render                 # writes report.html
 ../../trustward.sh diagram dataflow       # prints a Mermaid data flow diagram
 ```
 
@@ -57,7 +57,7 @@ data-flows:
 ```bash
 cd my-system
 /path/to/trustward.sh diagram dataflow    # quick check that the model loads
-/path/to/trustward.sh render              # threat-model.html
+/path/to/trustward.sh render              # report.html
 ```
 
 From there, grow the model incrementally:
@@ -75,16 +75,16 @@ Run `trustward.sh validate` as you go — it catches typos in cross-references (
 
 Run all commands from your model directory.
 
-### `trustward.sh render [report] [flags]`
+### `trustward.sh render [flags]`
 
-Generates and renders a report in one step. The report type defaults to `threat-model`:
+Generates and renders the report in one step:
 
 ```bash
-trustward.sh render                       # writes threat-model.html
-trustward.sh render threat-model --pdf    # also writes threat-model.pdf
+trustward.sh render                       # writes report.html
+trustward.sh render --pdf                 # also writes report.pdf
 ```
 
-Under the hood this runs `trustward report threat-model` (which prints a Quarto `.qmd` document to stdout) and then renders it with Quarto. The intermediate `threat-model.qmd` and `threat-model_files/` directory are by-products — add them and the rendered output to `.gitignore` if you only want them as CI artifacts.
+Under the hood this runs `trustward report` (which prints a Quarto `.qmd` document to stdout) and then renders it with Quarto. The intermediate `report.qmd` and `report_files/` directory are by-products — add them and the rendered output to `.gitignore` if you only want them as CI artifacts.
 
 ### `trustward.sh diagram dataflow`
 
@@ -113,21 +113,21 @@ It verifies that every cross-reference resolves to a declared ID:
 
 Requirement `satisfies` entries are deliberately **not** checked — they may point at external standards (e.g. `iec-62443-sl2::SR-1.1`) that are not part of the model.
 
-### `trustward.sh template export threat-model`
+### `trustward.sh template export report`
 
-Writes the built-in report template to `templates/threat-model.tmpl` in your model directory, as a starting point for customisation (see below). Refuses to overwrite an existing file.
+Writes the built-in report template to `templates/report.tmpl` in your model directory, as a starting point for customisation (see below). Refuses to overwrite an existing file.
 
 ## Customising the report
 
 For anything beyond a quick look, **export the template and own it** — it's where your branding and document framing live, and most real deployments need both. The built-in template renders out of the box (and prints a reminder pointing you here), but exporting is the recommended first step for a model you'll keep:
 
 ```bash
-trustward.sh template export threat-model
-# edit templates/threat-model.tmpl
+trustward.sh template export report
+# edit templates/report.tmpl
 trustward.sh render
 ```
 
-If `templates/threat-model.tmpl` exists in your model directory, trustward uses it instead of the built-in. It's a [Go `text/template`](https://pkg.go.dev/text/template) file. Customise it for:
+If `templates/report.tmpl` exists in your model directory, trustward uses it instead of the built-in. It's a [Go `text/template`](https://pkg.go.dev/text/template) file. Customise it for:
 
 - **Branding** — theme, fonts, logo treatment, and title-block styling (all in the Quarto front matter).
 - **Document framing** — trustward owns the threat model and risk assessment; the report is one artifact in a larger conformance set. The system design, asset inventory, and other documents live elsewhere. Add a "Related documents" section that **links out** to them rather than reproducing them here — keeping a single source of truth for each and avoiding drift.
@@ -163,8 +163,8 @@ A minimal GitHub Actions step, assuming your model lives in `my-system/` and `tr
     ../trustward.sh render
 - uses: actions/upload-artifact@v4
   with:
-    name: threat-model
-    path: my-system/threat-model.html
+    name: threat-model-report
+    path: my-system/report.html
 ```
 
 ## Installing the binary

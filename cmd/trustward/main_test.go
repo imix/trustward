@@ -53,12 +53,12 @@ func TestDiagram_EmitsMermaidFlowchart(t *testing.T) {
 func TestReport_RendersThreatModelDocument(t *testing.T) {
 	bin := buildBinary(t)
 
-	cmd := exec.Command(bin, "report", "threat-model")
+	cmd := exec.Command(bin, "report")
 	cmd.Dir = "../../example/fire-protection-system"
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
-		t.Fatalf("report threat-model should succeed, got %v:\n%s", err, out)
+		t.Fatalf("report should succeed, got %v:\n%s", err, out)
 	}
 	if !strings.Contains(string(out), "Threat Model —") {
 		t.Errorf("output should be the Quarto threat model document, got:\n%s", out)
@@ -69,16 +69,16 @@ func TestTemplateExport_WritesThenRefusesToOverwrite(t *testing.T) {
 	bin := buildBinary(t)
 	dir := t.TempDir()
 
-	first := exec.Command(bin, "template", "export", "threat-model")
+	first := exec.Command(bin, "template", "export", "report")
 	first.Dir = dir
 	if out, err := first.CombinedOutput(); err != nil {
 		t.Fatalf("first export should succeed, got %v:\n%s", err, out)
 	}
-	if _, err := os.Stat(filepath.Join(dir, "templates", "threat-model.tmpl")); err != nil {
+	if _, err := os.Stat(filepath.Join(dir, "templates", "report.tmpl")); err != nil {
 		t.Fatalf("export should write the template file: %v", err)
 	}
 
-	second := exec.Command(bin, "template", "export", "threat-model")
+	second := exec.Command(bin, "template", "export", "report")
 	second.Dir = dir
 	out, err := second.CombinedOutput()
 	if err == nil {
@@ -99,12 +99,12 @@ func TestReport_PrefersProjectLocalTemplate(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(dir, "templates"), 0755); err != nil {
 		t.Fatalf("mkdir templates: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "templates", "threat-model.tmpl"),
+	if err := os.WriteFile(filepath.Join(dir, "templates", "report.tmpl"),
 		[]byte("SENTINEL-TEMPLATE {{ .Title }}\n"), 0644); err != nil {
 		t.Fatalf("writing template: %v", err)
 	}
 
-	cmd := exec.Command(bin, "report", "threat-model")
+	cmd := exec.Command(bin, "report")
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {

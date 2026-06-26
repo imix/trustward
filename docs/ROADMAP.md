@@ -48,7 +48,7 @@ and report sections — reusing the established patterns:
 - loader merge in `internal/project/project.go` (generic `mergeList` for list keys; singletons first-wins)
 - validation in `internal/validate/validate.go` (`idSet`, ref checks, `checkRisk`)
 - scoring seam in `internal/risk/` (`Scorer.Score`, `Evaluate` as the single entry point; `MethodKnown`)
-- report in `internal/quarto/threatmodel.go` + `templates/threat-model.tmpl`
+- report in `internal/quarto/report.go` + `templates/report.tmpl`
 
 Each ships TDD (one RED→GREEN per slice), keeps existing models working (new
 fields optional), and updates MODEL.md + GLOSSARY.md + the example.

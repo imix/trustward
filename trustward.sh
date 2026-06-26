@@ -3,12 +3,12 @@
 #
 # Usage:
 #   ./trustward.sh <command> [args...]          — pass any trustward command
-#   ./trustward.sh render [report-type]         — generate and render a report
+#   ./trustward.sh render [--pdf]               — generate and render the report
 #
 # Examples:
 #   ./trustward.sh diagram dataflow
-#   ./trustward.sh render threat-model          # produces threat-model.html
-#   ./trustward.sh render                       # defaults to threat-model
+#   ./trustward.sh render                       # produces report.html
+#   ./trustward.sh render --pdf                 # also produces report.pdf
 set -euo pipefail
 
 IMAGE=${TRUSTWARD_IMAGE:-trustward}
@@ -18,9 +18,8 @@ IMAGE=${TRUSTWARD_IMAGE:-trustward}
 run=(docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/model")
 
 if [[ "${1:-}" == "render" ]]; then
-    report="${2:-threat-model}"
-    qmd="${report}.qmd"
-    "${run[@]}" "$IMAGE" report "$report" "${@:3}" > "$qmd"
+    qmd="report.qmd"
+    "${run[@]}" "$IMAGE" report "${@:2}" > "$qmd"
     # HOME=/tmp: the mapped UID has no home in the image; Quarto needs a writable one.
     "${run[@]}" -e HOME=/tmp --entrypoint quarto "$IMAGE" render "$qmd"
 else

@@ -27,14 +27,14 @@ func render(t *testing.T, proj *model.Project, diagram string, pdf bool) string 
 	if proj == nil {
 		proj = &model.Project{}
 	}
-	out, err := quarto.ThreatModel(proj, quarto.DefaultTemplate(), diagram, pdf)
+	out, err := quarto.Report(proj, quarto.DefaultTemplate(), diagram, pdf)
 	if err != nil {
-		t.Fatalf("ThreatModel: %v", err)
+		t.Fatalf("Report: %v", err)
 	}
 	return out
 }
 
-func TestThreatModel_EN40000ClauseStructure(t *testing.T) {
+func TestReport_EN40000ClauseStructure(t *testing.T) {
 	proj := &model.Project{
 		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
 		Assets:     []model.Asset{{ID: "a", Type: "data"}},
@@ -69,7 +69,7 @@ func TestThreatModel_EN40000ClauseStructure(t *testing.T) {
 	}
 }
 
-func TestThreatModel_RiskRegister(t *testing.T) {
+func TestReport_RiskRegister(t *testing.T) {
 	proj := &model.Project{
 		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
 		Components: []model.Component{{ID: "central-unit", Title: "Central Unit"}},
@@ -88,7 +88,7 @@ func TestThreatModel_RiskRegister(t *testing.T) {
 	assertContains(t, got, "alice")    // owner
 }
 
-func TestThreatModel_CRASections(t *testing.T) {
+func TestReport_CRASections(t *testing.T) {
 	proj := &model.Project{
 		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
 		Components: []model.Component{{ID: "cu", Title: "Central Unit"}},
@@ -107,7 +107,7 @@ func TestThreatModel_CRASections(t *testing.T) {
 	assertContains(t, got, "open")
 }
 
-func TestThreatModel_CybersecurityObjectives(t *testing.T) {
+func TestReport_CybersecurityObjectives(t *testing.T) {
 	proj := &model.Project{
 		Objectives: []model.Objective{
 			{ID: "obj-conf", Title: "Reading confidentiality", Type: "confidentiality", Description: "No leaks"},
@@ -126,14 +126,14 @@ func TestThreatModel_CybersecurityObjectives(t *testing.T) {
 	assertContains(t, got, "asset-readings")          // upheld-by trace
 }
 
-func TestThreatModel_NoObjectivesNoSection(t *testing.T) {
+func TestReport_NoObjectivesNoSection(t *testing.T) {
 	got := render(t, &model.Project{Assets: []model.Asset{{ID: "a", Type: "data"}}}, "", false)
 
 	// the §6.5.2 clause heading is always present; the objectives subsection is not
 	assertNotContains(t, got, "#### Cybersecurity Objectives")
 }
 
-func TestThreatModel_MonitoringAndReview(t *testing.T) {
+func TestReport_MonitoringAndReview(t *testing.T) {
 	proj := &model.Project{
 		RiskPolicy: model.RiskPolicy{
 			Method: "qualitative", Accept: []string{"low"}, Set: true,
@@ -147,7 +147,7 @@ func TestThreatModel_MonitoringAndReview(t *testing.T) {
 	assertContains(t, got, "Reviewed quarterly by the OT security lead.")
 }
 
-func TestThreatModel_MonitoringAndReviewEmpty(t *testing.T) {
+func TestReport_MonitoringAndReviewEmpty(t *testing.T) {
 	// Policy set but no review cadence: the clause heading still renders (like other
 	// narrative sections), with no special-case placeholder text.
 	proj := &model.Project{
@@ -160,7 +160,7 @@ func TestThreatModel_MonitoringAndReviewEmpty(t *testing.T) {
 	assertNotContains(t, got, "No risk monitoring and review cadence")
 }
 
-func TestThreatModel_FrontMatterMeta(t *testing.T) {
+func TestReport_FrontMatterMeta(t *testing.T) {
 	proj := &model.Project{
 		Version:    model.Version{Semver: "1.2.3", ReleaseDate: "2026-06-09"},
 		SystemMeta: &model.SystemMeta{Title: "My System", Description: "A test system."},
@@ -174,7 +174,7 @@ func TestThreatModel_FrontMatterMeta(t *testing.T) {
 	assertContains(t, got, "A test system.")
 }
 
-func TestThreatModel_DiagramEmbedded(t *testing.T) {
+func TestReport_DiagramEmbedded(t *testing.T) {
 	diagram := "flowchart TD\n    a --> b"
 
 	got := render(t, nil, diagram, false)
@@ -184,7 +184,7 @@ func TestThreatModel_DiagramEmbedded(t *testing.T) {
 	assertContains(t, got, "```")
 }
 
-func TestThreatModel_ThreatSummaryRow(t *testing.T) {
+func TestReport_ThreatSummaryRow(t *testing.T) {
 	proj := &model.Project{
 		Threats: []model.Threat{
 			{ID: "t-001", Title: "Spoof sensor", Target: "comp-a", Severity: "critical", ResidualRisk: "high"},
@@ -200,7 +200,7 @@ func TestThreatModel_ThreatSummaryRow(t *testing.T) {
 	assertContains(t, got, "| high |")
 }
 
-func TestThreatModel_MitigationResolvesToControlTitle(t *testing.T) {
+func TestReport_MitigationResolvesToControlTitle(t *testing.T) {
 	proj := &model.Project{
 		Threats: []model.Threat{
 			{ID: "t-001", Title: "Threat", Mitigations: []string{"ctrl-iam"}},
@@ -215,7 +215,7 @@ func TestThreatModel_MitigationResolvesToControlTitle(t *testing.T) {
 	assertContains(t, got, "Identity and Access Management (`ctrl-iam`)")
 }
 
-func TestThreatModel_UnknownMitigationFallsBackToID(t *testing.T) {
+func TestReport_UnknownMitigationFallsBackToID(t *testing.T) {
 	proj := &model.Project{
 		Threats: []model.Threat{
 			{ID: "t-001", Title: "Threat", Mitigations: []string{"ctrl-unknown"}},
@@ -228,7 +228,7 @@ func TestThreatModel_UnknownMitigationFallsBackToID(t *testing.T) {
 	assertNotContains(t, got, "Identity")
 }
 
-func TestThreatModel_NoMitigationsRendersNone(t *testing.T) {
+func TestReport_NoMitigationsRendersNone(t *testing.T) {
 	proj := &model.Project{
 		Threats: []model.Threat{
 			{ID: "t-001", Title: "Threat"},
@@ -240,13 +240,13 @@ func TestThreatModel_NoMitigationsRendersNone(t *testing.T) {
 	assertContains(t, got, "| **Mitigations** | none |")
 }
 
-func TestThreatModel_PDFFalse_NoPDFSection(t *testing.T) {
+func TestReport_PDFFalse_NoPDFSection(t *testing.T) {
 	got := render(t, nil, "", false)
 
 	assertNotContains(t, got, "pdf:")
 }
 
-func TestThreatModel_PDFTrue_PDFSectionPresent(t *testing.T) {
+func TestReport_PDFTrue_PDFSectionPresent(t *testing.T) {
 	got := render(t, nil, "", true)
 
 	assertContains(t, got, "pdf:")

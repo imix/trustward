@@ -15,7 +15,7 @@ import (
 	"github.com/imix/trustward/internal/validate"
 )
 
-const threatModelTmplPath = "templates/threat-model.tmpl"
+const reportTmplPath = "templates/report.tmpl"
 
 func main() {
 	root := &cobra.Command{
@@ -35,23 +35,18 @@ func main() {
 
 	reportCmd := &cobra.Command{
 		Use:   "report",
-		Short: "Generate documents from the security model",
+		Short: "Render the Quarto risk-management report",
+		RunE:  runReport,
 	}
-	threatModelCmd := &cobra.Command{
-		Use:   "threat-model",
-		Short: "Render a Quarto threat model report",
-		RunE:  runThreatModelReport,
-	}
-	threatModelCmd.Flags().Bool("pdf", false, "include PDF format in the Quarto front matter (requires Chrome headless)")
-	reportCmd.AddCommand(threatModelCmd)
+	reportCmd.Flags().Bool("pdf", false, "include PDF format in the Quarto front matter (requires Chrome headless)")
 
 	templateCmd := &cobra.Command{
 		Use:   "template",
 		Short: "Manage report templates",
 	}
 	templateCmd.AddCommand(&cobra.Command{
-		Use:   "export threat-model",
-		Short: "Write the built-in threat model template to " + threatModelTmplPath,
+		Use:   "export report",
+		Short: "Write the built-in report template to " + reportTmplPath,
 		RunE:  runTemplateExport,
 	})
 
@@ -78,18 +73,18 @@ func runDataflow(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func runThreatModelReport(cmd *cobra.Command, _ []string) error {
+func runReport(cmd *cobra.Command, _ []string) error {
 	proj, err := project.Load(".")
 	if err != nil {
 		return fmt.Errorf("loading project: %w", err)
 	}
-	tmpl, err := loadThreatModelTemplate()
+	tmpl, err := loadReportTemplate()
 	if err != nil {
 		return fmt.Errorf("loading template: %w", err)
 	}
 	pdf, _ := cmd.Flags().GetBool("pdf")
 	diagram := mermaid.DataFlow(proj)
-	out, err := quarto.ThreatModel(proj, tmpl, diagram, pdf)
+	out, err := quarto.Report(proj, tmpl, diagram, pdf)
 	if err != nil {
 		return fmt.Errorf("rendering report: %w", err)
 	}
@@ -114,26 +109,26 @@ func runValidate(_ *cobra.Command, _ []string) error {
 }
 
 func runTemplateExport(_ *cobra.Command, _ []string) error {
-	if _, err := os.Stat(threatModelTmplPath); err == nil {
-		return fmt.Errorf("%s already exists — delete it first if you want to reset it", threatModelTmplPath)
+	if _, err := os.Stat(reportTmplPath); err == nil {
+		return fmt.Errorf("%s already exists — delete it first if you want to reset it", reportTmplPath)
 	}
-	if err := os.MkdirAll(filepath.Dir(threatModelTmplPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(reportTmplPath), 0755); err != nil {
 		return err
 	}
-	if err := os.WriteFile(threatModelTmplPath, quarto.DefaultTemplateContent(), 0644); err != nil {
+	if err := os.WriteFile(reportTmplPath, quarto.DefaultTemplateContent(), 0644); err != nil {
 		return err
 	}
-	fmt.Printf("wrote %s\n", threatModelTmplPath)
+	fmt.Printf("wrote %s\n", reportTmplPath)
 	return nil
 }
 
-// loadThreatModelTemplate returns a project-local template if one exists,
+// loadReportTemplate returns a project-local template if one exists,
 // otherwise falls back to the built-in default.
-func loadThreatModelTemplate() (*template.Template, error) {
-	data, err := os.ReadFile(threatModelTmplPath)
+func loadReportTemplate() (*template.Template, error) {
+	data, err := os.ReadFile(reportTmplPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			fmt.Fprintln(os.Stderr, "note: using the built-in report template — run 'trustward template export threat-model' to customize branding and link out to your system-design docs")
+			fmt.Fprintln(os.Stderr, "note: using the built-in report template — run 'trustward template export report' to customize branding and link out to your system-design docs")
 			return quarto.DefaultTemplate(), nil
 		}
 		return nil, err
