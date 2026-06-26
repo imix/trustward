@@ -3,7 +3,7 @@
 This is the **judgment** layer: how *far* to take each part of a model, and when the
 simple form is enough versus when to reach for detail. For *what* each element means see
 [GLOSSARY.md](GLOSSARY.md); for the exact YAML see [MODEL.md](MODEL.md); for a first
-walkthrough see "Start your own model" in the [README](README.md).
+walkthrough see "Start your own model" in the [README](../README.md).
 
 The model scales from a back-of-the-envelope sketch to a CRA / prEN 40000-1-2 §6
 conformance artifact. The same elements serve both — you decide how much to fill in.
