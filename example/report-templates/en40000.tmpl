@@ -2,7 +2,7 @@
 title: "Threat Model — {{ .Title }}"
 subtitle: "Version {{ .Version }}"
 date: "{{ .Date }}"
-number-sections: false  # this shell carries explicit prEN 40000-1-2 §6 clause numbers
+number-sections: true  # Pandoc/Quarto numbers the sections
 format:
   html:
     toc: true
@@ -21,26 +21,28 @@ format:
 
 > **Document control** — Classification: _fill in_ · Owner: _fill in_ · Status: _draft_.
 > Replace this block and every _fill in_ prompt below before issuing the report.
+>
+> Sections follow prEN 40000-1-2 §6; numbering is automatic, so add your own headings freely.
 
-## 6.2 Product Context
+## Product Context
 
-### Product overview
+### Product intended purpose and reasonable foreseeable use
 
 {{ .Description }}
 
-> _Fill in: the product's purpose, market context, and how operators use it day to day._
+> _Fill in: the intended purpose and the reasonably foreseeable use of the product._
 
-### Intended use and users
+### Product functions
 
-> _Fill in: the intended use, the operators/users and their roles, and any constraints on use._
+> _Fill in: the security-relevant functions the product performs._
 
-### Operational environment
+### Product operational environment
 
 > _Fill in: deployment networks, physical siting, and trust assumptions about connected systems._
 
-### Assumptions and dependencies
+### Product user description
 
-> _Fill in: security-relevant assumptions and external dependencies the product relies on (a hardened host, a trusted time source, …)._
+> _Fill in: the operators/users, their roles, and any onboarding/integration assumptions._
 
 ### Components
 {{ if .ComponentList }}
@@ -58,14 +60,14 @@ format:
 ```
 
 {{ if .RiskPolicySet }}
-## 6.3 Risk Acceptance Criteria and Methodology
+## Risk Acceptance Criteria and Methodology
 
 Risk is scored using the **{{ if .RiskMethod }}{{ .RiskMethod }}{{ else }}qualitative{{ end }}** method. A risk is **accepted** without treatment when its level is one of: {{ range $i, $l := .RiskAccept }}{{ if $i }}, {{ end }}`{{ $l }}`{{ end }}{{ if not .RiskAccept }}(none defined){{ end }}. Any risk above the acceptance criteria must record a treatment decision (mitigate / accept / transfer / avoid) and an owner.
 
 {{ end -}}
-## 6.5 Risk Assessment
+## Risk Assessment
 
-### 6.5.2 Asset and Cybersecurity Objective Identification
+### Asset and Cybersecurity Objective Identification
 {{ if .AssetList }}
 #### Assets
 
@@ -86,7 +88,7 @@ The CIA-scale objectives the assets must uphold.
 | `{{ .ID }}` | {{ .Title }} | {{ .Type }} | {{ range $i, $a := (index $.ObjectiveAssets .ID) }}{{ if $i }}, {{ end }}`{{ $a }}`{{ end }} | {{ .Description | trim }} |
 {{ end }}
 {{ end -}}
-### 6.5.3 Threat Identification
+### Threat Identification
 {{ range .ThreatGroups }}
 #### {{ .TargetTitle }}
 
@@ -120,10 +122,10 @@ The CIA-scale objectives the assets must uphold.
 {{ end -}}
 {{ end -}}
 {{ if .RiskPolicySet }}
-### 6.5.4 Risk Register
+### Risk Register
 
-Risk estimation (§6.5.4) and evaluation (§6.5.5) per threat. **Open** risks are
-above the acceptance criteria with no treatment recorded.
+Risk estimation and evaluation per threat. **Open** risks are above the
+acceptance criteria with no treatment recorded.
 
 | Threat | Target | Likelihood | Impact | Risk | Evaluation | Treatment | Owner | Decided | Residual |
 |---|---|---|---|---|---|---|---|---|---|
@@ -133,7 +135,7 @@ above the acceptance criteria with no treatment recorded.
 {{ end }}
 {{ end -}}
 {{ if or .CatalogList .ControlList }}
-## 6.6 Risk Treatment
+## Risk Treatment
 {{ range .CatalogList }}
 {{ $cat := . -}}
 ### Compliance Evidence: {{ .Title }}
@@ -159,7 +161,7 @@ A **gap** is a requirement with no implementing control.
 {{ end }}
 {{ end -}}
 {{ end -}}
-## 6.7 Risk Monitoring and Review
+## Risk Monitoring and Review
 
 {{ if .RiskPolicySet }}{{ .RiskReview | trim }}
 
