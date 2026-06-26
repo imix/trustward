@@ -69,7 +69,7 @@ From there, grow the model incrementally:
 
 Run `trustward.sh validate` as you go — it catches typos in cross-references (a threat mitigated by a control that doesn't exist, a flow connecting a renamed component) that would otherwise silently produce wrong reports.
 
-[MODEL.md](MODEL.md) documents every key. [example/fire-protection-system](example/fire-protection-system) is a complete model using imports, catalogs, threats, and controls.
+[MODEL.md](MODEL.md) documents every key. [example/fire-protection-system](example/fire-protection-system) is a complete model using imports, catalogs, threats, and controls. For *how far* to take each part — coarse vs detailed, and when — see [HOWTO.md](HOWTO.md).
 
 ## Commands
 
@@ -187,5 +187,6 @@ Requires Go 1.25+. The Docker image also bundles [Quarto](https://quarto.org) fo
 
 ## Reference
 
+- [HOWTO.md](HOWTO.md) — how to model: how far to take each part, and when
 - [MODEL.md](MODEL.md) — complete YAML schema reference
 - [GLOSSARY.md](GLOSSARY.md) — domain term definitions
