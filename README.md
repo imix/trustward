@@ -16,7 +16,7 @@ docker build -t trustward .
 
 # Try it on the example model
 cd example/fire-protection-system
-../../trustward.sh render                 # writes report.html
+../../trustward.sh render                 # writes out/report.html
 ../../trustward.sh diagram dataflow       # prints a Mermaid data flow diagram
 ```
 
@@ -57,7 +57,7 @@ data-flows:
 ```bash
 cd my-system
 /path/to/trustward.sh diagram dataflow    # quick check that the model loads
-/path/to/trustward.sh render              # report.html
+/path/to/trustward.sh render              # out/report.html
 ```
 
 From there, grow the model incrementally:
@@ -80,11 +80,11 @@ Run all commands from your model directory.
 Generates and renders the report in one step:
 
 ```bash
-trustward.sh render                       # writes report.html
-trustward.sh render --pdf                 # also writes report.pdf
+trustward.sh render                       # writes out/report.html
+trustward.sh render --pdf                 # also writes out/report.pdf
 ```
 
-Under the hood this runs `trustward report` (which prints a Quarto `.qmd` document to stdout) and then renders it with Quarto. The intermediate `report.qmd` and `report_files/` directory are by-products — add them and the rendered output to `.gitignore` if you only want them as CI artifacts.
+Under the hood this runs `trustward report` (which prints a Quarto `.qmd` document to stdout) and then renders it with Quarto. All generated files land in `out/` (`report.qmd`, `report.html`, `report_files/`) — that whole directory is a by-product; it's `.gitignore`d by default, or upload it as a CI artifact.
 
 ### `trustward.sh diagram dataflow`
 
@@ -115,7 +115,7 @@ Requirement `satisfies` entries are deliberately **not** checked — they may po
 
 ### `trustward.sh template export report`
 
-Writes the built-in report template to `templates/report.tmpl` in your model directory, as a starting point for customisation (see below). Refuses to overwrite an existing file.
+Writes the built-in report template to `report.tmpl` in your model directory, as a starting point for customisation (see below). Refuses to overwrite an existing file.
 
 ## Customising the report
 
@@ -123,11 +123,11 @@ For anything beyond a quick look, **export the template and own it** — it's wh
 
 ```bash
 trustward.sh template export report
-# edit templates/report.tmpl
+# edit report.tmpl
 trustward.sh render
 ```
 
-If `templates/report.tmpl` exists in your model directory, trustward uses it instead of the built-in. It's a [Go `text/template`](https://pkg.go.dev/text/template) file. Customise it for:
+If `report.tmpl` exists in your model directory, trustward uses it instead of the built-in. It's a [Go `text/template`](https://pkg.go.dev/text/template) file. Customise it for:
 
 - **Branding** — theme, fonts, logo treatment, and title-block styling (all in the Quarto front matter).
 - **Document framing** — trustward owns the threat model and risk assessment; the report is one artifact in a larger conformance set. The system design, asset inventory, and other documents live elsewhere. Add a "Related documents" section that **links out** to them rather than reproducing them here — keeping a single source of truth for each and avoiding drift.
@@ -164,7 +164,7 @@ A minimal GitHub Actions step, assuming your model lives in `my-system/` and `tr
 - uses: actions/upload-artifact@v4
   with:
     name: threat-model-report
-    path: my-system/report.html
+    path: my-system/out/report.html
 ```
 
 ## Installing the binary

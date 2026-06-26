@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"text/template"
 
 	"github.com/spf13/cobra"
@@ -15,7 +14,7 @@ import (
 	"github.com/imix/trustward/internal/validate"
 )
 
-const reportTmplPath = "templates/report.tmpl"
+const reportTmplPath = "report.tmpl"
 
 func main() {
 	root := &cobra.Command{
@@ -111,9 +110,6 @@ func runValidate(_ *cobra.Command, _ []string) error {
 func runTemplateExport(_ *cobra.Command, _ []string) error {
 	if _, err := os.Stat(reportTmplPath); err == nil {
 		return fmt.Errorf("%s already exists — delete it first if you want to reset it", reportTmplPath)
-	}
-	if err := os.MkdirAll(filepath.Dir(reportTmplPath), 0755); err != nil {
-		return err
 	}
 	if err := os.WriteFile(reportTmplPath, quarto.DefaultTemplateContent(), 0644); err != nil {
 		return err

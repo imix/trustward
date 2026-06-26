@@ -74,7 +74,7 @@ func TestTemplateExport_WritesThenRefusesToOverwrite(t *testing.T) {
 	if out, err := first.CombinedOutput(); err != nil {
 		t.Fatalf("first export should succeed, got %v:\n%s", err, out)
 	}
-	if _, err := os.Stat(filepath.Join(dir, "templates", "report.tmpl")); err != nil {
+	if _, err := os.Stat(filepath.Join(dir, "report.tmpl")); err != nil {
 		t.Fatalf("export should write the template file: %v", err)
 	}
 
@@ -96,10 +96,7 @@ func TestReport_PrefersProjectLocalTemplate(t *testing.T) {
 		[]byte("system:\n  id: s\n  title: My System\n  description: d\n"), 0644); err != nil {
 		t.Fatalf("writing model: %v", err)
 	}
-	if err := os.MkdirAll(filepath.Join(dir, "templates"), 0755); err != nil {
-		t.Fatalf("mkdir templates: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "templates", "report.tmpl"),
+	if err := os.WriteFile(filepath.Join(dir, "report.tmpl"),
 		[]byte("SENTINEL-TEMPLATE {{ .Title }}\n"), 0644); err != nil {
 		t.Fatalf("writing template: %v", err)
 	}

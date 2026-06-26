@@ -7,8 +7,8 @@
 #
 # Examples:
 #   ./trustward.sh diagram dataflow
-#   ./trustward.sh render                       # produces report.html
-#   ./trustward.sh render --pdf                 # also produces report.pdf
+#   ./trustward.sh render                       # produces out/report.html
+#   ./trustward.sh render --pdf                 # also produces out/report.pdf
 set -euo pipefail
 
 IMAGE=${TRUSTWARD_IMAGE:-trustward}
@@ -18,7 +18,8 @@ IMAGE=${TRUSTWARD_IMAGE:-trustward}
 run=(docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/model")
 
 if [[ "${1:-}" == "render" ]]; then
-    qmd="report.qmd"
+    mkdir -p out
+    qmd="out/report.qmd"
     "${run[@]}" "$IMAGE" report "${@:2}" > "$qmd"
     # HOME=/tmp: the mapped UID has no home in the image; Quarto needs a writable one.
     "${run[@]}" -e HOME=/tmp --entrypoint quarto "$IMAGE" render "$qmd"
