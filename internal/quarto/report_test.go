@@ -34,7 +34,7 @@ func render(t *testing.T, proj *model.Project, diagram string, pdf bool) string 
 	return out
 }
 
-func TestReport_EN40000ClauseStructure(t *testing.T) {
+func TestReport_SectionStructure(t *testing.T) {
 	proj := &model.Project{
 		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
 		Assets:     []model.Asset{{ID: "a", Type: "data"}},
@@ -45,15 +45,16 @@ func TestReport_EN40000ClauseStructure(t *testing.T) {
 
 	got := render(t, proj, "flowchart TD", false)
 
-	// Headings mirror prEN 40000-1-2 §6 clause numbering, in clause order.
+	// Sections follow the prEN 40000-1-2 §6 process but stay standard-agnostic:
+	// no hardcoded clause numbers (Pandoc numbers sections when enabled).
 	ordered := []string{
-		"## 6.2 Product Context",
-		"## 6.3 Risk Acceptance Criteria and Methodology",
-		"## 6.5 Risk Assessment",
-		"### 6.5.2 Asset and Cybersecurity Objective Identification",
-		"### 6.5.3 Threat Identification",
-		"### 6.5.4 Risk Register",
-		"## 6.6 Risk Treatment",
+		"## Product Context",
+		"## Risk Acceptance Criteria and Methodology",
+		"## Risk Assessment",
+		"### Asset and Cybersecurity Objective Identification",
+		"### Threat Identification",
+		"### Risk Register",
+		"## Risk Treatment",
 	}
 	last := -1
 	for _, h := range ordered {
@@ -66,6 +67,13 @@ func TestReport_EN40000ClauseStructure(t *testing.T) {
 			t.Errorf("heading %q is out of clause order", h)
 		}
 		last = i
+	}
+
+	// A heading needs a blank line before it or Pandoc (blank_before_header)
+	// folds it into the preceding paragraph. RiskPolicySet is true here, so the
+	// acceptance paragraph sits directly above Risk Assessment — guard the gap.
+	if !strings.Contains(got, "\n\n## Risk Assessment") {
+		t.Error("## Risk Assessment must be preceded by a blank line")
 	}
 }
 
@@ -143,7 +151,7 @@ func TestReport_MonitoringAndReview(t *testing.T) {
 
 	got := render(t, proj, "", false)
 
-	assertContains(t, got, "## 6.7 Risk Monitoring and Review")
+	assertContains(t, got, "## Risk Monitoring and Review")
 	assertContains(t, got, "Reviewed quarterly by the OT security lead.")
 }
 
@@ -156,7 +164,7 @@ func TestReport_MonitoringAndReviewEmpty(t *testing.T) {
 
 	got := render(t, proj, "", false)
 
-	assertContains(t, got, "## 6.7 Risk Monitoring and Review")
+	assertContains(t, got, "## Risk Monitoring and Review")
 	assertNotContains(t, got, "No risk monitoring and review cadence")
 }
 

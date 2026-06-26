@@ -2,6 +2,7 @@
 title: "Threat Model — {{ .Title }}"
 date: "{{ .Date }}"
 version: "{{ .Version }}"
+number-sections: true  # Pandoc numbers the sections; set false for unnumbered headings
 {{ if .Logo -}}
 title-block-banner: true
 {{ end -}}
@@ -15,7 +16,7 @@ format:
 {{ end -}}
 ---
 
-## 6.2 Product Context
+## Product Context
 
 ### System Overview
 
@@ -40,13 +41,13 @@ format:
 ```
 
 {{ if .RiskPolicySet }}
-## 6.3 Risk Acceptance Criteria and Methodology
+## Risk Acceptance Criteria and Methodology
 
 Risk is scored using the **{{ if .RiskMethod }}{{ .RiskMethod }}{{ else }}qualitative{{ end }}** method. A risk is **accepted** without treatment when its level is one of: {{ range $i, $l := .RiskAccept }}{{ if $i }}, {{ end }}`{{ $l }}`{{ end }}{{ if not .RiskAccept }}(none defined){{ end }}. Any risk above the acceptance criteria must record a treatment decision (mitigate / accept / transfer / avoid) and an owner.
-{{ end -}}
-## 6.5 Risk Assessment
+{{ end }}
+## Risk Assessment
 
-### 6.5.2 Asset and Cybersecurity Objective Identification
+### Asset and Cybersecurity Objective Identification
 {{ if .AssetList }}
 #### Assets
 
@@ -59,7 +60,7 @@ Risk is scored using the **{{ if .RiskMethod }}{{ .RiskMethod }}{{ else }}qualit
 {{ if .ObjectiveList }}
 #### Cybersecurity Objectives
 
-Per prEN 40000-1-2 §6.5.2 — the CIA-scale objectives the assets must uphold.
+The CIA-scale objectives the assets must uphold.
 
 | ID | Title | Type | Upheld by | Description |
 |---|---|---|---|---|
@@ -67,7 +68,7 @@ Per prEN 40000-1-2 §6.5.2 — the CIA-scale objectives the assets must uphold.
 | `{{ .ID }}` | {{ .Title }} | {{ .Type }} | {{ range $i, $a := (index $.ObjectiveAssets .ID) }}{{ if $i }}, {{ end }}`{{ $a }}`{{ end }} | {{ .Description | trim }} |
 {{ end }}
 {{ end -}}
-### 6.5.3 Threat Identification
+### Threat Identification
 {{ range .ThreatGroups }}
 #### {{ .TargetTitle }}
 
@@ -101,10 +102,10 @@ Per prEN 40000-1-2 §6.5.2 — the CIA-scale objectives the assets must uphold.
 {{ end -}}
 {{ end -}}
 {{ if .RiskPolicySet }}
-### 6.5.4 Risk Register
+### Risk Register
 
-Risk estimation (§6.5.4) and evaluation (§6.5.5) per threat. **Open** risks are
-above the acceptance criteria with no treatment recorded.
+Risk estimation and evaluation per threat. **Open** risks are above the
+acceptance criteria with no treatment recorded.
 
 | Threat | Target | Likelihood | Impact | Risk | Evaluation | Treatment | Owner | Decided | Residual |
 |---|---|---|---|---|---|---|---|---|---|
@@ -114,13 +115,13 @@ above the acceptance criteria with no treatment recorded.
 {{ end }}
 {{ end -}}
 {{ if or .CatalogList .ControlList }}
-## 6.6 Risk Treatment
+## Risk Treatment
 {{ range .CatalogList }}
 {{ $cat := . -}}
 ### Compliance Evidence: {{ .Title }}
 
-Control coverage of {{ .Title }} requirements — evidence of risk treatment
-(CRA / prEN 40000-1-2 §6.6). A **gap** is a requirement with no implementing control.
+Control coverage of {{ .Title }} requirements — evidence of risk treatment.
+A **gap** is a requirement with no implementing control.
 
 | Requirement | Title | Status | Control |
 |---|---|---|---|
@@ -141,7 +142,7 @@ Control coverage of {{ .Title }} requirements — evidence of risk treatment
 {{ end -}}
 {{ end -}}
 {{ if .RiskPolicySet }}
-## 6.7 Risk Monitoring and Review
+## Risk Monitoring and Review
 
 {{ .RiskReview | trim }}
 {{ end -}}
