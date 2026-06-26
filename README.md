@@ -113,7 +113,7 @@ It verifies that every cross-reference resolves to a declared ID:
 
 Requirement `satisfies` entries are deliberately **not** checked — they may point at external standards (e.g. `iec-62443-sl2::SR-1.1`) that are not part of the model.
 
-### `trustward.sh template export report`
+### `trustward.sh template export`
 
 Writes the built-in report template to `report.tmpl` in your model directory, as a starting point for customisation (see below). Refuses to overwrite an existing file.
 
@@ -122,7 +122,7 @@ Writes the built-in report template to `report.tmpl` in your model directory, as
 For anything beyond a quick look, **export the template and own it** — it's where your branding and document framing live, and most real deployments need both. The built-in template renders out of the box (and prints a reminder pointing you here), but exporting is the recommended first step for a model you'll keep:
 
 ```bash
-trustward.sh template export report
+trustward.sh template export
 # edit report.tmpl
 trustward.sh render
 ```

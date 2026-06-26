@@ -44,8 +44,9 @@ func main() {
 		Short: "Manage report templates",
 	}
 	templateCmd.AddCommand(&cobra.Command{
-		Use:   "export report",
+		Use:   "export",
 		Short: "Write the built-in report template to " + reportTmplPath,
+		Args:  cobra.NoArgs,
 		RunE:  runTemplateExport,
 	})
 
@@ -124,7 +125,7 @@ func loadReportTemplate() (*template.Template, error) {
 	data, err := os.ReadFile(reportTmplPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			fmt.Fprintln(os.Stderr, "note: using the built-in report template — run 'trustward template export report' to customize branding and link out to your system-design docs")
+			fmt.Fprintln(os.Stderr, "note: using the built-in report template — run 'trustward template export' to customize branding and link out to your system-design docs")
 			return quarto.DefaultTemplate(), nil
 		}
 		return nil, err

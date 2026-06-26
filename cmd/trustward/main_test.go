@@ -69,7 +69,7 @@ func TestTemplateExport_WritesThenRefusesToOverwrite(t *testing.T) {
 	bin := buildBinary(t)
 	dir := t.TempDir()
 
-	first := exec.Command(bin, "template", "export", "report")
+	first := exec.Command(bin, "template", "export")
 	first.Dir = dir
 	if out, err := first.CombinedOutput(); err != nil {
 		t.Fatalf("first export should succeed, got %v:\n%s", err, out)
@@ -78,7 +78,7 @@ func TestTemplateExport_WritesThenRefusesToOverwrite(t *testing.T) {
 		t.Fatalf("export should write the template file: %v", err)
 	}
 
-	second := exec.Command(bin, "template", "export", "report")
+	second := exec.Command(bin, "template", "export")
 	second.Dir = dir
 	out, err := second.CombinedOutput()
 	if err == nil {
