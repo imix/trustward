@@ -144,12 +144,7 @@ cp /path/to/trustward/example/report-templates/en40000.tmpl report.tmpl
 trustward.sh render
 ```
 
-| Shell | Shape |
-|---|---|
-| `en40000.tmpl` | prEN 40000-1-2 §6 with explicit clause numbers (6.2 Product Context … 6.7 Monitoring) and the §6.2 manual context subsections |
-| `iec62443.tmpl` | IEC 62443-4-2 component assessment — scope, security context (SL-T, zones/conduits), and requirement coverage, auto-numbered |
-
-Pick the one matching your target, or use the minimal default and add only what you need.
+`en40000.tmpl` is the prEN 40000-1-2 §6 shell — explicit clause numbers (6.2 Product Context … 6.7 Monitoring) and the §6.2 manual context subsections. Copy it, or use the minimal default and add only what you need.
 
 The template receives:
 
