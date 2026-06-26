@@ -178,7 +178,6 @@ This puts the `trustward` binary on your `PATH` (under `$(go env GOPATH)/bin`). 
 ## Building from source
 
 ```bash
-cd tool
 go build -o trustward ./cmd/trustward/
 go test ./...
 ```

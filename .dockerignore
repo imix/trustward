@@ -1,6 +1,8 @@
-# Only the tool source is needed for the build
+# Only the Go module (go.mod/go.sum, cmd/, internal/) is needed for the build
 *.yaml
 *.md
 *.sh
 example/
-tool/trustward
+docs/
+en4000.txt
+/trustward

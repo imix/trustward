@@ -10,7 +10,7 @@ import (
 // The shipped example model is the reference for what a correct project
 // looks like — it must validate without issues.
 func TestCheck_ExampleModelIsClean(t *testing.T) {
-	proj, err := project.Load("../../../example/fire-protection-system")
+	proj, err := project.Load("../../example/fire-protection-system")
 	if err != nil {
 		t.Fatalf("Load example: %v", err)
 	}

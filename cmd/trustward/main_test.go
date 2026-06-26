@@ -24,7 +24,7 @@ func TestValidate_CleanModelExitsZero(t *testing.T) {
 	bin := buildBinary(t)
 
 	cmd := exec.Command(bin, "validate")
-	cmd.Dir = "../../../example/fire-protection-system"
+	cmd.Dir = "../../example/fire-protection-system"
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
@@ -39,7 +39,7 @@ func TestDiagram_EmitsMermaidFlowchart(t *testing.T) {
 	bin := buildBinary(t)
 
 	cmd := exec.Command(bin, "diagram", "dataflow")
-	cmd.Dir = "../../../example/fire-protection-system"
+	cmd.Dir = "../../example/fire-protection-system"
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
@@ -54,7 +54,7 @@ func TestReport_RendersThreatModelDocument(t *testing.T) {
 	bin := buildBinary(t)
 
 	cmd := exec.Command(bin, "report", "threat-model")
-	cmd.Dir = "../../../example/fire-protection-system"
+	cmd.Dir = "../../example/fire-protection-system"
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {

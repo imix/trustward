@@ -44,11 +44,11 @@ patterns shipped as catalogs with ref-based inheritance
 Each is **additive** — new optional model types, loader merges, validate checks,
 and report sections — reusing the established patterns:
 
-- model types in `tool/internal/model/types.go`, `Project` in `project.go`
-- loader merge in `tool/internal/project/project.go` (generic `mergeList` for list keys; singletons first-wins)
-- validation in `tool/internal/validate/validate.go` (`idSet`, ref checks, `checkRisk`)
-- scoring seam in `tool/internal/risk/` (`Scorer.Score`, `Evaluate` as the single entry point; `MethodKnown`)
-- report in `tool/internal/quarto/threatmodel.go` + `templates/threat-model.tmpl`
+- model types in `internal/model/types.go`, `Project` in `project.go`
+- loader merge in `internal/project/project.go` (generic `mergeList` for list keys; singletons first-wins)
+- validation in `internal/validate/validate.go` (`idSet`, ref checks, `checkRisk`)
+- scoring seam in `internal/risk/` (`Scorer.Score`, `Evaluate` as the single entry point; `MethodKnown`)
+- report in `internal/quarto/threatmodel.go` + `templates/threat-model.tmpl`
 
 Each ships TDD (one RED→GREEN per slice), keeps existing models working (new
 fields optional), and updates MODEL.md + GLOSSARY.md + the example.
