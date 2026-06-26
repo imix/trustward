@@ -178,7 +178,7 @@ func TestReport_FrontMatterMeta(t *testing.T) {
 
 	assertContains(t, got, `title: "Threat Model — My System"`)
 	assertContains(t, got, `date: "2026-06-09"`)
-	assertContains(t, got, `version: "1.2.3"`)
+	assertContains(t, got, `subtitle: "Version 1.2.3"`)
 	assertContains(t, got, "A test system.")
 }
 

@@ -19,10 +19,12 @@ run=(docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/model")
 
 if [[ "${1:-}" == "render" ]]; then
     mkdir -p out
-    qmd="out/report.qmd"
-    "${run[@]}" "$IMAGE" report "${@:2}" > "$qmd"
+    # Generate the .qmd at the model root so Quarto resolves relative paths (logo,
+    # images) against your model dir, then direct all output into out/.
+    "${run[@]}" "$IMAGE" report "${@:2}" > report.qmd
     # HOME=/tmp: the mapped UID has no home in the image; Quarto needs a writable one.
-    "${run[@]}" -e HOME=/tmp --entrypoint quarto "$IMAGE" render "$qmd"
+    "${run[@]}" -e HOME=/tmp --entrypoint quarto "$IMAGE" render report.qmd --output-dir out
+    mv -f report.qmd out/
 else
     "${run[@]}" "$IMAGE" "$@"
 fi

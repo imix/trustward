@@ -1,11 +1,8 @@
 ---
 title: "Threat Model — {{ .Title }}"
+subtitle: "Version {{ .Version }}"
 date: "{{ .Date }}"
-version: "{{ .Version }}"
 number-sections: true  # Pandoc numbers the sections; set false for unnumbered headings
-{{ if .Logo -}}
-title-block-banner: true
-{{ end -}}
 format:
   html:
     toc: true
@@ -16,13 +13,16 @@ format:
 {{ end -}}
 ---
 
+{{ if .Logo }}
+![]({{ .Logo }}){width=320px fig-align="center"}
+
+{{ end -}}
+{{ "{{< pagebreak >}}" }}{{/* Quarto page-break shortcode, escaped past Go's {{ }} delimiters */}}
+
 ## Product Context
 
 ### System Overview
 
-{{ if .Logo }}
-![]({{ .Logo }}){width=180px style="float:right; margin: 0 0 1em 2em;"}
-{{ end -}}
 {{ .Description }}
 {{ if .ComponentList }}
 ### Components
