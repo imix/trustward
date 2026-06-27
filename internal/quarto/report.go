@@ -116,13 +116,21 @@ func Report(proj *model.Project, tmpl *template.Template, diagram string, pdf bo
 		}
 	}
 
-	compTitles := make(map[string]string, len(proj.Components))
+	// A threat target is a component or a data flow — title lookup must cover both.
+	targetTitles := make(map[string]string, len(proj.Components)+len(proj.DataFlows))
 	for _, c := range proj.Components {
 		t := c.Title
 		if t == "" {
 			t = c.ID
 		}
-		compTitles[c.ID] = t
+		targetTitles[c.ID] = t
+	}
+	for _, f := range proj.DataFlows {
+		t := f.Title
+		if t == "" {
+			t = f.ID
+		}
+		targetTitles[f.ID] = t
 	}
 
 	var targetOrder []string
@@ -137,7 +145,7 @@ func Report(proj *model.Project, tmpl *template.Template, diagram string, pdf bo
 	}
 	groups := make([]ThreatGroup, 0, len(targetOrder))
 	for _, targetID := range targetOrder {
-		title := compTitles[targetID]
+		title := targetTitles[targetID]
 		if title == "" {
 			title = targetID
 		}

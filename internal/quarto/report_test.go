@@ -208,6 +208,19 @@ func TestReport_ThreatSummaryRow(t *testing.T) {
 	assertContains(t, got, "| high |")
 }
 
+func TestReport_FlowTargetUsesFlowTitle(t *testing.T) {
+	// A threat targeting a data flow groups under the flow's title, not its raw ID.
+	proj := &model.Project{
+		DataFlows: []model.DataFlow{{ID: "flow-ocpp", Title: "OCPP control channel"}},
+		Threats:   []model.Threat{{ID: "t-1", Title: "Rogue server", Target: "flow-ocpp"}},
+	}
+
+	got := render(t, proj, "", false)
+
+	assertContains(t, got, "#### OCPP control channel")
+	assertNotContains(t, got, "#### flow-ocpp")
+}
+
 func TestReport_MitigationResolvesToControlTitle(t *testing.T) {
 	proj := &model.Project{
 		Threats: []model.Threat{
