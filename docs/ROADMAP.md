@@ -13,10 +13,11 @@ computed (`internal/risk`, qualitative 3×3 matrix) and `validate` enforces the
 CRA gate: every non-accepted risk needs a treatment and an owner. The report
 shows a risk register.
 
-**Phase 2 — ETSI attack-potential profile.** The `risk.Scorer` seam gained a
-second profile, `etsi-tvra` (`internal/risk/etsi.go`) — attack-potential factors
-on a threat's `attack` block sum to an attack potential that maps inversely to
-likelihood, then the shared matrix. Selected via `risk-policy.method: etsi-tvra`.
+**Phase 2 — attack-potential profile.** The `risk.Scorer` seam gained a
+second profile, `attack-potential` (`internal/risk/attackpotential.go`) — the
+attacker factors on a threat's `attack` block (the Common Criteria / ETSI factor
+scale) sum to an attack potential that maps inversely to likelihood, then the
+shared matrix. Selected via `risk-policy.method: attack-potential`.
 
 **Phase 3 — prEN 40000-1-2 §6 report shape.** A Risk Acceptance Criteria and
 Methodology section (§6.3, from the risk-policy), a Risk Register with an
@@ -29,7 +30,7 @@ validate CRA gate.
 Likelihood}`) instead of a bare level, so the derived likelihood is no longer
 discarded. `risk.Eval` embeds `Score`; `risk.Evaluate` is the single scoring
 entry point. The register's Likelihood column shows the derived likelihood for
-etsi-tvra threats (was blank).
+attack-potential threats (was blank).
 
 **Cybersecurity objectives (§6.5.2).** `asset.objectives[]` and
 `threat.violates[]` give the objective → asset → threat trace, on a CIA-extended
@@ -60,8 +61,8 @@ Each is self-contained; do only when a workflow or obligation calls for it.
 **C1 — First-class threat agents (motivation + capability).** Reusable attacker
 profiles instead of per-threat inline `attack` blocks.
 - `ThreatAgent{ID, Title, Description, Expertise, Knowledge, Opportunity, Equipment, Motivation, Capability}`.
-- `Threat.Agent string` (agent id). ETSI scorer reads factors from the referenced
-  agent when set, else the inline `attack` block (back-compat).
+- `Threat.Agent string` (agent id). The attack-potential scorer reads factors from the
+  referenced agent when set, else the inline `attack` block (back-compat).
 - Validate: agent ref resolves; motivation/capability in their scales.
 - `motivation`/`capability` modelled + shown; folding them into the likelihood is optional.
 
@@ -87,7 +88,7 @@ asset; incidents are the downstream harm).
   assets/objectives/requirements. Complements per-control `evidence`.
 
 **C6 — ETSI scales as a report appendix.**
-- When `method: etsi-tvra`, append the factor scales with their definitions
+- When `method: attack-potential`, append the factor scales with their definitions
   (expertise/knowledge/opportunity/equipment/motivation/capability/intensity) as
   reference material, so the computed numbers are auditable. Also the home for the
   attack-potential-band detail if an assessor needs the raw number.

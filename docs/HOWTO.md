@@ -85,14 +85,16 @@ cite — the catalog grows with your mapping, not the whole published standard. 
 taxonomy as a catalog (not prose `[TID-…]` tags) means a typo'd reference fails `validate`
 instead of passing silently.
 
-## Scoring method: `qualitative` vs `etsi-tvra`
+## Scoring method: `qualitative` vs `attack-potential`
 
 - **`qualitative`** (the default) — you state `likelihood` and `impact` (low/medium/high)
   and a 3×3 matrix yields the level. Right for almost everything, and for early work.
-- **`etsi-tvra`** — likelihood is *derived* from a per-threat `attack:` block (expertise,
-  knowledge, opportunity, equipment → an attack potential). Reach for it when you want a
-  defensible, attacker-effort-based likelihood for regulated or contested risk. It's only
-  worth filling in the `attack:` blocks if you've chosen this method; otherwise skip them.
+- **`attack-potential`** — likelihood is *derived* from a per-threat `attack:` block
+  (expertise, knowledge, opportunity, equipment → an attack potential, the scale shared by
+  Common Criteria / ISO 18045 and ETSI TS 102 165-1). Reach for it when you want a
+  defensible, attacker-effort-based likelihood for regulated or contested risk — you assess
+  how *hard* the attack is, which the system answers, rather than guessing a probability.
+  It's only worth filling in the `attack:` blocks if you've chosen this method; otherwise skip them.
 
 You set the method once, in `risk-policy.method`.
 

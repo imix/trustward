@@ -25,8 +25,8 @@ func TestLevelMatrix(t *testing.T) {
 	}
 }
 
-func TestETSILevel(t *testing.T) {
-	e := ETSI{}
+func TestAttackPotentialLevel(t *testing.T) {
+	e := AttackPotential{}
 	atk := func(exp, kn, op, eq string) *model.AttackPotential {
 		return &model.AttackPotential{Expertise: exp, Knowledge: kn, Opportunity: op, Equipment: eq}
 	}
@@ -49,22 +49,22 @@ func TestETSILevel(t *testing.T) {
 	}
 	for _, c := range cases {
 		if got := e.Score(c.threat).Level; got != c.want {
-			t.Errorf("%s: ETSI.Score().Level = %q, want %q", c.name, got, c.want)
+			t.Errorf("%s: AttackPotential.Score().Level = %q, want %q", c.name, got, c.want)
 		}
 	}
 }
 
 // The derived likelihood must be surfaced, not discarded: an easy attack
 // (sum 0) bands to "high", a hard one to "low".
-func TestETSILikelihoodSurfaced(t *testing.T) {
+func TestAttackPotentialLikelihoodSurfaced(t *testing.T) {
 	atk := func(exp, kn, op, eq string) *model.AttackPotential {
 		return &model.AttackPotential{Expertise: exp, Knowledge: kn, Opportunity: op, Equipment: eq}
 	}
-	easy := ETSI{}.Score(model.Threat{Impact: "high", Attack: atk("layman", "public", "unlimited", "standard")})
+	easy := AttackPotential{}.Score(model.Threat{Impact: "high", Attack: atk("layman", "public", "unlimited", "standard")})
 	if easy.Likelihood != "high" {
 		t.Errorf("easy attack: want derived likelihood high, got %q", easy.Likelihood)
 	}
-	hard := ETSI{}.Score(model.Threat{Impact: "high", Attack: atk("expert", "critical", "difficult", "bespoke")})
+	hard := AttackPotential{}.Score(model.Threat{Impact: "high", Attack: atk("expert", "critical", "difficult", "bespoke")})
 	if hard.Likelihood != "low" {
 		t.Errorf("hard attack: want derived likelihood low, got %q", hard.Likelihood)
 	}
@@ -111,18 +111,18 @@ func TestEvaluate(t *testing.T) {
 	}
 }
 
-func TestScore_ETSIMethod(t *testing.T) {
+func TestScore_AttackPotentialMethod(t *testing.T) {
 	p := &model.Project{
-		RiskPolicy: model.RiskPolicy{Method: "etsi-tvra", Set: true},
+		RiskPolicy: model.RiskPolicy{Method: "attack-potential", Set: true},
 		Threats: []model.Threat{
-			{ID: "etsi", Impact: "high",
+			{ID: "ap", Impact: "high",
 				Attack: &model.AttackPotential{Expertise: "layman", Knowledge: "public", Opportunity: "unlimited", Equipment: "standard"}},
 			{ID: "noattack", Severity: "low"}, // no attack block → severity fallback
 		},
 	}
 	got := Evaluate(p)
-	if got["etsi"].Level != "critical" {
-		t.Errorf("etsi-scored: want critical, got %q", got["etsi"].Level)
+	if got["ap"].Level != "critical" {
+		t.Errorf("attack-potential-scored: want critical, got %q", got["ap"].Level)
 	}
 	if got["noattack"].Level != "low" {
 		t.Errorf("no attack block: want severity fallback low, got %q", got["noattack"].Level)

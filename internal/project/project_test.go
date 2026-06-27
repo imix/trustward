@@ -173,7 +173,7 @@ threats:
 	// later file's risk-policy must be ignored (first wins)
 	writeFile(t, dir, "extra.yaml", `
 risk-policy:
-  method: etsi-tvra
+  method: attack-potential
   accept: [low, medium]
 `)
 

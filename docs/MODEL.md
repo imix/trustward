@@ -98,7 +98,7 @@ Only treated as threat list when value is a YAML sequence (not a mapping). List 
 - `treatment` — risk treatment decision: `mitigate` \| `accept` \| `transfer` \| `avoid` (string, optional)
 - `owner` — who signed off the treatment decision (string, optional)
 - `decided` — ISO date of the treatment sign-off (string, optional)
-- `attack` — ETSI attack-potential factors, used by the `etsi-tvra` method (object, optional):
+- `attack` — attack-potential factors, used by the `attack-potential` method (object, optional):
   - `expertise` — `layman` \| `proficient` \| `expert` \| `multiple-experts`
   - `knowledge` — `public` \| `restricted` \| `sensitive` \| `critical`
   - `opportunity` — `unlimited` \| `easy` \| `moderate` \| `difficult` \| `none`
@@ -109,9 +109,9 @@ Only treated as threat list when value is a YAML sequence (not a mapping). List 
 
 How the risk level is computed depends on the `risk-policy` method:
 - `qualitative` — from `likelihood` × `impact`.
-- `etsi-tvra` — the `attack` factors sum to an attack potential (ETSI TS 102 165-1
-  clause 6.6.3), which maps inversely to a likelihood (harder attack → less
-  likely), then combined with `impact`.
+- `attack-potential` — the `attack` factors sum to an attack potential (the
+  Common Criteria / ETSI TS 102 165-1 clause 6.6.3 scale), which maps inversely
+  to a likelihood (harder attack → less likely), then combined with `impact`.
 
 When the method's inputs are absent or invalid, the tool falls back to `severity`.
 
@@ -119,7 +119,7 @@ When the method's inputs are absent or invalid, the tool falls back to `severity
 A single object (CRA / prEN 40000-1-2 §6.3):
 - `method` — scoring profile (string):
   - `qualitative` (default) — 3×3 likelihood×impact matrix → `low`/`medium`/`high`/`critical`
-  - `etsi-tvra` — ETSI attack-potential; reads each threat's `attack` block
+  - `attack-potential` — reads each threat's `attack` block (Common Criteria / ETSI factor scale)
 - `accept` — risk levels acceptable without treatment (list of strings)
 - `review` — the risk monitoring and review cadence: how often risks are
   reviewed, by whom, and what triggers an out-of-cycle review (string, optional).

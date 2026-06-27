@@ -84,7 +84,7 @@ func TestCheck_RiskFieldsValidated(t *testing.T) {
 
 func TestCheck_AttackFactorsValidated(t *testing.T) {
 	p := &model.Project{
-		RiskPolicy: model.RiskPolicy{Method: "etsi-tvra", Accept: []string{"low"}, Set: true},
+		RiskPolicy: model.RiskPolicy{Method: "attack-potential", Accept: []string{"low"}, Set: true},
 		Threats: []model.Threat{{
 			ID:        "threat-x",
 			Impact:    "high",
@@ -103,7 +103,7 @@ func TestCheck_AttackFactorsValidated(t *testing.T) {
 func TestCheck_UnknownRiskPolicyMethodRejected(t *testing.T) {
 	// A typo'd method must be rejected, not silently scored as qualitative.
 	p := &model.Project{
-		RiskPolicy: model.RiskPolicy{Method: "etsi-tvra-typo", Set: true},
+		RiskPolicy: model.RiskPolicy{Method: "attack-potential-typo", Set: true},
 		Threats:    []model.Threat{{ID: "threat-x", Severity: "low"}},
 	}
 	if !issueMentioning(validate.Check(p), "risk-policy", "method") {

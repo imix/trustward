@@ -113,14 +113,16 @@ type Threat struct {
 	Treatment    string           `yaml:"treatment"`  // mitigate|accept|transfer|avoid
 	Owner        string           `yaml:"owner"`      // who signed off the treatment decision
 	Decided      string           `yaml:"decided"`    // ISO sign-off date
-	Attack       *AttackPotential `yaml:"attack"`     // ETSI attack-potential factors (etsi-tvra method)
+	Attack       *AttackPotential `yaml:"attack"`     // attacker factors for the attack-potential method
 	Mitigations  []string         `yaml:"mitigations"`
 	ResidualRisk string           `yaml:"residualRisk"`
 	Notes        string           `yaml:"notes"`
 }
 
-// AttackPotential holds the ETSI TS 102 165-1 attacker factors (clause 6.6.3),
-// used by the etsi-tvra scoring method to derive a likelihood.
+// AttackPotential holds the four attacker factors (expertise, knowledge,
+// opportunity, equipment) of the attack-potential scale shared by Common
+// Criteria (ISO/IEC 18045) and ETSI TS 102 165-1 (clause 6.6.3), used by the
+// attack-potential scoring method to derive a likelihood.
 type AttackPotential struct {
 	Expertise   string `yaml:"expertise"`
 	Knowledge   string `yaml:"knowledge"`

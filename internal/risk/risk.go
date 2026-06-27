@@ -1,13 +1,14 @@
 // Package risk computes a risk level for a threat. The scoring method is
 // pluggable via Scorer: a qualitative likelihood×impact matrix (default) or an
-// ETSI attack-potential profile, selected by the project's risk-policy method.
+// attack-potential profile (the Common Criteria / ETSI factor scale), selected
+// by the project's risk-policy method.
 package risk
 
 import "github.com/imix/trustward/internal/model"
 
 // Score is one threat's computed risk: the level, and the likelihood that
 // produced it — declared (qualitative) or derived from attack potential
-// (etsi-tvra). An empty Level means the inputs were absent or invalid, so the
+// (attack-potential). An empty Level means the inputs were absent or invalid, so the
 // caller can fall back to the threat's severity.
 type Score struct {
 	Level      string
@@ -24,7 +25,7 @@ type Scorer interface {
 var rank = map[string]int{"low": 1, "medium": 2, "high": 3}
 
 // level is the shared likelihood×impact matrix → {low,medium,high,critical}.
-// Both the qualitative and ETSI methods end here once they have a likelihood.
+// Both the qualitative and attack-potential methods end here once they have a likelihood.
 func level(likelihood, impact string) string {
 	l, ok1 := rank[likelihood]
 	i, ok2 := rank[impact]
@@ -71,8 +72,8 @@ func scorerFor(method string) Scorer {
 	switch method {
 	case "", "qualitative":
 		return Qualitative{}
-	case "etsi-tvra":
-		return ETSI{}
+	case "attack-potential":
+		return AttackPotential{}
 	default:
 		return nil
 	}

@@ -12,7 +12,7 @@ Data, configuration, firmware, or capability that has value and could be targete
 
 ## Attack Potential
 
-A measure of how hard an attack is, per ETSI TS 102 165-1 (TVRA) clause 6.6.3: the sum of four attacker factors — expertise, knowledge, opportunity, and equipment. Used by the `etsi-tvra` scoring method, where a higher attack potential maps to a *lower* [Likelihood](#likelihood) (a harder attack is less likely).
+A measure of how hard an attack is: the sum of four attacker factors — expertise, knowledge, opportunity, and equipment — on the attack-potential scale shared by Common Criteria (ISO/IEC 18045) and ETSI TS 102 165-1 (clause 6.6.3). Used by the `attack-potential` scoring method, where a higher attack potential maps to a *lower* [Likelihood](#likelihood) (a harder attack is less likely).
 
 ---
 
