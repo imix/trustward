@@ -109,6 +109,7 @@ It verifies that every cross-reference resolves to a declared ID:
 - trust zone `members` → components
 - data flow `connects` → exactly two components; data flow `assets` → assets
 - control `ref` → a control catalog requirement
+- reference `location` (when a local path) → an existing file; and every reference declares a `version`
 - every entity has an `id`, and IDs are unique within each entity kind
 
 Requirement `satisfies` entries are deliberately **not** checked — they may point at external standards (e.g. `iec-62443-sl2::SR-1.1`) that are not part of the model.
@@ -130,7 +131,7 @@ trustward.sh render
 If `report.tmpl` exists in your model directory, trustward uses it instead of the built-in. It's a [Go `text/template`](https://pkg.go.dev/text/template) file. Customise it for:
 
 - **Branding** — theme, fonts, logo treatment, and title-block styling (all in the Quarto front matter).
-- **Document framing** — trustward owns the threat model and risk assessment; the report is one artifact in a larger conformance set. The system design, asset inventory, and other documents live elsewhere. Add a "Related documents" section that **links out** to them rather than reproducing them here — keeping a single source of truth for each and avoiding drift.
+- **Document framing** — trustward owns the threat model and risk assessment; the report is one artifact in a larger conformance set. The system design, asset inventory, and other documents live elsewhere. Add a "Related documents" section that **links out** to them rather than reproducing them here — keeping a single source of truth for each and avoiding drift. For documents whose *version* matters, declare them in the model's `references:` (see [docs/MODEL.md](docs/MODEL.md)) instead of hand-listing them: the built-in template renders a References table with each pinned version, and `validate` checks they resolve — so the report can't cite a stale version.
 
 ### Two starting points: the default, or a standard-shaped shell
 
@@ -154,6 +155,7 @@ The template receives:
 | `.Date` | string | Release date |
 | `.Version` | string | SemVer |
 | `.Description` | string | System description |
+| `.References` | `[]Reference` | External versioned docs — variant register, requirements, standards, SBOM |
 | `.Threats` | `[]Threat` | All threats |
 | `.Controls` | `map[string]string` | Control ID → title (for inline references) |
 | `.ControlList` | `[]Control` | Full control objects (for a controls section) |

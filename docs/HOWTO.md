@@ -117,6 +117,19 @@ its `covered` / `gap` rows. A baseline catalog can map onto external standards v
 `satisfies:` (those targets aren't validated — they may name requirements you don't load).
 Skip all of this for an internal model.
 
+## External references: when to pin them
+
+Declare a `reference` when the model leans on an external document whose *version*
+matters — a variant register mapping product SKUs to the model's profiles, a
+requirements spec, a standard, an SBOM. Each entry pins the version the assessment
+was issued against, and the report renders them in a References table sourced from
+the model, so a cited version can't drift from prose typed into the template.
+`validate` fails a reference with no `version`, or a local `location:` that doesn't
+resolve.
+
+Skip it for a model that depends on nothing external. Reach for it the moment your
+report needs to say "valid against X v1.2" — let the data say it, not the template.
+
 ## Splitting into files
 
 One `system.yaml` holds an entire model and is fine until it's unwieldy. Split via

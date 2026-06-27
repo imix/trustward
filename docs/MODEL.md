@@ -15,6 +15,20 @@ List of objects with:
 - `path` — relative path to a YAML file (string)
 - `version` — expected SemVer of the imported file (string)
 
+#### `references:` — external versioned documents
+List of objects with:
+- `id` — unique identifier (string, kebab-case)
+- `title` — human-readable document name (string)
+- `version` — the version this model was issued against (string, required)
+- `location` — a local path (resolved and checked at load) or a URL (string)
+
+External documents the model depends on — a variant register, requirements
+spec, standard, or SBOM. The report renders them in a References table with
+their pinned versions, so a cited version can't drift from a hand-typed copy.
+A local `location` must resolve on disk at load (the same treatment `imports:`
+gets); a URL is recorded but not fetched. `validate` requires every reference
+to pin a `version`.
+
 #### `system:` — system metadata (first occurrence wins)
 - `id` — unique identifier (string, kebab-case)
 - `title` — human-readable name (string)
@@ -152,6 +166,7 @@ List of objects with:
 | `controls[].ref` | `catalog-id::req-id` | `catalog.id` + `catalog.requirements[].id` |
 | `threats[].ref` | `catalog-id::pattern-id` | `threat-catalog.id` + `threat-catalog.patterns[].id` |
 | `catalog.requirements[].satisfies[]` | `catalog-id::req-id` | another `catalog.id` + `requirements[].id` |
+| `references[].location` | local path | an existing file on disk (URLs exempt) |
 
 ---
 
@@ -161,7 +176,7 @@ The loader merges content from all imported files depth-first. Behavior by key:
 - `system:` — first occurrence wins; subsequent declarations ignored
 - `risk-policy:` — first occurrence wins; subsequent declarations ignored
 - `version:`, `imports:` — file-level metadata only
-- All list fields (`assets:`, `objectives:`, `components:`, `trust-zones:`, `data-flows:`, `threats:`, `controls:`) — merged by appending
+- All list fields (`assets:`, `objectives:`, `components:`, `trust-zones:`, `data-flows:`, `threats:`, `controls:`, `references:`) — merged by appending
 - `catalog:` — each file contributes at most one catalog; all catalogs are collected into the project
 - `threat-catalog:` — same as above; threat refs are resolved after the full graph is loaded
 
