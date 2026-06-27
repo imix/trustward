@@ -172,6 +172,8 @@ func Check(p *model.Project) []Issue {
 		func(t model.Threat) []string { return t.Mitigations }, controls)
 	resolveRefs(c, "threat", p.Threats, threatID, "violates", "objective",
 		func(t model.Threat) []string { return t.Violates }, objectives)
+	resolveRefs(c, "threat", p.Threats, threatID, "backed-by", "threat catalog pattern",
+		func(t model.Threat) []string { return t.BackedBy }, patterns)
 
 	// Arity: a data flow connects exactly two components.
 	for _, f := range p.DataFlows {

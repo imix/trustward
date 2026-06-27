@@ -102,6 +102,9 @@ The CIA-scale objectives the assets must uphold.
 {{ if .Asset -}}
 | **Asset** | `{{ .Asset }}` |
 {{ end -}}
+{{ if .BackedBy -}}
+| **Backed by** | {{ join .BackedBy ", " }} |
+{{ end -}}
 | **Severity** | {{ .Severity }} |
 | **Residual Risk** | {{ .ResidualRisk }} |
 {{ if .Mitigations -}}

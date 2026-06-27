@@ -91,6 +91,7 @@ Only treated as threat list when value is a YAML sequence (not a mapping). List 
 - `target` — component ID or data-flow ID being attacked (string)
 - `asset` — asset ID at risk (string, optional)
 - `violates` — cybersecurity objectives this threat violates (list of objective IDs, optional)
+- `backed-by` — threat-catalog patterns this threat traces to, in `catalog-id::pattern-id` form, e.g. an EMB3D `emb3d::TID-119` or ATT&CK technique (list of strings, optional). Unlike `ref`, this is **citation only** — it carries no field inheritance and a threat may cite many. Each entry must resolve to a loaded threat-catalog pattern.
 - `severity` — e.g. `low`, `medium`, `high`, `critical` (string)
 - `likelihood` — `low` \| `medium` \| `high`; with `impact`, drives the computed risk level (string, optional)
 - `impact` — `low` \| `medium` \| `high` (string, optional)
@@ -165,6 +166,7 @@ List of objects with:
 | `threats[].mitigations[]` | control IDs | `controls[].id` |
 | `controls[].ref` | `catalog-id::req-id` | `catalog.id` + `catalog.requirements[].id` |
 | `threats[].ref` | `catalog-id::pattern-id` | `threat-catalog.id` + `threat-catalog.patterns[].id` |
+| `threats[].backed-by[]` | `catalog-id::pattern-id` | `threat-catalog.id` + `threat-catalog.patterns[].id` |
 | `catalog.requirements[].satisfies[]` | `catalog-id::req-id` | another `catalog.id` + `requirements[].id` |
 | `references[].location` | local path | an existing file on disk (URLs exempt) |
 

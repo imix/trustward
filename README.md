@@ -104,7 +104,7 @@ trustward.sh validate
 
 It verifies that every cross-reference resolves to a declared ID:
 
-- threat `target` → a component or data flow; threat `asset` → an asset; threat `mitigations` → controls; threat `ref` → a threat catalog pattern
+- threat `target` → a component or data flow; threat `asset` → an asset; threat `mitigations` → controls; threat `ref` and `backed-by` → threat catalog patterns
 - component `assets` → assets; component `controls` → controls
 - trust zone `members` → components
 - data flow `connects` → exactly two components; data flow `assets` → assets
@@ -162,7 +162,7 @@ The template receives:
 | `.Diagram` | string | Rendered Mermaid diagram source |
 | `.PDF` | bool | Whether PDF output was requested |
 
-Built-in template functions: `controlTitle <controls> <id>`, `join <sep> <list>`, `upper <string>`, `trim <string>`.
+Built-in template functions: `controlTitle <controls> <id>`, `join <list> <sep>`, `upper <string>`, `trim <string>`.
 
 The template's front matter is regular Quarto config — theme, table of contents, Mermaid theme, and output formats are all controlled there.
 

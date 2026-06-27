@@ -76,6 +76,15 @@ Keep threats **inline** by default. Factor a reusable pattern into a `threat-cat
 across many components or models and you want to define its title/severity/notes once.
 For a single system, inline is simpler.
 
+A `threat-catalog` serves a second, distinct purpose: a citable **taxonomy** — EMB3D,
+ATT&CK, CWE — your threats trace to with `backed-by: [emb3d::TID-119, …]`. Unlike `ref:`,
+`backed-by` carries no field inheritance and a threat may cite *many* — it's traceability,
+not reuse. Reach for it when an assessor or standard expects the mapping (EMB3D for an
+embedded device, say); skip it for an internal model. List only the patterns you actually
+cite — the catalog grows with your mapping, not the whole published standard. Keeping the
+taxonomy as a catalog (not prose `[TID-…]` tags) means a typo'd reference fails `validate`
+instead of passing silently.
+
 ## Scoring method: `qualitative` vs `etsi-tvra`
 
 - **`qualitative`** (the default) — you state `likelihood` and `impact` (low/medium/high)

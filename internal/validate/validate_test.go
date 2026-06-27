@@ -42,6 +42,26 @@ func TestCheck_ReferenceNeedsVersion(t *testing.T) {
 	}
 }
 
+func TestCheck_BackedByMustResolveToPattern(t *testing.T) {
+	p := &model.Project{
+		ThreatCatalogs: []model.ThreatCatalog{{
+			ID:       "emb3d",
+			Patterns: []model.ThreatPattern{{ID: "TID-119"}},
+		}},
+		Threats: []model.Threat{{
+			ID:       "threat-x",
+			BackedBy: []string{"emb3d::TID-119", "emb3d::TID-911"}, // second is a typo
+		}},
+	}
+	issues := validate.Check(p)
+	if !issueMentioning(issues, "threat-x", "TID-911", "backed-by") {
+		t.Errorf("want unresolved backed-by issue, got %v", issues)
+	}
+	if issueMentioning(issues, "TID-119") {
+		t.Errorf("a real TID must not be flagged: %v", issues)
+	}
+}
+
 func TestCheck_RiskFieldsValidated(t *testing.T) {
 	p := &model.Project{
 		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},

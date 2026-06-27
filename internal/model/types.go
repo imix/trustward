@@ -105,7 +105,8 @@ type Threat struct {
 	Type         string           `yaml:"type"`
 	Asset        string           `yaml:"asset"`
 	Target       string           `yaml:"target"`
-	Violates     []string         `yaml:"violates"` // cybersecurity objectives this threat violates
+	Violates     []string         `yaml:"violates"`  // cybersecurity objectives this threat violates
+	BackedBy     []string         `yaml:"backed-by"` // threat-catalog patterns (e.g. EMB3D TIDs) this threat traces to — citation, no inheritance
 	Severity     string           `yaml:"severity"`
 	Likelihood   string           `yaml:"likelihood"` // qualitative: low|medium|high
 	Impact       string           `yaml:"impact"`     // qualitative: low|medium|high
