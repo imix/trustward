@@ -63,18 +63,50 @@ func (c *checker) add(subject, message string) {
 	c.issues = append(c.issues, Issue{subject, message})
 }
 
+// oneOf wraps an optional scalar reference as a 0-or-1 element slice, so a
+// single-valued field flows through resolveRefs like a list one. "" means unset.
+func oneOf(s string) []string {
+	if s == "" {
+		return nil
+	}
+	return []string{s}
+}
+
+// resolveRefs reports any value in each item's reference field that does not
+// resolve to a declared id in target. noun labels the field in the message
+// ("member", "mitigation"); targetLabel names what it must resolve to
+// ("component"). The single place the resolve-or-report rule lives — every
+// cross-reference edge in Check is one call.
+func resolveRefs[E any](c *checker, kind string, items []E, id func(E) string, noun, targetLabel string, refs func(E) []string, target map[string]bool) {
+	for _, it := range items {
+		subject := fmt.Sprintf("%s %q", kind, id(it))
+		for _, r := range refs(it) {
+			if !target[r] {
+				c.add(subject, fmt.Sprintf("%s %q does not match any %s", noun, r, targetLabel))
+			}
+		}
+	}
+}
+
 // Check returns all referential-integrity issues in the project.
 // A clean project yields no issues.
 func Check(p *model.Project) []Issue {
 	c := &checker{}
 
-	assets := idSet(c, "asset", p.Assets, func(a model.Asset) string { return a.ID })
-	objectives := idSet(c, "objective", p.Objectives, func(o model.Objective) string { return o.ID })
-	controls := idSet(c, "control", p.Controls, func(ct model.Control) string { return ct.ID })
-	components := idSet(c, "component", p.Components, func(cp model.Component) string { return cp.ID })
-	flows := idSet(c, "data flow", p.DataFlows, func(f model.DataFlow) string { return f.ID })
+	assetID := func(a model.Asset) string { return a.ID }
+	compID := func(cp model.Component) string { return cp.ID }
+	flowID := func(f model.DataFlow) string { return f.ID }
+	threatID := func(t model.Threat) string { return t.ID }
+	controlID := func(ct model.Control) string { return ct.ID }
+	objID := func(o model.Objective) string { return o.ID }
+
+	assets := idSet(c, "asset", p.Assets, assetID)
+	objectives := idSet(c, "objective", p.Objectives, objID)
+	controls := idSet(c, "control", p.Controls, controlID)
+	components := idSet(c, "component", p.Components, compID)
+	flows := idSet(c, "data flow", p.DataFlows, flowID)
 	idSet(c, "trust zone", p.TrustZones, func(z model.TrustZone) string { return z.ID })
-	idSet(c, "threat", p.Threats, func(t model.Threat) string { return t.ID })
+	idSet(c, "threat", p.Threats, threatID)
 	idSet(c, "reference", p.References, func(r model.Reference) string { return r.ID })
 
 	patterns := make(map[string]bool)
@@ -104,81 +136,47 @@ func Check(p *model.Project) []Issue {
 		}
 	}
 
-	for _, a := range p.Assets {
-		subject := fmt.Sprintf("asset %q", a.ID)
-		for _, o := range a.Objectives {
-			if !objectives[o] {
-				c.add(subject, fmt.Sprintf("objective %q does not match any objective", o))
-			}
-		}
+	// A threat target resolves against components and data flows alike.
+	targetable := make(map[string]bool, len(components)+len(flows))
+	for id := range components {
+		targetable[id] = true
+	}
+	for id := range flows {
+		targetable[id] = true
 	}
 
-	for _, cp := range p.Components {
-		subject := fmt.Sprintf("component %q", cp.ID)
-		for _, a := range cp.Assets {
-			if !assets[a] {
-				c.add(subject, fmt.Sprintf("asset %q does not match any asset", a))
-			}
-		}
-		for _, ctrl := range cp.Controls {
-			if !controls[ctrl] {
-				c.add(subject, fmt.Sprintf("control %q does not match any control", ctrl))
-			}
-		}
-	}
+	// Every cross-reference edge in the model, one line each — mirrors the
+	// "Cross-reference rules" table in docs/MODEL.md. resolveRefs holds the
+	// single resolve-or-report rule.
+	resolveRefs(c, "asset", p.Assets, assetID, "objective", "objective",
+		func(a model.Asset) []string { return a.Objectives }, objectives)
+	resolveRefs(c, "component", p.Components, compID, "asset", "asset",
+		func(cp model.Component) []string { return cp.Assets }, assets)
+	resolveRefs(c, "component", p.Components, compID, "control", "control",
+		func(cp model.Component) []string { return cp.Controls }, controls)
+	resolveRefs(c, "trust zone", p.TrustZones, func(z model.TrustZone) string { return z.ID }, "member", "component",
+		func(z model.TrustZone) []string { return z.Members }, components)
+	resolveRefs(c, "data flow", p.DataFlows, flowID, "connects", "component",
+		func(f model.DataFlow) []string { return f.Connects }, components)
+	resolveRefs(c, "data flow", p.DataFlows, flowID, "asset", "asset",
+		func(f model.DataFlow) []string { return f.Assets }, assets)
+	resolveRefs(c, "control", p.Controls, controlID, "ref", "catalog requirement",
+		func(ct model.Control) []string { return oneOf(ct.Ref) }, requirements)
+	resolveRefs(c, "threat", p.Threats, threatID, "ref", "threat catalog pattern",
+		func(t model.Threat) []string { return oneOf(t.Ref) }, patterns)
+	resolveRefs(c, "threat", p.Threats, threatID, "target", "component or data flow",
+		func(t model.Threat) []string { return oneOf(t.Target) }, targetable)
+	resolveRefs(c, "threat", p.Threats, threatID, "asset", "asset",
+		func(t model.Threat) []string { return oneOf(t.Asset) }, assets)
+	resolveRefs(c, "threat", p.Threats, threatID, "mitigation", "control",
+		func(t model.Threat) []string { return t.Mitigations }, controls)
+	resolveRefs(c, "threat", p.Threats, threatID, "violates", "objective",
+		func(t model.Threat) []string { return t.Violates }, objectives)
 
-	for _, z := range p.TrustZones {
-		subject := fmt.Sprintf("trust zone %q", z.ID)
-		for _, m := range z.Members {
-			if !components[m] {
-				c.add(subject, fmt.Sprintf("member %q does not match any component", m))
-			}
-		}
-	}
-
+	// Arity: a data flow connects exactly two components.
 	for _, f := range p.DataFlows {
-		subject := fmt.Sprintf("data flow %q", f.ID)
 		if len(f.Connects) != 2 {
-			c.add(subject, fmt.Sprintf("must connect exactly 2 components, has %d", len(f.Connects)))
-		}
-		for _, cp := range f.Connects {
-			if !components[cp] {
-				c.add(subject, fmt.Sprintf("connects %q does not match any component", cp))
-			}
-		}
-		for _, a := range f.Assets {
-			if !assets[a] {
-				c.add(subject, fmt.Sprintf("asset %q does not match any asset", a))
-			}
-		}
-	}
-
-	for _, ctrl := range p.Controls {
-		if ctrl.Ref != "" && !requirements[ctrl.Ref] {
-			c.add(fmt.Sprintf("control %q", ctrl.ID), fmt.Sprintf("ref %q does not match any catalog requirement", ctrl.Ref))
-		}
-	}
-
-	for _, t := range p.Threats {
-		subject := fmt.Sprintf("threat %q", t.ID)
-		if t.Ref != "" && !patterns[t.Ref] {
-			c.add(subject, fmt.Sprintf("ref %q does not match any threat catalog pattern", t.Ref))
-		}
-		if t.Target != "" && !components[t.Target] && !flows[t.Target] {
-			c.add(subject, fmt.Sprintf("target %q does not match any component or data flow", t.Target))
-		}
-		if t.Asset != "" && !assets[t.Asset] {
-			c.add(subject, fmt.Sprintf("asset %q does not match any asset", t.Asset))
-		}
-		for _, m := range t.Mitigations {
-			if !controls[m] {
-				c.add(subject, fmt.Sprintf("mitigation %q does not match any control", m))
-			}
-		}
-		for _, o := range t.Violates {
-			if !objectives[o] {
-				c.add(subject, fmt.Sprintf("violates %q does not match any objective", o))
-			}
+			c.add(fmt.Sprintf("data flow %q", f.ID), fmt.Sprintf("must connect exactly 2 components, has %d", len(f.Connects)))
 		}
 	}
 
