@@ -36,18 +36,7 @@ func typeColor(t string) colorSpec {
 // grouped by trust zone, with labelled edges for each data flow.
 func DataFlow(proj *model.Project) string {
 	var b strings.Builder
-
-	compByID := make(map[string]model.Component, len(proj.Components))
-	for _, c := range proj.Components {
-		compByID[c.ID] = c
-	}
-
-	nodeLabel := func(id string) string {
-		if c, ok := compByID[id]; ok && c.Title != "" {
-			return c.Title
-		}
-		return id
-	}
+	idx := model.NewIndex(proj)
 
 	b.WriteString("flowchart TD\n")
 
@@ -57,7 +46,7 @@ func DataFlow(proj *model.Project) string {
 		zoneID := toMermaidID(zone.ID)
 		b.WriteString(fmt.Sprintf("    subgraph %s[\"%s\"]\n", zoneID, zone.Title))
 		for _, memberID := range zone.Members {
-			b.WriteString(fmt.Sprintf("        %s[\"%s\"]\n", toMermaidID(memberID), nodeLabel(memberID)))
+			b.WriteString(fmt.Sprintf("        %s[\"%s\"]\n", toMermaidID(memberID), idx.Label(memberID)))
 			inZone[memberID] = true
 		}
 		b.WriteString("    end\n")
@@ -67,7 +56,7 @@ func DataFlow(proj *model.Project) string {
 
 	for _, comp := range proj.Components {
 		if !inZone[comp.ID] {
-			b.WriteString(fmt.Sprintf("    %s[\"%s\"]\n", toMermaidID(comp.ID), nodeLabel(comp.ID)))
+			b.WriteString(fmt.Sprintf("    %s[\"%s\"]\n", toMermaidID(comp.ID), idx.Label(comp.ID)))
 		}
 	}
 

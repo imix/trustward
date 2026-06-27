@@ -84,56 +84,10 @@ type reportData struct {
 // Report renders the risk-management report using the provided template.
 // Pass DefaultTemplate() or a template compiled with ParseTemplate().
 func Report(proj *model.Project, tmpl *template.Template, diagram string, pdf bool) (string, error) {
-	controls := make(map[string]string, len(proj.Controls))
-	for _, c := range proj.Controls {
-		controls[c.ID] = c.Title
-	}
+	idx := model.NewIndex(proj)
 
-	controlComponents := make(map[string][]string)
-	for _, comp := range proj.Components {
-		for _, cid := range comp.Controls {
-			controlComponents[cid] = append(controlComponents[cid], comp.ID)
-		}
-	}
-
-	reqControls := make(map[string][]string)
-	for _, c := range proj.Controls {
-		if c.Ref != "" {
-			reqControls[c.Ref] = append(reqControls[c.Ref], c.ID)
-		}
-	}
-
-	assetComponents := make(map[string][]string)
-	for _, comp := range proj.Components {
-		for _, assetID := range comp.Assets {
-			assetComponents[assetID] = append(assetComponents[assetID], comp.ID)
-		}
-	}
-
-	objectiveAssets := make(map[string][]string)
-	for _, a := range proj.Assets {
-		for _, oid := range a.Objectives {
-			objectiveAssets[oid] = append(objectiveAssets[oid], a.ID)
-		}
-	}
-
-	// A threat target is a component or a data flow — title lookup must cover both.
-	targetTitles := make(map[string]string, len(proj.Components)+len(proj.DataFlows))
-	for _, c := range proj.Components {
-		t := c.Title
-		if t == "" {
-			t = c.ID
-		}
-		targetTitles[c.ID] = t
-	}
-	for _, f := range proj.DataFlows {
-		t := f.Title
-		if t == "" {
-			t = f.ID
-		}
-		targetTitles[f.ID] = t
-	}
-
+	// Threats group by target in encounter order — a presentation concern, so
+	// it stays here; the Index supplies the target's display title.
 	var targetOrder []string
 	targetSeen := make(map[string]bool)
 	threatMap := make(map[string][]model.Threat)
@@ -146,13 +100,9 @@ func Report(proj *model.Project, tmpl *template.Template, diagram string, pdf bo
 	}
 	groups := make([]ThreatGroup, 0, len(targetOrder))
 	for _, targetID := range targetOrder {
-		title := targetTitles[targetID]
-		if title == "" {
-			title = targetID
-		}
 		groups = append(groups, ThreatGroup{
 			TargetID:    targetID,
-			TargetTitle: title,
+			TargetTitle: idx.TargetTitle(targetID),
 			Threats:     threatMap[targetID],
 		})
 	}
@@ -160,9 +110,9 @@ func Report(proj *model.Project, tmpl *template.Template, diagram string, pdf bo
 	data := reportData{
 		References:          proj.References,
 		AssetList:           proj.Assets,
-		AssetComponents:     assetComponents,
+		AssetComponents:     idx.ComponentsByAsset(),
 		ObjectiveList:       proj.Objectives,
-		ObjectiveAssets:     objectiveAssets,
+		ObjectiveAssets:     idx.AssetsByObjective(),
 		ThreatGroups:        groups,
 		ThreatList:          proj.Threats,
 		RiskEval:            risk.Evaluate(proj),
@@ -170,12 +120,12 @@ func Report(proj *model.Project, tmpl *template.Template, diagram string, pdf bo
 		RiskAccept:          proj.RiskPolicy.Accept,
 		RiskReview:          proj.RiskPolicy.Review,
 		RiskPolicySet:       proj.RiskPolicy.Set,
-		Controls:            controls,
+		Controls:            idx.ControlTitles(),
 		ControlList:         proj.Controls,
-		ControlComponents:   controlComponents,
+		ControlComponents:   idx.ComponentsByControl(),
 		ComponentList:       proj.Components,
 		CatalogList:         proj.Catalogs,
-		RequirementControls: reqControls,
+		RequirementControls: idx.ControlsByRequirement(),
 		Diagram:             strings.TrimRight(diagram, "\n"),
 		PDF:                 pdf,
 	}
