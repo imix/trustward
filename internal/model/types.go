@@ -5,6 +5,16 @@ type Version struct {
 	ReleaseDate string `yaml:"releasedate"`
 }
 
+// Reference is an external, versioned document the model depends on — a variant
+// register, requirements spec, standard, SBOM. Local locations are resolved at
+// load; the report renders each with the version it was issued against.
+type Reference struct {
+	ID       string `yaml:"id"`
+	Title    string `yaml:"title"`
+	Version  string `yaml:"version"`
+	Location string `yaml:"location"` // local path (resolved at load) or URL
+}
+
 type SystemMeta struct {
 	ID          string `yaml:"id"`
 	Title       string `yaml:"title"`

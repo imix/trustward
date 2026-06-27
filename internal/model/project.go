@@ -4,6 +4,7 @@ package model
 // Any file in the import graph can contribute to any of these fields.
 type Project struct {
 	Version        Version
+	References     []Reference
 	SystemMeta     *SystemMeta
 	Assets         []Asset
 	Objectives     []Objective

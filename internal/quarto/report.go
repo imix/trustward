@@ -59,6 +59,7 @@ type reportData struct {
 	Version             string
 	Description         string
 	Logo                string
+	References          []model.Reference // external versioned docs (variant register, requirements, standards, SBOM)
 	AssetList           []model.Asset
 	AssetComponents     map[string][]string  // asset id → component ids that hold it
 	ObjectiveList       []model.Objective    // cybersecurity objectives (§6.5.2)
@@ -157,6 +158,7 @@ func Report(proj *model.Project, tmpl *template.Template, diagram string, pdf bo
 	}
 
 	data := reportData{
+		References:          proj.References,
 		AssetList:           proj.Assets,
 		AssetComponents:     assetComponents,
 		ObjectiveList:       proj.Objectives,

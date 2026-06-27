@@ -26,6 +26,22 @@ func issueMentioning(issues []validate.Issue, wants ...string) bool {
 	return false
 }
 
+func TestCheck_ReferenceNeedsVersion(t *testing.T) {
+	p := &model.Project{
+		References: []model.Reference{
+			{ID: "variants", Title: "Variant register", Version: "1.0", Location: "./variants.md"},
+			{ID: "reqs", Title: "Requirements", Location: "https://example.com/reqs"}, // no version
+		},
+	}
+	issues := validate.Check(p)
+	if !issueMentioning(issues, "reqs", "version") {
+		t.Errorf("want missing-version issue for reqs, got %v", issues)
+	}
+	if issueMentioning(issues, "variants", "version") {
+		t.Errorf("variants pins a version; should not be flagged: %v", issues)
+	}
+}
+
 func TestCheck_RiskFieldsValidated(t *testing.T) {
 	p := &model.Project{
 		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},

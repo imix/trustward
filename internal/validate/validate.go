@@ -75,6 +75,7 @@ func Check(p *model.Project) []Issue {
 	flows := idSet(c, "data flow", p.DataFlows, func(f model.DataFlow) string { return f.ID })
 	idSet(c, "trust zone", p.TrustZones, func(z model.TrustZone) string { return z.ID })
 	idSet(c, "threat", p.Threats, func(t model.Threat) string { return t.ID })
+	idSet(c, "reference", p.References, func(r model.Reference) string { return r.ID })
 
 	patterns := make(map[string]bool)
 	for _, cat := range p.ThreatCatalogs {
@@ -93,6 +94,13 @@ func Check(p *model.Project) []Issue {
 		if o.Type != "" && !validObjectiveTypes[o.Type] {
 			c.add(fmt.Sprintf("objective %q", o.ID),
 				fmt.Sprintf("type %q is not a CIA-scale property (confidentiality/integrity/availability/authenticity/accountability)", o.Type))
+		}
+	}
+
+	// External references must pin a version — that pin is what the report cites.
+	for _, r := range p.References {
+		if r.ID != "" && r.Version == "" {
+			c.add(fmt.Sprintf("reference %q", r.ID), "missing version")
 		}
 	}
 

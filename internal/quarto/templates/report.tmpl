@@ -24,6 +24,17 @@ format:
 ### System Overview
 
 {{ .Description }}
+{{ if .References }}
+### References
+
+External documents this assessment depends on, at the versions it was issued against. Reissue the report when any of these is bumped.
+
+| ID | Document | Version | Location |
+|---|---|---|---|
+{{ range .References -}}
+| `{{ .ID }}` | {{ .Title }} | {{ .Version }} | `{{ .Location }}` |
+{{ end }}
+{{ end -}}
 {{ if .ComponentList }}
 ### Components
 

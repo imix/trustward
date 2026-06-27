@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/imix/trustward/internal/model"
 	"gopkg.in/yaml.v3"
@@ -111,6 +112,24 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 		}
 	}
 
+	// External references merge across files; local locations must resolve on
+	// disk now (relative to this file), the same treatment imports get.
+	if n, ok := nodes["references"]; ok {
+		var refs []model.Reference
+		if err := n.Decode(&refs); err != nil {
+			return fmt.Errorf("%s: references: %w", name, err)
+		}
+		dir := filepath.Dir(abs)
+		for _, r := range refs {
+			if localPath(r.Location) {
+				if _, err := os.Stat(filepath.Join(dir, r.Location)); err != nil {
+					return fmt.Errorf("%s: reference %q: location does not resolve: %w", name, r.ID, err)
+				}
+			}
+		}
+		p.References = append(p.References, refs...)
+	}
+
 	// Follow imports relative to this file's directory.
 	if n, ok := nodes["imports"]; ok {
 		var imports []rawImport
@@ -126,6 +145,12 @@ func loadGraph(p *model.Project, path string, visited map[string]bool) error {
 	}
 
 	return nil
+}
+
+// localPath reports whether a reference location is a filesystem path (checked
+// at load) rather than a URL (left for the reader to follow).
+func localPath(loc string) bool {
+	return loc != "" && !strings.HasPrefix(loc, "http://") && !strings.HasPrefix(loc, "https://")
 }
 
 // mergeList decodes a list-valued top-level key, if present, and appends it to
