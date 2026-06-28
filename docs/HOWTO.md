@@ -141,6 +141,36 @@ resolve.
 Skip it for a model that depends on nothing external. Reach for it the moment your
 report needs to say "valid against X v1.2" — let the data say it, not the template.
 
+## Machine-readable output: when
+
+`report` emits Quarto source by default. Pass `--format json` to get the **risk
+register** instead — a flat JSON array, one entry per threat, each joining the
+threat's identifying fields with its computed evaluation (`level`, `likelihood`,
+`accepted`, `treated`, `open`) and its treatment decision (`treatment`, `owner`,
+`decided`, `mitigations`, `residualRisk`):
+
+```
+trustward report --format json > register.json
+```
+
+It shares `risk.Evaluate` with the rendered report and the CRA gate, so the
+levels and `open` flags can't drift from what the document says. It's pure Go —
+no Quarto or Docker — so it runs in a bare CI container where the full report
+can't.
+
+To **block a pipeline on open risks, use `validate`** — it applies the same CRA
+gate and exits non-zero, no jq needed. Reach for `--format json` when the
+pipeline wants its *own* predicate over the computed register: a residual-level
+ceiling stricter than the model's `accept:`, counts for a Slack alarm,
+warn-but-don't-block, or a cross-version diff. Computing those in jq beats
+reimplementing the scoring matrix there.
+
+```
+trustward report --format json | jq -e 'all(.[]; .residualRisk != "critical")'
+```
+
+Skip it if the rendered report and `validate`'s exit code are all you need.
+
 ## Splitting into files
 
 One `system.yaml` holds an entire model and is fine until it's unwieldy. Split via

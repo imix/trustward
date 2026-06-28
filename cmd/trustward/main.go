@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/imix/trustward/internal/mermaid"
 	"github.com/imix/trustward/internal/project"
 	"github.com/imix/trustward/internal/quarto"
+	"github.com/imix/trustward/internal/risk"
 	"github.com/imix/trustward/internal/validate"
 )
 
@@ -40,6 +42,7 @@ func main() {
 		RunE:  runReport,
 	}
 	reportCmd.Flags().Bool("pdf", false, "include PDF format in the Quarto front matter (requires Chrome headless)")
+	reportCmd.Flags().String("format", "qmd", "output format: qmd (Quarto source) or json (machine-readable risk register)")
 
 	templateCmd := &cobra.Command{
 		Use:   "template",
@@ -80,6 +83,19 @@ func runReport(cmd *cobra.Command, _ []string) error {
 	proj, err := project.Load(".")
 	if err != nil {
 		return fmt.Errorf("loading project: %w", err)
+	}
+	switch format, _ := cmd.Flags().GetString("format"); format {
+	case "qmd":
+		// fall through to the Quarto path below
+	case "json":
+		out, err := json.MarshalIndent(risk.Register(proj), "", "  ")
+		if err != nil {
+			return fmt.Errorf("encoding register: %w", err)
+		}
+		fmt.Println(string(out))
+		return nil
+	default:
+		return fmt.Errorf("unknown format %q: want qmd or json", format)
 	}
 	tmpl, err := loadReportTemplate()
 	if err != nil {
