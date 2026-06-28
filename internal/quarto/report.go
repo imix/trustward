@@ -23,6 +23,20 @@ var funcMap = template.FuncMap{
 		return "`" + id + "`"
 	},
 	"upper": strings.ToUpper,
+	// riskColor maps a risk level to a heatmap fill for the matrix cells.
+	"riskColor": func(level string) string {
+		switch level {
+		case "low":
+			return "#c8e6c9"
+		case "medium":
+			return "#fff9c4"
+		case "high":
+			return "#ffcc80"
+		case "critical":
+			return "#ef9a9a"
+		}
+		return "#ffffff"
+	},
 }
 
 // DefaultTemplateContent returns the raw bytes of the built-in report
@@ -67,6 +81,7 @@ type reportData struct {
 	ThreatGroups        []ThreatGroup        // threats grouped by target, in encounter order
 	ThreatList          []model.Threat       // flat list, for the risk register
 	RiskEval            map[string]risk.Eval // threat id → computed score + evaluation vs acceptance criteria
+	RiskMatrix          risk.Matrix          // likelihood×impact heatmap of threat counts
 	RiskMethod          string               // scoring method (risk-policy)
 	RiskAccept          []string             // accepted risk levels (risk-policy)
 	RiskReview          string               // monitoring and review cadence (§6.7)
@@ -116,6 +131,7 @@ func Report(proj *model.Project, tmpl *template.Template, diagram string, pdf bo
 		ThreatGroups:        groups,
 		ThreatList:          proj.Threats,
 		RiskEval:            risk.Evaluate(proj),
+		RiskMatrix:          risk.MatrixOf(proj),
 		RiskMethod:          proj.RiskPolicy.Method,
 		RiskAccept:          proj.RiskPolicy.Accept,
 		RiskReview:          proj.RiskPolicy.Review,

@@ -116,6 +116,24 @@ The CIA-scale objectives the assets must uphold.
 {{ end -}}
 {{ end -}}
 {{ if .RiskPolicySet }}
+### Risk Matrix
+
+Threat count by likelihood (rows) × impact (columns), shaded by the resulting
+risk level. Worst case is top-right.
+
+```{=html}
+<table>
+<thead><tr><th>Likelihood \ Impact</th>{{ range .RiskMatrix.Impacts }}<th>{{ . | upper }}</th>{{ end }}</tr></thead>
+<tbody>
+{{- range .RiskMatrix.Rows }}
+<tr><th>{{ .Likelihood | upper }}</th>{{ range .Cells }}<td style="background:{{ riskColor .Level }};text-align:center">{{ if .Threats }}{{ len .Threats }}{{ end }}</td>{{ end }}</tr>
+{{- end }}
+</tbody>
+</table>
+```
+{{ if .RiskMatrix.Unplaced }}
+{{ len .RiskMatrix.Unplaced }} threat(s) scored by severity fallback, not placed on the matrix: {{ range $i, $id := .RiskMatrix.Unplaced }}{{ if $i }}, {{ end }}`{{ $id }}`{{ end }}.
+{{ end }}
 ### Risk Register
 
 Risk estimation and evaluation per threat. **Open** risks are above the
