@@ -1,0 +1,310 @@
+---
+title: "Threat Model — {{ .Title }}"
+subtitle: "Version {{ .Version }}"
+date: "{{ .Date }}"
+number-sections: true  # Pandoc/Quarto numbers the sections
+format:
+  html:
+    toc: true
+    theme: cosmo
+{{ if .PDF -}}
+  pdf:
+    toc: true
+{{ end -}}
+---
+
+{{ if .Logo }}
+![]({{ .Logo }}){width=320px fig-align="center"}
+
+{{ end -}}
+{{ "{{< pagebreak >}}" }}
+
+> **Document control** — Classification: _fill in_ · Owner: _fill in_ · Status: _draft_.
+> Replace this block and every _fill in_ prompt below before issuing the report.
+>
+> Sections follow prEN 40000-1-2 §6; numbering is automatic, so add your own headings freely.
+
+## Product Context
+
+### Scope and boundary
+
+**In scope** — the product and its interfaces: reader, controller, request-to-exit,
+management server, and the cloud/RDPS portal (RDPS is part of the product per §6.2).
+
+**Out of scope** — external systems the product interfaces with but does not include;
+only the interface is assessed, not their internals:
+
+- **[OOS-1]** Fire alarm panel — trusted to assert release [ENV-6]; only the override input is in scope.
+- **[OOS-2]** Building IP network — shared infrastructure [ENV-3]; treated as an untrusted conduit.
+- **[OOS-3]** Door, frame, and mechanical lock body — _scope call: in if part of the product (in-handle), out if procured separately_; the electric-release interface [FN-2] is in scope regardless.
+
+**Applies to** — this model covers the product across a range of hardware revisions
+and software versions, not a single build. It holds while each component stays within
+its assessed range; a component that moves outside it is re-assessed. The exact
+revision a deployed unit runs is pinned per build in the release manifest (component →
+repo → revision), not here.
+
+- Door Reader — _fill in: HW rev ≥ …; SW … line (earlier revs differ on the fieldbus PHY)_.
+- _Other components — fill in only where a tighter range than the product baseline applies._
+
+{{ if .References }}
+**References** — external documents this assessment depends on, at the versions it was issued
+against. The SKU → profile mapping lives in the variant register; this report's component
+profiles are valid only against the version pinned here. Reissue the report when any is bumped.
+
+| ID | Document | Version | Location |
+|---|---|---|---|
+{{ range .References -}}
+| `{{ .ID }}` | {{ .Title }} | {{ .Version }} | `{{ .Location }}` |
+{{ end }}
+{{ end -}}
+### Product intended purpose and reasonable foreseeable use
+
+The system controls physical passage through doors in a commercial office
+building by validating a credential presented at a door-mounted reader,
+releasing or holding the door, and recording the attempt.
+
+- **[PUR-1]** Intended use: only a holder of a valid, currently-enrolled
+  credential may pass a controlled door; every grant and denial is logged.
+- **[PUR-2]** Facility admins enrol and revoke credentials and review the
+  access log; they are the only privileged operators.
+- **[PUR-3]** Foreseeable use: doors also release on a request-to-exit sensor
+  from the secure side, and on fire-alarm override — both bypass the credential
+  check by design (life-safety takes precedence over access control).
+- **[PUR-4]** Foreseeable misuse: tailgating — an unauthorised person follows an
+  authorised one through a door that is already released.
+- **[PUR-5]** Foreseeable misuse: a lost or stolen credential is presented
+  before the admin revokes it.
+
+### Product functions
+
+- **[FN-1]** Validates a presented credential and decides grant or deny against
+  its access rights.
+- **[FN-2]** Releases the door on a grant for a bounded unlock window, then
+  re-secures it.
+- **[FN-3]** Releases the door without a credential check on a request-to-exit
+  signal and on fire-alarm override.
+- **[FN-4]** Records every grant, denial, and door event for audit.
+- **[FN-5]** Enrols and revokes credentials and sets access rights (which
+  credential opens which door, and when).
+- **[FN-6]** Decides grant/deny locally at each door so access continues during
+  loss of connectivity.
+- **[FN-7]** Authenticates administrators before any enrolment, revocation, or
+  log access.
+
+### Product operational environment
+
+- **[ENV-1]** Readers are mounted on the *unsecured* side of each door, physically
+  reachable by anyone in semi-public corridors, lobbies, and entrances.
+- **[ENV-2]** The door-release path on the secure side (lock wiring, exit sensor)
+  is assumed physically protected; the reader side is not.
+- **[ENV-3]** Components communicate over the building IP network, which is shared
+  with other building/IT systems and is **not** assumed trustworthy.
+- **[ENV-4]** Management is operated from a physically secured area (locked IT/comms
+  room) with restricted access.
+- **[ENV-5]** Remote management and updates traverse the public internet.
+- **[ENV-6]** The fire-alarm system is an external system trusted to assert door
+  release [FN-3]; the integrity of that signal is outside this product's control.
+- **[ENV-7]** Egress behaviour on power/connectivity loss is set per door:
+  fail-safe (release for free egress) on normal occupancy routes, fail-secure
+  (remain locked) where security or regulation requires. The choice per controlled
+  door is stated, not assumed.
+- **[ENV-8]** Power model is set per door, not shared: mains-wired doors vs.
+  self-contained battery locksets ("in handle") that operate independently of
+  building power — sets the availability threat (mains outage vs. battery
+  depletion / scheduled replacement).
+
+### Product user description
+
+- **[USR-1]** Facility admins — building-management staff who enrol/revoke
+  credentials, set access rights, and review logs [PUR-2]. Trusted but not security
+  specialists; the expected failure is misconfiguration (over-broad rights, slow
+  revocation [PUR-5]), not malice. Manage via a cloud portal, so [ENV-5] applies
+  to them (RDPS-dependent).
+- **[USR-2]** End users — staff who present a badge and nothing more [FN-1]. No
+  security training; predictable behaviour includes tailgating [PUR-4], lending or
+  sharing badges, and delayed reporting of a lost badge.
+- **[USR-3]** Installers / maintainers — contracted field technicians who commission
+  and service units [SC-4]. Transient physical access to door hardware; not direct
+  employees, so their trust is bounded.
+- **[USR-4]** Security / IT operations — monitor system health and respond to access
+  alerts. On a smaller site this role may be absent, leaving alerts unwatched.
+
+### Lifecycle context
+
+Non-operational phases the product passes through, covered lightly here (per EN
+40000 Clause 7 — secure development, production/distribution, and decommissioning).
+A phase graduates to its own threat model if it warrants one; until then a threat
+references these tags the same way it references `[ENV]`.
+
+#### Design & development
+
+- **[DEV-1]** The product is threat-modelled (this document) and code-reviewed
+  before release.
+- **[DEV-2]** Keys and credentials are generated with vetted libraries; no secrets
+  are hardcoded in firmware.
+- **[DEV-3]** Third-party and OSS components are tracked in an SBOM and monitored
+  for known vulnerabilities.
+
+#### Production & distribution
+
+- **[SC-1]** Readers, controllers, and locksets are built by third-party OEMs and
+  integrated by the manufacturer.
+- **[SC-2]** Firmware is signed at the factory; the signing key is held by the
+  manufacturer and not present on shipped units.
+- **[SC-3]** Units ship through third-party logistics to site; tamper-evident
+  packaging is _fill in: applied / not applied_.
+- **[SC-4]** Field installers commission units and set the initial configuration
+  and enrolment; they are contracted, not direct employees.
+
+#### Decommissioning & destruction
+
+- **[EOL-1]** Decommissioned units and their stored credential/access data and keys
+  are wiped or physically destroyed before disposal or reuse.
+- **[EOL-2]** Removed units and their credentials are revoked centrally so a
+  recovered unit cannot be reused.
+
+### Components
+{{ if .ComponentList }}
+| Component | Type | Controls |
+|---|---|---|
+{{ range .ComponentList -}}
+| {{ if .Title }}{{ .Title }}{{ else }}`{{ .ID }}`{{ end }} | {{ .Type }} | {{ range $i, $c := .Controls }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $c }}{{ end }} |
+{{ end }}
+{{ end -}}
+### Data Flow Diagram
+
+```{mermaid}
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#dce8f5', 'primaryBorderColor': '#5b8db8', 'lineColor': '#555555', 'secondaryColor': '#b8d4f0', 'tertiaryColor': '#c8e8c0', 'clusterBkg': '#b8d4f0', 'clusterBorder': '#5b8db8'}}}%%
+{{ .Diagram }}
+```
+
+{{ if .RiskPolicySet }}
+## Risk Acceptance Criteria and Methodology
+
+Risk is scored using the **{{ if .RiskMethod }}{{ .RiskMethod }}{{ else }}qualitative{{ end }}** method. A risk is **accepted** without treatment when its level is one of: {{ range $i, $l := .RiskAccept }}{{ if $i }}, {{ end }}`{{ $l }}`{{ end }}{{ if not .RiskAccept }}(none defined){{ end }}. Any risk above the acceptance criteria must record a treatment decision (mitigate / accept / transfer / avoid) and an owner.
+
+{{ end -}}
+## Risk Assessment
+
+### Asset and Cybersecurity Objective Identification
+{{ if .AssetList }}
+#### Assets
+
+| ID | Type | Classification | Hosted on | Description |
+|---|---|---|---|---|
+{{ range .AssetList -}}
+| `{{ .ID }}` | {{ .Type }} | {{ .Classification }} | {{ range $i, $c := (index $.AssetComponents .ID) }}{{ if $i }}, {{ end }}`{{ $c }}`{{ end }} | {{ .Description | trim }} |
+{{ end }}
+{{ end -}}
+{{ if .ObjectiveList }}
+#### Cybersecurity Objectives
+
+The CIA-scale objectives the assets must uphold.
+
+| ID | Title | Type | Upheld by | Description |
+|---|---|---|---|---|
+{{ range .ObjectiveList -}}
+| `{{ .ID }}` | {{ .Title }} | {{ .Type }} | {{ range $i, $a := (index $.ObjectiveAssets .ID) }}{{ if $i }}, {{ end }}`{{ $a }}`{{ end }} | {{ .Description | trim }} |
+{{ end }}
+{{ end -}}
+### Threat Identification
+{{ range .ThreatGroups }}
+#### {{ .TargetTitle }}
+
+| Severity | ID | Title | Residual Risk |
+|---|---|---|---|
+{{ range .Threats -}}
+| {{ .Severity }} | [`{{ .ID }}`](#{{ .ID }}) | {{ .Title }} | {{ .ResidualRisk }} |
+{{ end }}
+{{ range .Threats }}
+##### {{ .Title }} {#{{ .ID }}}
+
+| Field | Value |
+|---|---|
+| **ID** | `{{ .ID }}` |
+{{ if .Ref -}}
+| **Pattern** | `{{ .Ref }}` |
+{{ end -}}
+| **Type** | {{ .Type }} |
+| **Target** | `{{ .Target }}` |
+{{ if .Asset -}}
+| **Asset** | `{{ .Asset }}` |
+{{ end -}}
+{{ if .BackedBy -}}
+| **Backed by** | {{ join .BackedBy ", " }} |
+{{ end -}}
+| **Severity** | {{ .Severity }} |
+| **Residual Risk** | {{ .ResidualRisk }} |
+{{ if .Mitigations -}}
+| **Mitigations** | {{ range $i, $m := .Mitigations }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $m }}{{ end }} |
+{{ else -}}
+| **Mitigations** | none |
+{{ end }}
+{{ .Notes }}
+{{ end -}}
+{{ end -}}
+{{ if .RiskPolicySet }}
+### Risk Matrix
+
+Threat count by likelihood (rows) × impact (columns), shaded by the resulting
+risk level. Worst case is top-right.
+
+```{=html}
+<table>
+<thead><tr><th>Likelihood \ Impact</th>{{ range .RiskMatrix.Impacts }}<th>{{ . | upper }}</th>{{ end }}</tr></thead>
+<tbody>
+{{- range .RiskMatrix.Rows }}
+<tr><th>{{ .Likelihood | upper }}</th>{{ range .Cells }}<td style="background:{{ riskColor .Level }};text-align:center">{{ if .Threats }}{{ len .Threats }}{{ end }}</td>{{ end }}</tr>
+{{- end }}
+</tbody>
+</table>
+```
+{{ if .RiskMatrix.Unplaced }}
+{{ len .RiskMatrix.Unplaced }} threat(s) scored by severity fallback, not placed on the matrix: {{ range $i, $id := .RiskMatrix.Unplaced }}{{ if $i }}, {{ end }}`{{ $id }}`{{ end }}.
+{{ end }}
+### Risk Register
+
+Risk estimation and evaluation per threat. **Open** risks are above the
+acceptance criteria with no treatment recorded.
+
+| Threat | Target | Likelihood | Impact | Risk | Evaluation | Treatment | Owner | Decided | Residual |
+|---|---|---|---|---|---|---|---|---|---|
+{{ range .ThreatList -}}
+{{- $e := index $.RiskEval .ID -}}
+| [`{{ .ID }}`](#{{ .ID }}) | `{{ .Target }}` | {{ $e.Likelihood }} | {{ .Impact }} | {{ $e.Level }} | {{ if $e.Accepted }}accepted{{ else if $e.Treated }}treated{{ else }}**open**{{ end }} | {{ .Treatment }} | {{ .Owner }} | {{ .Decided }} | {{ .ResidualRisk }} |
+{{ end }}
+{{ end -}}
+{{ if or .CatalogList .ControlList }}
+## Risk Treatment
+{{ range .CatalogList }}
+{{ $cat := . -}}
+### Compliance Evidence: {{ .Title }}
+
+Control coverage of {{ .Title }} requirements — evidence of risk treatment.
+A **gap** is a requirement with no implementing control.
+
+| Requirement | Title | Status | Control |
+|---|---|---|---|
+{{ range .Requirements -}}
+{{- $key := printf "%s::%s" $cat.ID .ID -}}
+{{- $controls := index $.RequirementControls $key -}}
+| `{{ .ID }}` | {{ .Title }} | {{ if $controls }}covered{{ else }}**gap**{{ end }} | {{ range $i, $c := $controls }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $c }}{{ end }} |
+{{ end }}
+{{ end -}}
+{{ if .ControlList }}
+### Controls
+
+| ID | Title | Implemented by | Evidence | Description |
+|---|---|---|---|---|
+{{ range .ControlList -}}
+| `{{ .ID }}` | {{ .Title }} | {{ range $i, $c := (index $.ControlComponents .ID) }}{{ if $i }}, {{ end }}`{{ $c }}`{{ end }} | {{ range $i, $e := .Evidence }}{{ if $i }}, {{ end }}{{ $e }}{{ end }} | {{ .Description | trim }} |
+{{ end }}
+{{ end -}}
+{{ end -}}
+## Risk Monitoring and Review
+
+{{ if .RiskPolicySet }}{{ .RiskReview | trim }}
+
+{{ end -}}
+> _Fill in: review triggers and cadence beyond the policy statement, and who signs off on residual risk._

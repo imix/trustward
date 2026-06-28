@@ -1,0 +1,266 @@
+version:
+  semver: 0.1.0
+  releasedate: 2026-06-27
+
+references:
+  - id: variants
+    title: Variant register
+    version: "1.0"
+    location: ./variants.md
+
+risk-policy:
+  method: attack-potential
+  accept: [low]
+  review: >
+    This assessment is reviewed at least annually and at every minor or major
+    release. An out-of-cycle review is triggered by: a security incident or
+    field vulnerability report affecting the controller, a lockset, or the
+    cloud platform; new threat intelligence on the credential, firmware, or
+    fieldbus paths; a design change altering a component's properties or a
+    data-flow's trust-zone crossing; a new product variant whose mapping to
+    an existing profile is not already recorded in the variant register
+    [variants]; a new version of a pinned external reference [variants] — the
+    variant register, a requirements spec, or the EMB3D source — superseding
+    the one this assessment was issued against; or any previously accepted risk
+    moving above the acceptance criteria (the CRA gate fails validation until it
+    is re-treated). The Security Lead owns the review and signs off residual risk;
+    the Product Owner signs off any risk left accepted above the criteria
+    (prEN 40000-1-2 §6.7).
+
+system:
+  id: access-control
+  title: Access Control System
+  description: >
+    Physical door access control for a commercial office building: validates a
+    credential at the door, releases or holds the door, and logs the attempt [PUR-1].
+
+imports:
+  - path: ./threats.yaml
+    version: "0.1.0"
+
+objectives:
+  - id: obj-confidentiality
+    title: Confidentiality
+    type: confidentiality
+    description: Secrets and personal data are not disclosed.
+  - id: obj-integrity
+    title: Integrity
+    type: integrity
+    description: Authorization data, logs, and firmware are not altered.
+  - id: obj-availability
+    title: Availability
+    type: availability
+    description: Legitimate access and egress work when needed.
+  - id: obj-authenticity
+    title: Authenticity
+    type: authenticity
+    description: Credentials, firmware, and parties are genuine.
+  - id: obj-accountability
+    title: Accountability
+    type: accountability
+    description: Access actions are attributable and auditable.
+
+assets:
+  - id: authz-data
+    type: config
+    classification: confidential
+    objectives: [obj-integrity]
+    description: >
+      Access rights and revocation lists, and the grant/deny decision they drive
+      [FN-1][FN-5][FN-6]. Integrity is paramount — wrong or stale rights grant
+      unauthorized entry or wrongfully deny access [PUR-5].
+
+  - id: credential
+    type: credential
+    classification: restricted
+    objectives: [obj-confidentiality, obj-authenticity]
+    description: >
+      The badge secret used to authenticate a holder at the door [FN-1][USR-2].
+      Confidentiality and authenticity — a cloned or stolen credential impersonates
+      a legitimate holder.
+
+  - id: admin-access
+    type: credential
+    classification: restricted
+    objectives: [obj-confidentiality, obj-authenticity]
+    description: >
+      Administrative authentication and management sessions to the server and portal
+      [FN-7][USR-1]. Compromise yields full control of the system.
+
+  - id: audit-log
+    type: user-data
+    classification: confidential
+    objectives: [obj-integrity, obj-accountability]
+    description: >
+      The record of grants, denials, and door events [FN-4]. Integrity and
+      availability for accountability — tampering hides misuse, loss destroys forensics.
+
+  - id: controller-fw
+    type: firmware
+    classification: restricted
+    objectives: [obj-integrity, obj-authenticity]
+    description: >
+      The controller firmware — the trusted substrate every function [FN-1]–[FN-7]
+      runs on [SC-2][DEV-2]. Integrity and authenticity — malicious firmware subverts
+      all door logic.
+
+  - id: door-release
+    type: function
+    classification: restricted
+    objectives: [obj-availability, obj-integrity]
+    description: >
+      Correct and available actuation of passage [FN-2][FN-3][ENV-7]. Safety-relevant:
+      a spurious release admits an intruder; a failed release can trap occupants or
+      deny egress.
+
+components:
+  - id: reader
+    title: Door Reader
+    type: device
+    assets: [credential]
+    properties:
+      # Custom fieldbus: proprietary reader↔controller link, not OSDP/Wiegand. A fieldbus
+      # node has a microcontroller (small firmware surface), and "proprietary" pulls in
+      # TID-401 (undocumented protocol features) on top of the cleartext/replay gap —
+      # TID-406/407/408 — unless it's shown to encrypt+authenticate. Backs threat-sniff-credential.
+      protocol: "custom fieldbus"
+    description: Captures the credential at the door; mounted on the unsecured side [ENV-1].
+
+  - id: controller
+    title: Door Controller
+    type: device
+    assets: [authz-data, credential, controller-fw, audit-log, door-release]
+    properties:
+      # Gates the controller's app-software EMB3D surface: a local web/commissioning UI
+      # pulls in TID-310/311/316/319/321/322; none keeps them out of scope.
+      mgmt-interface: "local-web"
+    description: >
+      Decides grant/deny locally and drives the lock [FN-1][FN-6]; holds the access
+      rights and revocation data synced from the server. Secure side of the door [ENV-2].
+
+  - id: lock
+    title: Electric Lock / Strike
+    type: device
+    assets: [door-release]
+    description: >
+      Releases or secures the door on the controller's signal [FN-2]; fail-safe/fail-secure
+      per door [ENV-7]; mains or battery [ENV-8]. Scope call [OOS-3]. Dumb-actuator profile —
+      no firmware, no EMB3D surface of its own.
+
+  - id: lock-battery-standalone
+    title: Standalone Battery Lockset
+    type: device
+    assets: [door-release, credential]
+    properties:
+      # Smart + battery + offline profile: covers the in-handle SKUs.
+      intelligence: smart        # onboard firmware → its own EMB3D device surface
+      power: battery             # independent of building power [ENV-8]
+      transport: offline         # decides locally; sync is intermittent
+      fail-mode: fail-secure     # mechanical key override on battery depletion
+    description: >
+      Self-contained in-handle lockset: reads the credential, decides, and actuates in one
+      battery unit [ENV-8]. Availability is gated by battery depletion, not mains; offline
+      decisioning widens the stale-revocation window [PUR-5].
+
+  - id: lock-connected
+    title: Connected Lockset
+    type: device
+    assets: [door-release]
+    properties:
+      # Smart + mains + wired profile: networked locksets on a live link.
+      intelligence: smart        # onboard firmware → its own EMB3D device surface
+      power: mains               # mains / PoE
+      transport: wired           # live link to the controller [FN-2]
+      fail-mode: per-door        # fail-safe/fail-secure per door [ENV-7]
+    description: >
+      Networked lockset driven over a live link to the controller [FN-2]. Carries firmware and
+      a network stack, so unlike a dumb strike it has a device-level attack surface of its own.
+
+  - id: rex
+    title: Request-to-Exit Sensor
+    type: device
+    description: Asserts egress from the secure side, releasing without a credential check [FN-3].
+
+  - id: mgmt-server
+    title: Access Management Server
+    type: server
+    assets: [authz-data, credential, admin-access, audit-log]
+    description: Enrols/revokes credentials, sets access rights, holds the central audit log [FN-4][FN-5]; in a locked room [ENV-4].
+
+  - id: cloud-portal
+    title: Cloud Management Portal
+    type: service
+    assets: [admin-access]
+    description: RDPS portal admins use to manage the system over the internet [ENV-5][USR-1]; part of the product per §6.2.
+
+  - id: fire-panel
+    title: Fire Alarm Panel
+    type: external
+    description: External system trusted to assert emergency door release [ENV-6][FN-3]. Out of scope [OOS-1] — only the override interface is assessed.
+
+trust-zones:
+  - id: zone-door-unsecured
+    title: Door — Unsecured Side
+    description: Physically reachable public side of the door [ENV-1].
+    members: [reader]
+
+  - id: zone-door-secure
+    title: Door — Secure Side
+    description: Protected side; release path assumed physically protected [ENV-2].
+    members: [controller, lock, lock-battery-standalone, lock-connected, rex]
+
+  - id: zone-management
+    title: Management
+    description: Locked IT/comms room [ENV-4].
+    members: [mgmt-server]
+
+  - id: zone-cloud
+    title: Cloud (RDPS)
+    description: Internet-facing management portal [ENV-5].
+    members: [cloud-portal]
+
+  - id: zone-external
+    title: External Systems
+    description: Out-of-scope systems the product interfaces with [OOS-1].
+    members: [fire-panel]
+
+data-flows:
+  - id: flow-cred
+    title: Credential read
+    connects: [reader, controller]
+    assets: [credential]
+    description: Credential presented at the reader; crosses the unsecured→secure trust boundary [ENV-2].
+
+  - id: flow-release
+    title: Lock release
+    connects: [controller, lock]
+    assets: [door-release]
+    description: Grant/deny release signal [FN-2].
+
+  - id: flow-rex
+    title: Exit request
+    connects: [rex, controller]
+    description: Request-to-exit release [FN-3].
+
+  - id: flow-fire
+    title: Emergency override
+    connects: [fire-panel, controller]
+    description: Fire-alarm override release [ENV-6][FN-3]; boundary interface to an out-of-scope system [OOS-1].
+
+  - id: flow-sync
+    title: Rights & revocation sync
+    connects: [mgmt-server, controller]
+    assets: [authz-data]
+    description: Access rights and revocation data pushed to the controller [FN-6]; over the untrusted building network [ENV-3].
+
+  - id: flow-audit
+    title: Audit events
+    connects: [controller, mgmt-server]
+    assets: [audit-log]
+    description: Door/grant/deny events to the central log [FN-4]; over the building network [ENV-3].
+
+  - id: flow-admin
+    title: Cloud management
+    connects: [cloud-portal, mgmt-server]
+    assets: [admin-access, authz-data]
+    description: Admin management traffic over the internet [ENV-5].

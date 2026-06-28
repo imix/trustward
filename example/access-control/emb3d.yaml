@@ -1,0 +1,42 @@
+version:
+  semver: 0.1.0
+  releasedate: 2026-06-27
+
+# MITRE EMB3D threat reference as a citable catalog. Threats trace to these
+# patterns via `backed-by: [emb3d::TID-xxx]` — citation, not ref-inheritance.
+# Only the TIDs cited by this model are listed; add rows as the mapping grows.
+# Full descriptions, device properties, and mitigations: see the reference below.
+
+references:
+  - id: emb3d-src
+    title: MITRE EMB3D (threat reference)
+    version: "2.x"
+    location: https://emb3d.mitre.org/threats/
+
+threat-catalog:
+  id: emb3d
+  title: MITRE EMB3D
+  patterns:
+    - { id: TID-108, title: ROM/NVRAM Data Extraction or Modification }
+    - { id: TID-115, title: Firmware/Data Extraction via Hardware Interface }
+    - { id: TID-116, title: Latent Privileged Access Port }
+    - { id: TID-119, title: Latent Hardware Debug Port Allows Memory/Code Manipulation }
+    - { id: TID-201, title: Inadequate Bootloader Protection and Verification }
+    - { id: TID-211, title: Device Allows Unauthenticated Firmware Installation }
+    - { id: TID-213, title: Faulty FW/SW Update Integrity Verification }
+    - { id: TID-214, title: Secrets Extracted from Device Root of Trust }
+    - { id: TID-216, title: Firmware Update Rollbacks Allowed }
+    - { id: TID-225, title: Logs can be manipulated on the device }
+    - { id: TID-226, title: Device leaks security information in logs }
+    - { id: TID-310, title: Remotely Accessible Unauthenticated Services }
+    - { id: TID-311, title: Default Credentials }
+    - { id: TID-316, title: Incorrect Certificate Verification Allows Authentication Bypass }
+    - { id: TID-319, title: Cross Site Scripting (XSS) }
+    - { id: TID-321, title: HTTP Application Session Hijacking }
+    - { id: TID-322, title: Cross Site Request Forgery (CSRF) }
+    - { id: TID-401, title: Undocumented Protocol Features }
+    - { id: TID-404, title: Remotely Triggerable Deadlock/DoS }
+    - { id: TID-405, title: Network Stack Resource Exhaustion }
+    - { id: TID-406, title: Unauthorized Messages or Connections }
+    - { id: TID-407, title: Missing Message Replay Protection }
+    - { id: TID-408, title: Unencrypted Sensitive Data Communication }

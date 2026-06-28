@@ -69,7 +69,7 @@ From there, grow the model incrementally:
 
 Run `trustward.sh validate` as you go — it catches typos in cross-references (a threat mitigated by a control that doesn't exist, a flow connecting a renamed component) that would otherwise silently produce wrong reports.
 
-[docs/MODEL.md](docs/MODEL.md) documents every key. [example/fire-protection-system](example/fire-protection-system) is a complete model using imports, catalogs, threats, and controls. For *how far* to take each part — coarse vs detailed, and when — see [docs/HOWTO.md](docs/HOWTO.md).
+[docs/MODEL.md](docs/MODEL.md) documents every key. The [example/](example) directory has worked models: [fire-protection-system](example/fire-protection-system) is the complete baseline (imports, catalogs, threats, controls), and [access-control](example/access-control) is the advanced one (the opt-in risk layer with attack-potential scoring and the CRA gate, an EMB3D device pass, and external references). For *how far* to take each part — coarse vs detailed, and when — see [docs/HOWTO.md](docs/HOWTO.md).
 
 ## Commands
 
@@ -113,6 +113,14 @@ It verifies that every cross-reference resolves to a declared ID:
 - every entity has an `id`, and IDs are unique within each entity kind
 
 Requirement `satisfies` entries are deliberately **not** checked — they may point at external standards (e.g. `iec-62443-sl2::SR-1.1`) that are not part of the model.
+
+### `trustward.sh report --format json`
+
+Prints the **risk register** as JSON instead of a Quarto document — each threat joined with its computed evaluation (level, likelihood, accepted/treated/open) and treatment decision. Pure Go (no Quarto/Docker needed; works with the bare binary too), so it runs in a minimal CI container. Blocking CI on open risks is `validate`'s job; use the JSON when a pipeline needs its own predicate over the numbers — a residual ceiling, an alarm count, a cross-version diff.
+
+```bash
+trustward.sh report --format json > register.json
+```
 
 ### `trustward.sh template export`
 
@@ -205,3 +213,8 @@ Requires Go 1.25+. The Docker image also bundles [Quarto](https://quarto.org) fo
 - [docs/HOWTO.md](docs/HOWTO.md) — how to model: how far to take each part, and when
 - [docs/MODEL.md](docs/MODEL.md) — complete YAML schema reference
 - [docs/GLOSSARY.md](docs/GLOSSARY.md) — domain term definitions
+- [docs/adr/](docs/adr) — architecture decision records: why the model is shaped the way it is
+
+## AI assistance
+
+trustward — its code, documentation, and example models — was built with substantial help from AI coding tools. A human directed and reviewed the work, but treat it accordingly: it is a **modelling aid, not a certified compliance tool**. It does not by itself guarantee conformance with the CRA, prEN 40000-1-2, or any standard — the output is only as good as the model you write and the review you give it. Validate the results and have a qualified person sign off any assessment you rely on.

@@ -1,0 +1,428 @@
+version:
+  semver: 0.1.0
+  releasedate: 2026-06-27
+
+imports:
+  - path: ./emb3d.yaml
+    version: "0.1.0"
+
+# Functional (top-down) threats: derived from assets/objectives and the product
+# context. The EMB3D device pass traces threats to catalog TIDs via `backed-by`
+# (see emb3d.yaml). Scoring (likelihood/impact/treatment/owner) comes in §6.5.4.
+
+threats:
+  # ---- door-release (availability + integrity, safety) ----
+  - id: threat-tailgating
+    title: Tailgating through an open door
+    type: spoofing
+    target: reader
+    asset: door-release
+    violates: [obj-integrity]
+    severity: medium
+    impact: medium
+    attack: {expertise: layman, knowledge: public, opportunity: unlimited, equipment: standard}
+    treatment: accept
+    owner: Product Owner
+    decided: "2026-06-28"
+    residualRisk: high
+    notes: >
+      An unauthorised person follows an authorised one through a released door
+      [PUR-4]. The product cannot prevent it; a known limitation, likely accepted.
+
+  - id: threat-rex-spoof
+    title: Spoofed request-to-exit from the unsecured side
+    type: spoofing
+    target: rex
+    asset: door-release
+    violates: [obj-integrity]
+    severity: medium
+    impact: medium
+    attack: {expertise: proficient, knowledge: public, opportunity: easy, equipment: standard}
+    treatment: accept
+    owner: Product Owner
+    decided: "2026-06-28"
+    residualRisk: high
+    notes: >
+      Triggering the exit sensor from outside (tool through the gap, heat/PIR
+      stimulus) releases the door with no credential [FN-3].
+
+  - id: threat-fire-override-abuse
+    title: Forged fire-alarm override
+    type: spoofing
+    target: flow-fire
+    asset: door-release
+    violates: [obj-integrity, obj-availability]
+    severity: high
+    impact: high
+    attack: {expertise: proficient, knowledge: restricted, opportunity: moderate, equipment: standard}
+    treatment: accept
+    owner: Product Owner
+    decided: "2026-06-28"
+    residualRisk: high
+    notes: >
+      Asserting the override input [ENV-6][FN-3] releases doors fleet-wide without
+      credentials. The signal's integrity is outside the product [OOS-1], so only
+      the input interface can be hardened.
+
+  - id: threat-release-dos
+    title: Denial of access or egress
+    type: denial
+    target: controller
+    asset: door-release
+    violates: [obj-availability]
+    severity: medium
+    backed-by: [emb3d::TID-404, emb3d::TID-405]
+    impact: medium
+    attack: {expertise: proficient, knowledge: public, opportunity: moderate, equipment: standard}
+    treatment: accept
+    owner: Product Owner
+    decided: "2026-06-28"
+    residualRisk: medium
+    notes: >
+      Flooding the controller or severing the building network [ENV-3], or cutting
+      power [ENV-8], blocks legitimate entry — and egress where doors are fail-secure [ENV-7].
+      The device-comms paths are network-stack resource exhaustion and a remotely
+      triggerable deadlock.
+
+  - id: threat-egress-failsecure
+    title: Occupants trapped by a fail-secure door
+    type: denial
+    target: lock
+    asset: door-release
+    violates: [obj-availability]
+    severity: high
+    mitigations: [ctrl-fail-safe-egress]
+    treatment: mitigate
+    owner: Product Owner
+    decided: "2026-06-28"
+    residualRisk: low
+    notes: >
+      Safety hazard, not an attack: on power/comms loss a fail-secure door [ENV-7]
+      can trap occupants. Drives the per-door fail-safe/fail-secure decision.
+
+  # ---- credential (confidentiality + authenticity) ----
+  - id: threat-clone-credential
+    title: Cloned credential
+    type: spoofing
+    target: reader
+    asset: credential
+    violates: [obj-authenticity]
+    severity: high
+    impact: high
+    attack: {expertise: proficient, knowledge: public, opportunity: easy, equipment: specialised}
+    treatment: accept
+    owner: Product Owner
+    decided: "2026-06-28"
+    residualRisk: high
+    notes: >
+      A badge carrying no second factor [USR-2] is copied and replayed at a reader,
+      impersonating the holder.
+
+  - id: threat-stolen-credential
+    title: Stolen credential used before revocation
+    type: spoofing
+    target: reader
+    asset: credential
+    violates: [obj-authenticity]
+    severity: medium
+    impact: medium
+    attack: {expertise: layman, knowledge: public, opportunity: easy, equipment: standard}
+    treatment: accept
+    owner: Product Owner
+    decided: "2026-06-28"
+    residualRisk: high
+    notes: >
+      A lost or stolen credential opens doors until the admin revokes it [PUR-5];
+      the exposure window is the revocation latency.
+
+  - id: threat-sniff-credential
+    title: Credential captured on the reader link
+    type: disclosure
+    target: flow-cred
+    asset: credential
+    violates: [obj-confidentiality, obj-authenticity]
+    severity: medium
+    backed-by: [emb3d::TID-401, emb3d::TID-407, emb3d::TID-408]
+    impact: high
+    attack: {expertise: proficient, knowledge: restricted, opportunity: moderate, equipment: specialised}
+    treatment: accept
+    owner: Security Lead
+    decided: "2026-06-28"
+    residualRisk: high
+    notes: >
+      Tapping the reader→controller link [ENV-2] captures the credential for later
+      replay or cloning. The custom fieldbus likely carries it in clear, over an
+      undocumented protocol with no replay protection.
+
+  # ---- authz-data (integrity) ----
+  - id: threat-tamper-sync
+    title: Tampered rights or blocked revocation in transit
+    type: tampering
+    target: flow-sync
+    asset: authz-data
+    violates: [obj-integrity]
+    severity: high
+    backed-by: [emb3d::TID-406, emb3d::TID-407]
+    impact: high
+    attack: {expertise: proficient, knowledge: restricted, opportunity: moderate, equipment: specialised}
+    treatment: accept
+    owner: Security Lead
+    decided: "2026-06-28"
+    residualRisk: high
+    notes: >
+      Altering the rights/revocation push [FN-6] over the untrusted building network
+      [ENV-3] grants access or suppresses a revocation — by unauthenticated message
+      injection or replay of a stale pre-revocation sync over the reachable link.
+
+  - id: threat-stale-revocation
+    title: Revoked credential honoured while offline
+    type: tampering
+    target: controller
+    asset: authz-data
+    violates: [obj-integrity]
+    severity: medium
+    impact: medium
+    attack: {expertise: layman, knowledge: public, opportunity: moderate, equipment: standard}
+    treatment: accept
+    owner: Product Owner
+    decided: "2026-06-28"
+    residualRisk: high
+    notes: >
+      A controller deciding locally [FN-6] keeps honouring a revoked credential
+      until the next sync reaches it [PUR-5].
+
+  # ---- admin-access (confidentiality + authenticity) ----
+  - id: threat-admin-takeover
+    title: Admin account takeover via the portal
+    type: spoofing
+    target: cloud-portal
+    asset: admin-access
+    violates: [obj-authenticity, obj-confidentiality]
+    severity: critical
+    impact: high
+    attack: {expertise: proficient, knowledge: public, opportunity: easy, equipment: standard}
+    treatment: accept
+    owner: Security Lead
+    decided: "2026-06-28"
+    residualRisk: critical
+    notes: >
+      Phishing or credential stuffing against the internet-facing portal [ENV-5]
+      [USR-1] yields full control — enrol, revoke, open any door.
+
+  - id: threat-admin-misconfig
+    title: Over-broad rights or slow revocation by an admin
+    type: tampering
+    target: mgmt-server
+    asset: authz-data
+    violates: [obj-integrity]
+    severity: medium
+    treatment: accept
+    owner: Product Owner
+    decided: "2026-06-28"
+    residualRisk: medium
+    notes: >
+      Foreseeable misuse, not malice [USR-1]: an admin grants excessive access or
+      revokes too slowly [PUR-5].
+
+  # ---- audit-log (integrity + accountability) ----
+  - id: threat-log-tamper
+    title: Audit log altered or deleted
+    type: repudiation
+    target: mgmt-server
+    asset: audit-log
+    violates: [obj-integrity, obj-accountability]
+    severity: medium
+    impact: medium
+    attack: {expertise: proficient, knowledge: restricted, opportunity: moderate, equipment: standard}
+    treatment: accept
+    owner: Security Lead
+    decided: "2026-06-28"
+    residualRisk: medium
+    notes: >
+      A compromised admin or server tampers with the log [FN-4] to hide misuse.
+
+  - id: threat-audit-gap
+    title: Access events lost while disconnected
+    type: repudiation
+    target: controller
+    asset: audit-log
+    violates: [obj-accountability, obj-availability]
+    severity: low
+    notes: >
+      Events decided offline [FN-6] are lost if buffering fails before sync,
+      leaving gaps in accountability [FN-4].
+
+  # ---- controller-fw (integrity + authenticity) ----
+  - id: threat-malicious-fw
+    title: Malicious or unsigned firmware on the controller
+    type: tampering
+    target: controller
+    asset: controller-fw
+    violates: [obj-integrity, obj-authenticity]
+    severity: critical
+    backed-by: [emb3d::TID-201, emb3d::TID-211, emb3d::TID-213, emb3d::TID-214, emb3d::TID-216, emb3d::TID-225, emb3d::TID-226]
+    impact: high
+    attack: {expertise: expert, knowledge: sensitive, opportunity: difficult, equipment: specialised}
+    mitigations: [ctrl-signed-fw]
+    treatment: mitigate
+    owner: Security Lead
+    decided: "2026-06-28"
+    residualRisk: medium
+    notes: >
+      Attacker firmware [SC-2][DEV-2] gives full control of door logic — including rewriting
+      the locally buffered audit log. The failure modes span the firmware-trust path:
+      unauthenticated install, faulty update-integrity verification, rollback to a vulnerable
+      version, and weak boot / root-of-trust. Physical and debug-port attack paths are split
+      out as `threat-controller-debug`.
+
+  - id: threat-controller-debug
+    title: Firmware and secrets extracted via the controller's debug interface
+    type: tampering
+    target: controller
+    asset: controller-fw
+    violates: [obj-integrity, obj-authenticity, obj-confidentiality]
+    severity: high
+    backed-by: [emb3d::TID-108, emb3d::TID-115, emb3d::TID-116, emb3d::TID-119, emb3d::TID-214]
+    impact: high
+    attack: {expertise: expert, knowledge: sensitive, opportunity: difficult, equipment: specialised}
+    treatment: accept
+    owner: Security Lead
+    decided: "2026-06-28"
+    residualRisk: medium
+    notes: >
+      Transient physical access to a fielded controller [USR-3] through a latent debug or
+      privileged port allows reading or modifying memory and code, and extracting firmware
+      and stored secrets from NVRAM — keys, credential data, authz-data. The signing key is
+      not on the unit [SC-2], so this owns one controller and clones its badges rather than
+      forging fleet firmware; the secure side [ENV-2] bounds but does not remove the access.
+      One control answers it: lock/disable debug ports and encrypt secrets at rest.
+
+  - id: threat-controller-webui
+    title: Controller local management interface takeover
+    type: spoofing
+    target: controller
+    asset: admin-access
+    violates: [obj-authenticity, obj-confidentiality]
+    severity: high
+    backed-by: [emb3d::TID-310, emb3d::TID-311, emb3d::TID-316, emb3d::TID-319, emb3d::TID-321, emb3d::TID-322]
+    impact: high
+    attack: {expertise: proficient, knowledge: public, opportunity: easy, equipment: standard}
+    treatment: accept
+    owner: Security Lead
+    decided: "2026-06-28"
+    residualRisk: critical
+    notes: >
+      The controller exposes a local web/commissioning interface (mgmt-interface: local-web),
+      reachable over the building network [ENV-3]. Default or unchanged commissioning
+      credentials on a network-reachable service, session hijacking, CSRF, XSS, or
+      certificate-validation gaps yield admin control of this controller — alter its local
+      rights and open the door — and a foothold toward firmware compromise
+      [threat-malicious-fw]. Mitigation: force a credential change at commissioning,
+      authenticate every service, validated TLS, session/CSRF/XSS hardening.
+
+  # ---- smart lock profiles: EMB3D device pass (lock-connected, lock-battery-standalone) ----
+  # The dumb strike (`lock`) has no firmware or comms → no device surface; only these do.
+
+  - id: threat-lock-connected-fw
+    title: Malicious firmware on a connected lockset
+    type: tampering
+    target: lock-connected
+    asset: door-release
+    violates: [obj-integrity, obj-authenticity]
+    severity: high
+    backed-by: [emb3d::TID-108, emb3d::TID-119, emb3d::TID-201, emb3d::TID-211, emb3d::TID-213, emb3d::TID-216]
+    impact: high
+    attack: {expertise: expert, knowledge: sensitive, opportunity: difficult, equipment: specialised}
+    treatment: accept
+    owner: Security Lead
+    decided: "2026-06-28"
+    residualRisk: medium
+    notes: >
+      The connected lockset carries its own firmware and network stack. Unauthenticated or
+      unverified firmware install, rollback, weak boot, or extraction via a debug port
+      subverts the device that drives the bolt — opening this door regardless of the
+      controller's decision. Bounded to one door; no fleet signing key on the unit [SC-2].
+      Mitigation: secure boot + signed updates, locked debug ports.
+
+  - id: threat-lock-connected-release-inject
+    title: Forged or replayed release command to a connected lockset
+    type: tampering
+    target: lock-connected
+    asset: door-release
+    violates: [obj-integrity, obj-availability]
+    severity: high
+    backed-by: [emb3d::TID-404, emb3d::TID-405, emb3d::TID-406, emb3d::TID-407]
+    impact: high
+    attack: {expertise: proficient, knowledge: restricted, opportunity: moderate, equipment: specialised}
+    treatment: accept
+    owner: Product Owner
+    decided: "2026-06-28"
+    residualRisk: high
+    notes: >
+      The lockset actuates on a release command over its link [FN-2]. Injecting an unauthorized
+      command or replaying a prior release opens the door without a grant; network-stack
+      exhaustion or a triggerable deadlock denies legitimate release. Mitigation:
+      authenticated, replay-protected release channel.
+
+  - id: threat-lock-standalone-fw
+    title: Malicious firmware or secret extraction on a standalone lockset
+    type: tampering
+    target: lock-battery-standalone
+    asset: door-release
+    violates: [obj-integrity, obj-authenticity, obj-confidentiality]
+    severity: high
+    backed-by: [emb3d::TID-108, emb3d::TID-119, emb3d::TID-201, emb3d::TID-211, emb3d::TID-213, emb3d::TID-214, emb3d::TID-216]
+    impact: high
+    attack: {expertise: expert, knowledge: sensitive, opportunity: difficult, equipment: specialised}
+    treatment: accept
+    owner: Security Lead
+    decided: "2026-06-28"
+    residualRisk: medium
+    notes: >
+      The self-contained lockset reads the credential, decides, and actuates in one unit, so a
+      firmware compromise owns the whole access decision at the door. Holding credential and
+      authz data locally, it is also a richer extraction target via debug / NVRAM access —
+      pulling keys and badge data. Physical reach is the gate. Mitigation: secure boot + signed
+      updates, encrypted secrets at rest, locked debug ports.
+
+  - id: threat-lock-standalone-offline
+    title: Stale rights and lost events on an offline standalone lockset
+    type: tampering
+    target: lock-battery-standalone
+    asset: authz-data
+    violates: [obj-integrity, obj-accountability]
+    severity: high
+    backed-by: [emb3d::TID-225, emb3d::TID-226]
+    impact: medium
+    attack: {expertise: layman, knowledge: public, opportunity: easy, equipment: standard}
+    treatment: accept
+    owner: Product Owner
+    decided: "2026-06-28"
+    residualRisk: high
+    notes: >
+      Offline-first decisioning with only intermittent sync widens both windows that
+      `threat-stale-revocation` and `threat-audit-gap` open on the controller: a revoked badge
+      keeps working far longer [PUR-5], and locally buffered events can be lost or rewritten on
+      the device before they reach the central log. Mitigation: bounded offline validity,
+      tamper-evident local buffering, sync-health alerting.
+
+# Controls — only measures that exist today. A risk with no control built is
+# recorded as `accept` (with an owner): the gate treats a `mitigate` with no
+# control as open, because a mitigate with no control is a plan, not a current
+# reduction (ADR 0012). Residual stays at the computed level for accepted risks;
+# only a `mitigate` backed by a control here may show a reduced residual.
+controls:
+  - id: ctrl-signed-fw
+    title: Signed controller firmware
+    description: >
+      Firmware is signed at the factory; the signing key is held by the manufacturer and is
+      not present on shipped units [SC-2][DEV-2]. Already reflected in the low likelihood
+      scored for attacker firmware — this records it as the control behind that residual.
+    evidence: ["factory firmware-signing process [SC-2]"]
+  - id: ctrl-fail-safe-egress
+    title: Per-door fail-safe egress default
+    description: >
+      Doors on normal occupancy routes fail-safe (release for free egress) on power or
+      connectivity loss [ENV-7]; fail-secure only where regulation requires, with alternative
+      egress provided. Removes the trap hazard on egress routes.
+    evidence: ["per-door fail-safe/secure configuration [ENV-7]"]
