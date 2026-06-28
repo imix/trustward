@@ -102,14 +102,21 @@ You set the method once, in `risk-policy.method`.
 
 Declaring a `risk-policy` is the switch that turns a *threat list* into a *gated risk
 assessment*. With it present, `validate` enforces the **CRA gate**: every risk whose
-computed level isn't in `accept:` must carry a `treatment` (mitigate/accept/transfer/avoid)
-and an `owner`. It also lights up the §6.3 (criteria), §6.5.5 (evaluation) and §6.7
-(monitoring) sections of the report.
+computed level isn't in `accept:` must carry a `treatment` and an `owner`. It also lights
+up the §6.3 (criteria), §6.5.5 (evaluation) and §6.7 (monitoring) sections of the report.
+
+A treatment only closes the gate if it's honest about what exists today. `mitigate`
+counts as treated **only with at least one `mitigations:` control** — a mitigate with no
+control is an intention to fix (a plan), and the model is current-state, not plans, so it
+stays open. To acknowledge a risk you aren't currently reducing, use `accept` with an
+owner; `transfer` and `avoid` likewise need only an owner. A `residualRisk` below the
+computed level must be earned — `validate` flags a reduction with no control behind it.
+(See ADR [0012](adr/0012-mitigate-needs-a-control.md).)
 
 Turn it on when you want conformance enforcement and sign-off discipline. Leave it off for
 a lightweight model — without a `risk-policy` there's no gate, and untreated threats are
-fine. Don't switch it on until you're ready to assign treatments and owners, or `validate`
-will (correctly) start failing.
+fine. Don't switch it on until you're ready to assign treatments, controls, and owners, or
+`validate` will (correctly) start failing.
 
 ## Trust zones & data flows: how much segmentation
 
@@ -169,7 +176,8 @@ reimplementing the scoring matrix there.
 trustward report --format json | jq -e 'all(.[]; .residualRisk != "critical")'
 ```
 
-Skip it if the rendered report and `validate`'s exit code are all you need.
+Skip it if the rendered report and `validate`'s exit code are all you need. (See ADR
+[0013](adr/0013-machine-readable-register-via-json.md).)
 
 ## Splitting into files
 

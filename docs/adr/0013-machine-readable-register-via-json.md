@@ -1,0 +1,5 @@
+# Machine-readable risk register via `report --format json`
+
+The threat analysis is emitted as JSON — the scored risk register, each threat joined with its computed evaluation — via `report --format json`, built with `encoding/json` rather than a report template. A template cannot safely emit JSON: it does not quote or escape strings, so the first apostrophe or comma in a title breaks the output. The JSON field names are the export contract, the same way reportData field names are the template contract.
+
+Blocking a CI pipeline on open risks stays `validate`'s job — it runs the same `risk.Evaluate` and exits non-zero, no JSON needed. The register serves pipelines that want their *own* predicate over the computed numbers: a residual-level ceiling stricter than the model's `accept:`, counts for an alarm, a cross-version diff. It is pure Go — no Quarto or Docker — so it runs in a bare CI container where the full report cannot. Both views share `risk.Evaluate`, so the JSON, the rendered report, and the gate can never disagree.
