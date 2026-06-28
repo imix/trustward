@@ -4,5 +4,5 @@
 *.sh
 example/
 docs/
-en4000.txt
+tmp/
 /trustward

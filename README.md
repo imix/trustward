@@ -163,14 +163,30 @@ The template receives:
 | `.Date` | string | Release date |
 | `.Version` | string | SemVer |
 | `.Description` | string | System description |
+| `.Logo` | string | Logo path from the system metadata |
 | `.References` | `[]Reference` | External versioned docs — variant register, requirements, standards, SBOM |
-| `.Threats` | `[]Threat` | All threats |
-| `.Controls` | `map[string]string` | Control ID → title (for inline references) |
-| `.ControlList` | `[]Control` | Full control objects (for a controls section) |
+| `.AssetList` | `[]Asset` | All assets |
+| `.AssetComponents` | `map[string][]string` | Asset ID → component IDs that hold it |
+| `.ObjectiveList` | `[]Objective` | Cybersecurity objectives (§6.5.2) |
+| `.ObjectiveAssets` | `map[string][]string` | Objective ID → asset IDs that uphold it |
+| `.ThreatGroups` | `[]ThreatGroup` | Threats grouped by target (`.TargetID`, `.TargetTitle`, `.Threats`), in encounter order |
+| `.ThreatList` | `[]Threat` | Flat threat list, for the risk register |
+| `.RiskEval` | `map[string]Eval` | Threat ID → computed evaluation (`.Level`, `.Likelihood`, `.Accepted`, `.Treated`, `.Open`) |
+| `.RiskMatrix` | `Matrix` | Likelihood×impact heatmap (`.Impacts`, `.Rows[].Cells[]`, `.Unplaced`) |
+| `.RiskMethod` | string | Scoring method from the risk-policy |
+| `.RiskAccept` | `[]string` | Accepted risk levels |
+| `.RiskReview` | string | Monitoring & review cadence (§6.7) |
+| `.RiskPolicySet` | bool | Whether a risk-policy is declared — gate the risk sections on this |
+| `.Controls` | `map[string]string` | Control ID → title (for the `controlTitle` helper) |
+| `.ControlList` | `[]Control` | Full control objects, for a controls section |
+| `.ControlComponents` | `map[string][]string` | Control ID → component IDs that implement it |
+| `.ComponentList` | `[]Component` | All components |
+| `.CatalogList` | `[]ControlCatalog` | Requirement catalogs, for compliance mapping |
+| `.RequirementControls` | `map[string][]string` | `catalog-id::req-id` → control IDs that satisfy it |
 | `.Diagram` | string | Rendered Mermaid diagram source |
 | `.PDF` | bool | Whether PDF output was requested |
 
-Built-in template functions: `controlTitle <controls> <id>`, `join <list> <sep>`, `upper <string>`, `trim <string>`.
+Built-in template functions: `controlTitle <controls> <id>`, `join <list> <sep>`, `upper <string>`, `trim <string>`, `riskColor <level>` (a heatmap fill colour for the risk matrix).
 
 The template's front matter is regular Quarto config — theme, table of contents, Mermaid theme, and output formats are all controlled there.
 

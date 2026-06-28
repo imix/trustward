@@ -15,6 +15,5 @@ example/tmp/
 .idea/
 .vscode/
 
-# prEN 40000 draft standard — not redistributable
-en4000.txt
+# Scratch / WIP models, and the non-redistributable prEN 40000 draft (now under tmp/)
 tmp/

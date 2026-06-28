@@ -103,8 +103,8 @@ Only treated as threat list when value is a YAML sequence (not a mapping). List 
   - `knowledge` — `public` \| `restricted` \| `sensitive` \| `critical`
   - `opportunity` — `unlimited` \| `easy` \| `moderate` \| `difficult` \| `none`
   - `equipment` — `standard` \| `specialised` \| `bespoke` \| `multiple-bespoke`
-- `mitigations` — list of control IDs that reduce risk (list of strings)
-- `residualRisk` — severity after mitigations applied (string)
+- `mitigations` — list of control IDs that reduce risk; each must resolve to a declared control (list of strings)
+- `residualRisk` — risk level after mitigations are applied: `low` \| `medium` \| `high` \| `critical`. A residual below the computed level must be earned by a `mitigations` control, or `validate` flags it as an unsupported reduction (string, optional)
 - `notes` — rationale, mitigation justification, residual risk explanation (string)
 
 How the risk level is computed depends on the `risk-policy` method:
@@ -126,8 +126,12 @@ A single object (CRA / prEN 40000-1-2 §6.3):
   Rendered as the report's §6.7 section; a placeholder is shown when absent.
 
 When a `risk-policy` is present, validation enforces the **CRA gate**: any threat
-whose computed risk level is not in `accept` must declare a `treatment` and an
-`owner`. Models without a `risk-policy` are unaffected.
+whose computed risk level is not in `accept` must be treated — a `treatment` plus
+an `owner`. A `mitigate` treatment must additionally carry at least one
+`mitigations` control: a mitigate with no control records an intention to fix (a
+plan), not a current reduction, so it stays **open** and fails the gate (see
+[ADR 0012](adr/0012-mitigate-needs-a-control.md)). `accept` / `transfer` /
+`avoid` need only an owner. Models without a `risk-policy` are unaffected.
 
 #### `catalog:` — requirement catalog (one per file)
 A single object defining a named set of requirements used for gap analysis and compliance mapping:
