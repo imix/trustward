@@ -216,6 +216,9 @@ func checkRisk(c *checker, p *model.Project) {
 				}
 			}
 		}
+		if t.ResidualRisk != "" && risk.LevelRank(t.ResidualRisk) == 0 {
+			c.add(subject, fmt.Sprintf("residualRisk %q is not a valid level (low/medium/high/critical)", t.ResidualRisk))
+		}
 	}
 
 	if !p.RiskPolicy.Set {
@@ -223,9 +226,20 @@ func checkRisk(c *checker, p *model.Project) {
 	}
 	eval := risk.Evaluate(p)
 	for _, t := range p.Threats {
-		if e := eval[t.ID]; e.Open() {
-			c.add(fmt.Sprintf("threat %q", t.ID),
-				fmt.Sprintf("%s risk is not accepted and needs a treatment + owner", e.Level))
+		subject := fmt.Sprintf("threat %q", t.ID)
+		e := eval[t.ID]
+		if e.Open() {
+			// A mitigate with no control records an intention, not a reduction —
+			// it stays open. Name that case so the fix is obvious.
+			if t.Treatment == "mitigate" && len(t.Mitigations) == 0 {
+				c.add(subject, fmt.Sprintf("%s risk: mitigate treatment needs a mitigations control — a mitigate with no control is a plan, not a current reduction (use accept with an owner to acknowledge it instead)", e.Level))
+			} else {
+				c.add(subject, fmt.Sprintf("%s risk is not accepted and needs a treatment + owner", e.Level))
+			}
+		}
+		// A residual below the computed level must be earned by a control.
+		if t.ResidualRisk != "" && risk.LevelRank(t.ResidualRisk) < risk.LevelRank(e.Level) && len(t.Mitigations) == 0 {
+			c.add(subject, fmt.Sprintf("residualRisk %q is below the computed %s risk but no mitigations control is recorded to justify the reduction", t.ResidualRisk, e.Level))
 		}
 	}
 }

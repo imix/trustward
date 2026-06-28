@@ -15,7 +15,7 @@ func TestRegister_OpenTreatedAccepted(t *testing.T) {
 		Threats: []model.Threat{
 			{ID: "open", Likelihood: "high", Impact: "high"},                                 // critical, not accepted, untreated
 			{ID: "accepted", Likelihood: "low", Impact: "low"},                               // low → accepted by policy
-			{ID: "treated", Likelihood: "high", Impact: "high", Treatment: "mitigate", Owner: "Sec"}, // critical but treated
+			{ID: "treated", Likelihood: "high", Impact: "high", Treatment: "mitigate", Owner: "Sec", Mitigations: []string{"c1"}}, // critical but treated by a control
 		},
 	}
 	got := map[string]Entry{}

@@ -24,6 +24,15 @@ type Scorer interface {
 // rank maps the qualitative scale to a weight; product bands give the level.
 var rank = map[string]int{"low": 1, "medium": 2, "high": 3}
 
+// levelRank orders the computed risk levels for comparison. Unlike the
+// likelihood/impact input scale it includes "critical".
+var levelRank = map[string]int{"low": 1, "medium": 2, "high": 3, "critical": 4}
+
+// LevelRank returns the ordinal of a risk level (low<medium<high<critical),
+// or 0 if s is not a known level — lets callers compare a residual against the
+// computed level.
+func LevelRank(s string) int { return levelRank[s] }
+
 // level is the shared likelihood×impact matrix → {low,medium,high,critical}.
 // Both the qualitative and attack-potential methods end here once they have a likelihood.
 func level(likelihood, impact string) string {
@@ -91,6 +100,18 @@ type Eval struct {
 // Open reports a risk that is neither accepted nor treated — a CRA gap.
 func (e Eval) Open() bool { return !e.Accepted && !e.Treated }
 
+// treated reports whether a treatment decision actually closes the risk. A
+// decision needs an owner; a "mitigate" decision additionally needs at least
+// one mitigations control, because a mitigate with no control is an intention
+// to fix (a plan), not a current reduction — it must stay open, not pass the
+// gate. accept/transfer/avoid are not reductions, so they need no control.
+func treated(t model.Threat) bool {
+	if t.Treatment == "" || t.Owner == "" {
+		return false
+	}
+	return t.Treatment != "mitigate" || len(t.Mitigations) > 0
+}
+
 // Evaluate scores every threat and judges it against the risk-policy's
 // acceptance criteria — the single entry point shared by the validator (the
 // CRA gate) and the report (risk register). The policy's method scores each
@@ -114,7 +135,7 @@ func Evaluate(p *model.Project) map[string]Eval {
 		out[t.ID] = Eval{
 			Score:    sc,
 			Accepted: accept[sc.Level],
-			Treated:  t.Treatment != "" && t.Owner != "",
+			Treated:  treated(t),
 		}
 	}
 	return out

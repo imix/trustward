@@ -95,8 +95,9 @@ func TestEvaluate(t *testing.T) {
 		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
 		Threats: []model.Threat{
 			{ID: "accepted", Likelihood: "low", Impact: "low"},                                     // low ∈ accept
-			{ID: "treated", Likelihood: "high", Impact: "high", Treatment: "mitigate", Owner: "a"}, // critical, but treated
-			{ID: "open", Likelihood: "high", Impact: "high"},                                       // critical, untreated
+			{ID: "treated", Likelihood: "high", Impact: "high", Treatment: "mitigate", Owner: "a", Mitigations: []string{"c1"}}, // critical, mitigated by a control
+			{ID: "plan", Likelihood: "high", Impact: "high", Treatment: "mitigate", Owner: "a"},                                 // mitigate, no control → still open
+			{ID: "open", Likelihood: "high", Impact: "high"},                                                                    // critical, untreated
 		},
 	}
 	e := Evaluate(p)
@@ -105,6 +106,9 @@ func TestEvaluate(t *testing.T) {
 	}
 	if !e["treated"].Treated || e["treated"].Open() {
 		t.Errorf("treated: %+v", e["treated"])
+	}
+	if e["plan"].Treated || !e["plan"].Open() {
+		t.Errorf("mitigate without a control must stay open: %+v", e["plan"])
 	}
 	if !e["open"].Open() {
 		t.Errorf("open should be open: %+v", e["open"])

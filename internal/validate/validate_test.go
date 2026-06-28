@@ -124,13 +124,53 @@ func TestCheck_CRAGate(t *testing.T) {
 
 	treated := &model.Project{
 		RiskPolicy: base,
+		Controls:   []model.Control{{ID: "ctrl-a"}},
+		Threats: []model.Threat{{
+			ID: "threat-x", Likelihood: "high", Impact: "high",
+			Treatment: "mitigate", Owner: "alice", Mitigations: []string{"ctrl-a"},
+		}},
+	}
+	if issueMentioning(validate.Check(treated), "threat-x", "treatment") {
+		t.Errorf("mitigate with a control + owner must pass the CRA gate, got %v", validate.Check(treated))
+	}
+
+	// A mitigate with no control is a plan, not a reduction — it stays open.
+	planOnly := &model.Project{
+		RiskPolicy: base,
 		Threats: []model.Threat{{
 			ID: "threat-x", Likelihood: "high", Impact: "high",
 			Treatment: "mitigate", Owner: "alice",
 		}},
 	}
-	if issueMentioning(validate.Check(treated), "threat-x", "treatment") {
-		t.Errorf("treated+owned risk must pass the CRA gate, got %v", validate.Check(treated))
+	if !issueMentioning(validate.Check(planOnly), "threat-x", "mitigations control") {
+		t.Errorf("want mitigate-without-control flagged as open, got %v", validate.Check(planOnly))
+	}
+
+	// accept needs no control — an owned acceptance closes the gate.
+	accepted := &model.Project{
+		RiskPolicy: base,
+		Threats: []model.Threat{{
+			ID: "threat-x", Likelihood: "high", Impact: "high",
+			Treatment: "accept", Owner: "alice",
+		}},
+	}
+	if issueMentioning(validate.Check(accepted), "threat-x", "treatment") {
+		t.Errorf("owned accept must pass the CRA gate, got %v", validate.Check(accepted))
+	}
+}
+
+func TestCheck_ResidualNeedsControl(t *testing.T) {
+	base := model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true}
+	// residual below the computed critical level, but no control to justify it.
+	p := &model.Project{
+		RiskPolicy: base,
+		Threats: []model.Threat{{
+			ID: "threat-x", Likelihood: "high", Impact: "high",
+			Treatment: "accept", Owner: "alice", ResidualRisk: "low",
+		}},
+	}
+	if !issueMentioning(validate.Check(p), "threat-x", "no mitigations control") {
+		t.Errorf("want unsupported residual reduction flagged, got %v", validate.Check(p))
 	}
 }
 
