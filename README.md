@@ -155,6 +155,8 @@ trustward.sh render
 
 `en40000.tmpl` is the prEN 40000-1-2 §6 shell — explicit clause numbers (6.2 Product Context … 6.7 Monitoring) and the §6.2 manual context subsections. Copy it, or use the minimal default and add only what you need.
 
+> **On standards and copyright.** A shell reproduces only a standard's *structure* — clause numbers and section headings — as a scaffold for your own content; it ships **none** of the standard's normative text, and prEN 40000 is still a *draft* whose numbering may change before publication. Standards are copyrighted works sold by their publishers (CEN, IEC, …): obtain the standard itself from its publisher, and note that whether reproducing its section structure is permitted (fair use, fair dealing, or a local exception) depends on your jurisdiction and is yours to assess. Nothing here is legal advice.
+
 The template receives:
 
 | Field | Type | Description |

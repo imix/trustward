@@ -25,3 +25,14 @@ cp /path/to/trustward/example/report-templates/en40000.tmpl report.tmpl
 
 [../access-control](../access-control) ships its own filled-in `report.tmpl`
 derived from this shell — a worked end state.
+
+## On standards and copyright
+
+A shell reproduces only a standard's **structure** — clause numbers and section
+headings — as a scaffold for your own content; it ships none of the standard's
+normative text. prEN 40000 is still a **draft**, so its numbering may change
+before publication. Standards are copyrighted works sold by their publishers
+(CEN, IEC, …): obtain the standard from its publisher, and assess for your own
+jurisdiction whether reproducing its section structure is permitted (fair use,
+fair dealing, or a local exception). Nothing here is legal advice.
+
