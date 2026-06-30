@@ -49,7 +49,7 @@ format:
 ### Components
 {{ if .ComponentList }}
 | Component | Type | Controls |
-|---|---|---|
+|------------------------------|--------------------|--------------------------------------------------|
 {{ range .ComponentList -}}
 | {{ if .Title }}{{ .Title }}{{ else }}`{{ .ID }}`{{ end }} | {{ .Type }} | {{ range $i, $c := .Controls }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $c }}{{ end }} |
 {{ end }}
@@ -71,7 +71,7 @@ Risk is scored using the **{{ if .RiskMethod }}{{ .RiskMethod }}{{ else }}qualit
 #### Assets
 
 | ID | Type | Classification | Hosted on | Description |
-|---|---|---|---|---|
+|----------|----------|------------|-------------|-------------------------------------------------------|
 {{ range .AssetList -}}
 | `{{ .ID }}` | {{ .Type }} | {{ .Classification }} | {{ range $i, $c := (index $.AssetComponents .ID) }}{{ if $i }}, {{ end }}`{{ $c }}`{{ end }} | {{ .Description | trim }} |
 {{ end }}
@@ -82,7 +82,7 @@ Risk is scored using the **{{ if .RiskMethod }}{{ .RiskMethod }}{{ else }}qualit
 The CIA-scale objectives the assets must uphold.
 
 | ID | Title | Type | Upheld by | Description |
-|---|---|---|---|---|
+|----------|------------------|------------|---------------|---------------------------------------------|
 {{ range .ObjectiveList -}}
 | `{{ .ID }}` | {{ .Title }} | {{ .Type }} | {{ range $i, $a := (index $.ObjectiveAssets .ID) }}{{ if $i }}, {{ end }}`{{ $a }}`{{ end }} | {{ .Description | trim }} |
 {{ end }}
@@ -92,7 +92,7 @@ The CIA-scale objectives the assets must uphold.
 #### {{ .TargetTitle }}
 
 | Severity | ID | Title | Residual Risk |
-|---|---|---|---|
+|-------------|----------------------|--------------------------------------------------|---------------|
 {{ range .Threats -}}
 | {{ .Severity }} | [`{{ .ID }}`](#{{ .ID }}) | {{ .Title }} | {{ .ResidualRisk }} |
 {{ end }}
@@ -126,11 +126,11 @@ The CIA-scale objectives the assets must uphold.
 Risk estimation and evaluation per threat. **Open** risks are above the
 acceptance criteria with no treatment recorded.
 
-| Threat | Target | Likelihood | Impact | Risk | Evaluation | Treatment | Owner | Decided | Residual |
-|---|---|---|---|---|---|---|---|---|---|
+| Threat | Likelihood | Impact | Risk | Evaluation | Treatment | Owner | Residual |
+|----------------------|-----------|---------|---------|-------------|-------------|--------------|---------|
 {{ range .ThreatList -}}
 {{- $e := index $.RiskEval .ID -}}
-| [`{{ .ID }}`](#{{ .ID }}) | `{{ .Target }}` | {{ $e.Likelihood }} | {{ .Impact }} | {{ $e.Level }} | {{ if $e.Accepted }}accepted{{ else if $e.Treated }}treated{{ else }}**open**{{ end }} | {{ .Treatment }} | {{ .Owner }} | {{ .Decided }} | {{ .ResidualRisk }} |
+| [`{{ .ID }}`](#{{ .ID }}) | {{ $e.Likelihood }} | {{ .Impact }} | {{ $e.Level }} | {{ if $e.Accepted }}accepted{{ else if $e.Treated }}treated{{ else }}**open**{{ end }} | {{ .Treatment }} | {{ .Owner }} | {{ .ResidualRisk }} |
 {{ end }}
 {{ end -}}
 {{ if or .CatalogList .ControlList }}
@@ -143,7 +143,7 @@ Control coverage of {{ .Title }} requirements — evidence of risk treatment.
 A **gap** is a requirement with no implementing control.
 
 | Requirement | Title | Status | Control |
-|---|---|---|---|
+|------------------|----------------------------------------|------------|------------------------------|
 {{ range .Requirements -}}
 {{- $key := printf "%s::%s" $cat.ID .ID -}}
 {{- $controls := index $.RequirementControls $key -}}
@@ -154,7 +154,7 @@ A **gap** is a requirement with no implementing control.
 ### Controls
 
 | ID | Title | Implemented by | Evidence | Description |
-|---|---|---|---|---|
+|----------|------------------|---------------|-----------------|----------------------------------------|
 {{ range .ControlList -}}
 | `{{ .ID }}` | {{ .Title }} | {{ range $i, $c := (index $.ControlComponents .ID) }}{{ if $i }}, {{ end }}`{{ $c }}`{{ end }} | {{ range $i, $e := .Evidence }}{{ if $i }}, {{ end }}{{ $e }}{{ end }} | {{ .Description | trim }} |
 {{ end }}
