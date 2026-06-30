@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/imix/trustward/internal/dot"
 	"github.com/imix/trustward/internal/mermaid"
 	"github.com/imix/trustward/internal/project"
 	"github.com/imix/trustward/internal/quarto"
@@ -23,6 +24,10 @@ func main() {
 	root := &cobra.Command{
 		Use:   "trustward",
 		Short: "Security model tooling for YAML-based threat models",
+		// report's stdout is captured into report.qmd by trustward.sh; never let
+		// cobra dump usage/errors there. Failures go to stderr with a non-zero exit.
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 
 	diagramCmd := &cobra.Command{
@@ -35,14 +40,21 @@ func main() {
 		Args:  cobra.NoArgs,
 		RunE:  runDataflow,
 	})
+	diagramCmd.AddCommand(&cobra.Command{
+		Use:   "dot",
+		Short: "Render the data flow diagram as Graphviz DOT (for the report's pre-rendered image)",
+		Args:  cobra.NoArgs,
+		RunE:  runDataflowDot,
+	})
 
 	reportCmd := &cobra.Command{
-		Use:   "report",
-		Short: "Render the Quarto risk-management report",
-		Args:  cobra.NoArgs,
-		RunE:  runReport,
+		Use:          "report",
+		Short:        "Render the Quarto risk-management report",
+		Args:         cobra.NoArgs,
+		RunE:         runReport,
+		SilenceUsage: true,
 	}
-	reportCmd.Flags().Bool("pdf", false, "include PDF format in the Quarto front matter (requires Chrome headless)")
+	reportCmd.Flags().Bool("pdf", false, "also render a PDF (via the Typst engine bundled in the Docker image)")
 	reportCmd.Flags().String("format", "qmd", "output format: qmd (Quarto source) or json (machine-readable risk register)")
 
 	templateCmd := &cobra.Command{
@@ -67,6 +79,7 @@ func main() {
 	root.AddCommand(diagramCmd, reportCmd, templateCmd, validateCmd)
 
 	if err := root.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
 }
@@ -77,6 +90,15 @@ func runDataflow(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("loading project: %w", err)
 	}
 	fmt.Print(mermaid.DataFlow(proj))
+	return nil
+}
+
+func runDataflowDot(_ *cobra.Command, _ []string) error {
+	proj, err := project.Load(".")
+	if err != nil {
+		return fmt.Errorf("loading project: %w", err)
+	}
+	fmt.Print(dot.DataFlow(proj))
 	return nil
 }
 
@@ -103,7 +125,9 @@ func runReport(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("loading template: %w", err)
 	}
 	pdf, _ := cmd.Flags().GetBool("pdf")
-	diagram := mermaid.DataFlow(proj)
+	// The report embeds a Graphviz diagram so Quarto can render it (HTML and PDF)
+	// without a headless browser; the standalone `diagram` command stays Mermaid.
+	diagram := dot.DataFlow(proj)
 	out, err := quarto.Report(proj, tmpl, diagram, pdf)
 	if err != nil {
 		return fmt.Errorf("rendering report: %w", err)

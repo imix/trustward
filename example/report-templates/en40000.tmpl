@@ -8,10 +8,11 @@ format:
   html:
     toc: true
     theme: cosmo
-{{ if .PDF -}}
-  pdf:
+    embed-resources: true
+{{- if .PDF }}
+  typst:
     toc: true
-{{ end -}}
+{{- end }}
 ---
 
 {{ if .Logo }}
@@ -55,10 +56,7 @@ format:
 {{ end -}}
 ### Data Flow Diagram
 
-```{mermaid}
-%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#dce8f5', 'primaryBorderColor': '#5b8db8', 'lineColor': '#555555', 'secondaryColor': '#b8d4f0', 'tertiaryColor': '#c8e8c0', 'clusterBkg': '#b8d4f0', 'clusterBorder': '#5b8db8'}}}%%
-{{ .Diagram }}
-```
+![Data flow diagram](diagram.svg){fig-align="center"}
 
 {{ if .RiskPolicySet }}
 ## Risk Acceptance Criteria and Methodology

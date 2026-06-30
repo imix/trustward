@@ -182,14 +182,13 @@ func TestReport_FrontMatterMeta(t *testing.T) {
 	assertContains(t, got, "A test system.")
 }
 
-func TestReport_DiagramEmbedded(t *testing.T) {
-	diagram := "flowchart TD\n    a --> b"
+func TestReport_DiagramReferencesStaticImage(t *testing.T) {
+	got := render(t, nil, "", false)
 
-	got := render(t, nil, diagram, false)
-
-	assertContains(t, got, "```{mermaid}")
-	assertContains(t, got, "flowchart TD\n    a --> b")
-	assertContains(t, got, "```")
+	// The report references a pre-rendered static SVG (produced by the render
+	// pipeline with the Graphviz CLI), not an executable diagram cell that would
+	// need a headless browser for PDF output.
+	assertContains(t, got, "![Data flow diagram](diagram.svg)")
 }
 
 func TestReport_ThreatSummaryRow(t *testing.T) {
@@ -264,11 +263,11 @@ func TestReport_NoMitigationsRendersNone(t *testing.T) {
 func TestReport_PDFFalse_NoPDFSection(t *testing.T) {
 	got := render(t, nil, "", false)
 
-	assertNotContains(t, got, "pdf:")
+	assertNotContains(t, got, "typst:")
 }
 
 func TestReport_PDFTrue_PDFSectionPresent(t *testing.T) {
 	got := render(t, nil, "", true)
 
-	assertContains(t, got, "pdf:")
+	assertContains(t, got, "typst:")
 }

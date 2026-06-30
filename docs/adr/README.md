@@ -17,5 +17,6 @@ Why the model is shaped the way it is. Each ADR records *that* a decision was ma
 | [0011](0011-external-standard-refs-unvalidated.md) | External standard references are deliberately unvalidated |
 | [0012](0012-mitigate-needs-a-control.md) | A `mitigate` treatment needs a control to count as treated |
 | [0013](0013-machine-readable-register-via-json.md) | Machine-readable risk register via `report --format json` |
+| [0014](0014-pdf-via-typst-and-graphviz.md) | PDF via Typst + Graphviz — no LaTeX, no headless browser |
 
 Format: `docs/adr/NNNN-slug.md`, sequential. See the project's ADR conventions for the (minimal) template.

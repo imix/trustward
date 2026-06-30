@@ -4,6 +4,8 @@ Threat models that live next to your code.
 
 Define your system — its assets, cybersecurity objectives, threats, and controls — in plain text. trustward renders data flow diagrams and a risk-management report shaped to the CRA / prEN 40000-1-2 §6 process, in your editor, in CI, or on every pull request. (A *ward* is a guarded zone; trust zones are what the model maps.)
 
+**The stance:** the analysis is the *thinking* that makes a product more secure — the report is a byproduct. trustward has no rule engine inventing risks from your architecture; *you* write the threats, and the tool's job is to make that thinking cheap to do, easy to review, and impossible to let silently rot. A blunt rule engine optimises the compliance box; this optimises the product. (More in [docs/HOWTO.md](docs/HOWTO.md).)
+
 - **Reviewable in PRs.** Threats and mitigations are text diffs. Your team can discuss risk in the same place they discuss code.
 - **Version-controlled history.** Git tells you when a threat was identified, when a mitigation was added, when residual risk was accepted — and by whom.
 - **No proprietary tooling.** No licenses, no accounts, no vendor lock-in. A directory of text files and a Docker image.
@@ -187,7 +189,7 @@ The template receives:
 | `.ComponentList` | `[]Component` | All components |
 | `.CatalogList` | `[]ControlCatalog` | Requirement catalogs, for compliance mapping |
 | `.RequirementControls` | `map[string][]string` | `catalog-id::req-id` → control IDs that satisfy it |
-| `.Diagram` | string | Rendered Mermaid diagram source |
+| `.Diagram` | string | Graphviz DOT source, for custom templates. The built-in template instead embeds a pre-rendered `diagram.svg` (the render pipeline runs `diagram dot \| dot -Tsvg`), so PDF needs no browser. The standalone `diagram dataflow` command emits Mermaid. |
 | `.PDF` | bool | Whether PDF output was requested |
 
 Built-in template functions: `controlTitle <controls> <id>`, `join <list> <sep>`, `upper <string>`, `trim <string>`, `riskColor <level>` (a heatmap fill colour for the risk matrix).

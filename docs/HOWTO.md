@@ -8,9 +8,18 @@ walkthrough see "Start your own model" in the [README](../README.md).
 The model scales from a back-of-the-envelope sketch to a CRA / prEN 40000-1-2 §6
 conformance artifact. The same elements serve both — you decide how much to fill in.
 
-> **The one principle:** start minimal, add detail only on a *signal* — a decision you
-> need to record, a threat that has to cite what it breaks, or a conformance section you
-> have to produce. Detail that nothing reads is just maintenance cost.
+> **The one principle:** a threat analysis is the *thinking* that makes a product more
+> secure; the report and the conformance sections are byproducts of it. This tool exists
+> to lower the cost of that thinking and to preserve what you learn — never to do it for
+> you. That is why there is no rule engine emitting risks from your architecture: a tool
+> that hands you the answers optimises the box, not the product. You write the threats.
+>
+> In practice: **start minimal, add detail only on a signal** — a decision you need to
+> record, a threat that has to cite what it breaks, a conformance section you have to
+> produce. Detail that nothing reads is just maintenance cost. And treat a catalog as a
+> *prompt to think* — "which of these actually bite here, and what is specific to this
+> system that no catalog knows?" — not a checklist to clear. Attaching a threat group
+> without that judgement is the same box-ticking by another name.
 
 > prEN 40000-1-2 is a draft; clause numbers below are how trustward maps onto its
 > process, not quotations from it.
