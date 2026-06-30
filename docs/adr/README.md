@@ -10,7 +10,7 @@ Why the model is shaped the way it is. Each ADR records *that* a decision was ma
 | [0004](0004-references-single-versioned-list.md) | External documents as one versioned `references:` list |
 | [0005](0005-device-properties-model-local.md) | Device-property vocabulary kept model-local until reuse is proven |
 | [0006](0006-risk-analysis-precedes-controls.md) | Risk analysis precedes controls |
-| [0007](0007-no-yaml-schema-validation-yet.md) | No YAML schema validation yet (deferred) |
+| [0007](0007-no-yaml-schema-validation-yet.md) | Schema owns structure & vocabulary at load; `internal/validate` owns relations & the gate |
 | [0008](0008-rendering-delegated-to-quarto.md) | Rendering delegated to Quarto; the binary emits `.qmd`, not HTML |
 | [0009](0009-risk-layer-is-opt-in.md) | The risk layer is opt-in; `severity` is the fallback |
 | [0010](0010-threats-key-sequence-only.md) | `threats:` is a threat list only when it is a YAML sequence |

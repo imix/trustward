@@ -5,6 +5,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY cmd ./cmd
 COPY internal ./internal
+COPY schema ./schema
 RUN go build -o trustward ./cmd/trustward/
 
 # Stage 2: Quarto runtime + trustward binary

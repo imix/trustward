@@ -1,5 +1,31 @@
 ## YAML Schema Reference
 
+### Editor autocomplete
+
+[`schema/trustward.schema.json`](../schema/trustward.schema.json) is a JSON Schema
+that gives any [yaml-language-server](https://github.com/redhat-developer/yaml-language-server)
+client (VS Code's YAML extension, Neovim, …) autocomplete and inline checks on the
+closed vocabularies (`severity`, `treatment`, objective `type`, the `attack` factors,
+`risk-policy.method`). Point a file at it with a modeline on line 1 — adjust the
+relative path to wherever the schema sits:
+
+```yaml
+# yaml-language-server: $schema=../../schema/trustward.schema.json
+```
+
+Or map every model file at once in VS Code `settings.json`:
+
+```json
+"yaml.schemas": { "./schema/trustward.schema.json": "my-system/**/*.yaml" }
+```
+
+The **same schema is enforced at load time**: `trustward validate` checks every
+file in the import graph against it (in addition to the referential checks), so
+the editor hint and the CI gate share one structural contract. It's deliberately
+as permissive as the loader (unknown keys allowed, IDs unconstrained), so it only
+*adds* structural/vocabulary checks — it never rejects what the loader accepts.
+See [ADR 0007](adr/0007-no-yaml-schema-validation-yet.md).
+
 ### Top-level keys
 
 Any `.yaml` file in a trustward project can contain any combination of the following top-level keys. All files are linked via `imports:`. The loader starts at `system.yaml` and follows the import graph depth-first.
@@ -33,6 +59,7 @@ to pin a `version`.
 - `id` — unique identifier (string, kebab-case)
 - `title` — human-readable name (string)
 - `description` — free-text description used in reports (string)
+- `logo` — path to a logo image surfaced to the report template as `.Logo` (string, optional)
 
 #### `assets:` — list of assets
 List of objects with:
@@ -52,8 +79,10 @@ List of objects with:
 #### `components:` — list of system components
 List of objects with:
 - `id` — unique identifier (string, kebab-case)
+- `title` — human-readable name shown in diagrams (string)
 - `type` — e.g. `server`, `embedded-device`, `hmi`, `plc` (string)
 - `assets` — list of asset IDs hosted on this component (list of strings)
+- `controls` — list of control IDs implemented on this component (list of strings, optional)
 - `description` — component role and technical details (string)
 
 #### `trust-zones:` — logical security boundaries

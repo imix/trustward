@@ -22,6 +22,8 @@ cd example/fire-protection-system
 
 `trustward.sh` wraps the Docker image and mounts the **current directory** as the model directory — always run it from the directory containing your `system.yaml`. The image is the only runtime dependency.
 
+> **Just evaluating?** Skip Docker. `go build -o trustward ./cmd/trustward/` gives you a binary that does `validate` and `diagram` in seconds (see [Building from source](#building-from-source)). Only `render` (HTML/PDF) needs the Docker image, which bundles Quarto.
+
 ## Start your own model
 
 A model directory needs exactly one file to begin with: `system.yaml`. This is enough to render a diagram and a report:
@@ -102,14 +104,14 @@ Checks the referential integrity of the model and exits non-zero if anything is 
 trustward.sh validate
 ```
 
-It verifies that every cross-reference resolves to a declared ID:
+First it checks every file in the import graph against the embedded JSON Schema ([`schema/trustward.schema.json`](schema/trustward.schema.json), the same one editors use) — structure and the closed vocabularies (`severity`, `treatment`, objective `type`, the `attack` factors, `risk-policy.method`, data-flow arity, a reference's required `version`, …). Then it verifies that every cross-reference resolves to a declared ID:
 
 - threat `target` → a component or data flow; threat `asset` → an asset; threat `mitigations` → controls; threat `ref` and `backed-by` → threat catalog patterns
 - component `assets` → assets; component `controls` → controls
 - trust zone `members` → components
-- data flow `connects` → exactly two components; data flow `assets` → assets
+- data flow `connects` → components (each endpoint); data flow `assets` → assets
 - control `ref` → a control catalog requirement
-- reference `location` (when a local path) → an existing file; and every reference declares a `version`
+- reference `location` (when a local path) → an existing file
 - every entity has an `id`, and IDs are unique within each entity kind
 
 Requirement `satisfies` entries are deliberately **not** checked — they may point at external standards (e.g. `iec-62443-sl2::SR-1.1`) that are not part of the model.
@@ -229,7 +231,7 @@ Requires Go 1.25+. The Docker image also bundles [Quarto](https://quarto.org) fo
 ## Reference
 
 - [docs/HOWTO.md](docs/HOWTO.md) — how to model: how far to take each part, and when
-- [docs/MODEL.md](docs/MODEL.md) — complete YAML schema reference
+- [docs/MODEL.md](docs/MODEL.md) — complete YAML schema reference (and editor-autocomplete setup via [schema/trustward.schema.json](schema/trustward.schema.json))
 - [docs/GLOSSARY.md](docs/GLOSSARY.md) — domain term definitions
 - [docs/adr/](docs/adr) — architecture decision records: why the model is shaped the way it is
 

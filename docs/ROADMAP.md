@@ -101,6 +101,6 @@ components, 5+ trust zones). Proposed filtering options:
 - `--component <id>` — one-hop neighbourhood view
 - `--cross-zone-only` — drop intra-zone flows
 
-**YAML schema validation.** Validate YAML files against a schema on load to give
-actionable errors instead of silent zero-values. Deferred until file structures
-stabilise.
+**YAML schema validation.** Done — `validate` checks every model file against the
+embedded `schema/trustward.schema.json` (the same schema editors use). See
+[ADR 0007](adr/0007-no-yaml-schema-validation-yet.md).

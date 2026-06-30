@@ -1,0 +1,224 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/imix/trustward/schema/trustward.schema.json",
+  "title": "trustward model file",
+  "description": "Structure of any one .yaml file in a trustward model. Every key is optional: a file holds whatever subset of top-level keys it needs, and the loader merges all files in the import graph. Authoring aid only (autocomplete + closed-vocabulary checks), not enforced at load — see docs/adr/0007. Deliberately as permissive as the loader: unknown keys are allowed (the loader ignores them, and models carry model-local extensions like component `properties:`), and enums cover only the vocabularies the scoring code actually keys on.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "object",
+      "description": "File-level metadata; not part of the domain model.",
+      "properties": {
+        "semver": { "type": "string", "examples": ["0.1.0"] },
+        "releasedate": { "description": "ISO date, e.g. 2026-06-10 (quoted or bare)." }
+      }
+    },
+    "imports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string", "description": "Relative path to another YAML file." },
+          "version": { "type": "string", "description": "Expected SemVer of the imported file (documented; the loader reads only path)." }
+        }
+      }
+    },
+    "references": { "type": "array", "items": { "$ref": "#/definitions/reference" } },
+    "system": { "$ref": "#/definitions/system" },
+    "assets": { "type": "array", "items": { "$ref": "#/definitions/asset" } },
+    "objectives": { "type": "array", "items": { "$ref": "#/definitions/objective" } },
+    "components": { "type": "array", "items": { "$ref": "#/definitions/component" } },
+    "trust-zones": { "type": "array", "items": { "$ref": "#/definitions/trustZone" } },
+    "data-flows": { "type": "array", "items": { "$ref": "#/definitions/dataFlow" } },
+    "threat-catalog": { "$ref": "#/definitions/threatCatalog" },
+    "threats": {
+      "description": "A YAML sequence is a threat list (each item validated). A mapping is treated as ignored vocabulary by the loader, so the item checks apply only when it is a sequence.",
+      "if": { "type": "array" },
+      "then": { "items": { "$ref": "#/definitions/threat" } }
+    },
+    "risk-policy": { "$ref": "#/definitions/riskPolicy" },
+    "catalog": { "$ref": "#/definitions/controlCatalog" },
+    "controls": { "type": "array", "items": { "$ref": "#/definitions/control" } }
+  },
+  "definitions": {
+    "id": {
+      "type": "string",
+      "description": "Unique within its entity kind across the import graph. Your own IDs use kebab-case by convention; catalog/pattern IDs that mirror an external taxonomy (EMB3D TID-119, IEC SR-1.1) keep that standard's spelling."
+    },
+    "catalogRef": {
+      "type": "string",
+      "description": "catalog-id::item-id, e.g. emb3d::TID-119 or iec-62443-sl2::SR-1.1."
+    },
+    "reference": {
+      "type": "object",
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "title": { "type": "string" },
+        "version": { "type": "string", "description": "The version this model was issued against (required)." },
+        "location": { "type": "string", "description": "Local path (resolved at load) or URL." }
+      }
+    },
+    "system": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "logo": { "type": "string", "description": "Path surfaced to the report template as .Logo." }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "type": { "type": "string", "description": "Free text, e.g. user-data, config, firmware, function." },
+        "classification": { "type": "string", "examples": ["public", "internal", "confidential", "restricted"] },
+        "objectives": { "type": "array", "items": { "$ref": "#/definitions/id" } },
+        "description": { "type": "string" }
+      }
+    },
+    "objective": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "title": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["confidentiality", "integrity", "availability", "authenticity", "accountability"]
+        },
+        "description": { "type": "string" }
+      }
+    },
+    "component": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "description": "Free text, e.g. server, embedded-device, hmi, plc." },
+        "assets": { "type": "array", "items": { "$ref": "#/definitions/id" } },
+        "controls": { "type": "array", "items": { "$ref": "#/definitions/id" } },
+        "description": { "type": "string" }
+      }
+    },
+    "trustZone": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "members": { "type": "array", "items": { "$ref": "#/definitions/id" } }
+      }
+    },
+    "dataFlow": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "title": { "type": "string" },
+        "connects": {
+          "type": "array",
+          "description": "Exactly two component IDs.",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": { "$ref": "#/definitions/id" }
+        },
+        "assets": { "type": "array", "items": { "$ref": "#/definitions/id" } },
+        "description": { "type": "string" }
+      }
+    },
+    "threatCatalog": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "title": { "type": "string" },
+        "patterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "$ref": "#/definitions/id" },
+              "title": { "type": "string" },
+              "type": { "type": "string" },
+              "severity": { "type": "string" },
+              "notes": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "threat": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "ref": { "$ref": "#/definitions/catalogRef" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "description": "Free text; STRIDE (spoofing/tampering/repudiation/disclosure/denial/elevation) recommended, not enforced." },
+        "asset": { "$ref": "#/definitions/id" },
+        "target": { "$ref": "#/definitions/id" },
+        "violates": { "type": "array", "items": { "$ref": "#/definitions/id" } },
+        "backed-by": { "type": "array", "items": { "$ref": "#/definitions/catalogRef" } },
+        "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "likelihood": { "type": "string", "enum": ["low", "medium", "high"] },
+        "impact": { "type": "string", "enum": ["low", "medium", "high"] },
+        "treatment": { "type": "string", "enum": ["mitigate", "accept", "transfer", "avoid"] },
+        "owner": { "type": "string" },
+        "decided": { "description": "ISO sign-off date, e.g. 2026-06-10 (quoted or bare)." },
+        "attack": { "$ref": "#/definitions/attack" },
+        "mitigations": { "type": "array", "items": { "$ref": "#/definitions/id" } },
+        "residualRisk": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "notes": { "type": "string" }
+      }
+    },
+    "attack": {
+      "type": "object",
+      "description": "Attack-potential factors (Common Criteria / ETSI TS 102 165-1). Used by the attack-potential method.",
+      "properties": {
+        "expertise": { "type": "string", "enum": ["layman", "proficient", "expert", "multiple-experts"] },
+        "knowledge": { "type": "string", "enum": ["public", "restricted", "sensitive", "critical"] },
+        "opportunity": { "type": "string", "enum": ["unlimited", "easy", "moderate", "difficult", "none"] },
+        "equipment": { "type": "string", "enum": ["standard", "specialised", "bespoke", "multiple-bespoke"] }
+      }
+    },
+    "riskPolicy": {
+      "type": "object",
+      "properties": {
+        "method": { "type": "string", "enum": ["qualitative", "attack-potential"] },
+        "accept": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["low", "medium", "high", "critical"] }
+        },
+        "review": { "type": "string", "description": "Monitoring and review cadence (§6.7)." }
+      }
+    },
+    "controlCatalog": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "title": { "type": "string" },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "$ref": "#/definitions/id" },
+              "title": { "type": "string" },
+              "description": { "type": "string" },
+              "satisfies": { "type": "array", "items": { "$ref": "#/definitions/catalogRef" } }
+            }
+          }
+        }
+      }
+    },
+    "control": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "ref": { "$ref": "#/definitions/catalogRef" },
+        "evidence": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

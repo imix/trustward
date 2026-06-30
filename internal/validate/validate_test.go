@@ -26,22 +26,6 @@ func issueMentioning(issues []validate.Issue, wants ...string) bool {
 	return false
 }
 
-func TestCheck_ReferenceNeedsVersion(t *testing.T) {
-	p := &model.Project{
-		References: []model.Reference{
-			{ID: "variants", Title: "Variant register", Version: "1.0", Location: "./variants.md"},
-			{ID: "reqs", Title: "Requirements", Location: "https://example.com/reqs"}, // no version
-		},
-	}
-	issues := validate.Check(p)
-	if !issueMentioning(issues, "reqs", "version") {
-		t.Errorf("want missing-version issue for reqs, got %v", issues)
-	}
-	if issueMentioning(issues, "variants", "version") {
-		t.Errorf("variants pins a version; should not be flagged: %v", issues)
-	}
-}
-
 func TestCheck_BackedByMustResolveToPattern(t *testing.T) {
 	p := &model.Project{
 		ThreatCatalogs: []model.ThreatCatalog{{
@@ -59,55 +43,6 @@ func TestCheck_BackedByMustResolveToPattern(t *testing.T) {
 	}
 	if issueMentioning(issues, "TID-119") {
 		t.Errorf("a real TID must not be flagged: %v", issues)
-	}
-}
-
-func TestCheck_RiskFieldsValidated(t *testing.T) {
-	p := &model.Project{
-		RiskPolicy: model.RiskPolicy{Method: "qualitative", Accept: []string{"low"}, Set: true},
-		Threats: []model.Threat{{
-			ID:         "threat-x",
-			Likelihood: "extreme", // out of scale
-			Impact:     "high",
-			Treatment:  "frobnicate", // not a valid treatment
-			Owner:      "alice",
-		}},
-	}
-	issues := validate.Check(p)
-	if !issueMentioning(issues, "threat-x", "likelihood") {
-		t.Errorf("want out-of-scale likelihood issue, got %v", issues)
-	}
-	if !issueMentioning(issues, "threat-x", "treatment") {
-		t.Errorf("want bad-treatment issue, got %v", issues)
-	}
-}
-
-func TestCheck_AttackFactorsValidated(t *testing.T) {
-	p := &model.Project{
-		RiskPolicy: model.RiskPolicy{Method: "attack-potential", Accept: []string{"low"}, Set: true},
-		Threats: []model.Threat{{
-			ID:        "threat-x",
-			Impact:    "high",
-			Treatment: "mitigate", Owner: "alice",
-			Attack: &model.AttackPotential{
-				Expertise: "wizard", // not a valid factor value
-				Knowledge: "public", Opportunity: "easy", Equipment: "standard",
-			},
-		}},
-	}
-	if !issueMentioning(validate.Check(p), "threat-x", "expertise") {
-		t.Errorf("want invalid attack-factor issue, got %v", validate.Check(p))
-	}
-}
-
-func TestCheck_UnknownRiskPolicyMethodRejected(t *testing.T) {
-	// A typo'd method must be rejected, not silently scored as qualitative.
-	p := &model.Project{
-		RiskPolicy: model.RiskPolicy{Method: "attack-potential-typo", Set: true},
-		Threats:    []model.Threat{{ID: "threat-x", Severity: "low"}},
-	}
-	if !issueMentioning(validate.Check(p), "risk-policy", "method") {
-		t.Errorf("want unknown-method issue, got %v", validate.Check(p))
 	}
 }
 
@@ -198,24 +133,6 @@ func TestCheck_ObjectiveRefsMustResolve(t *testing.T) {
 	}
 	if !issueMentioning(issues, "threat-a", "obj-gone") {
 		t.Errorf("want unresolved threat violates issue, got %v", issues)
-	}
-}
-
-func TestCheck_ObjectiveTypeMustBeInCIAScale(t *testing.T) {
-	p := &model.Project{
-		Objectives: []model.Objective{
-			{ID: "obj-ok", Type: "integrity"},
-			{ID: "obj-bad", Type: "speed"},
-		},
-	}
-
-	issues := validate.Check(p)
-
-	if !issueMentioning(issues, "objective", "speed") {
-		t.Errorf("want invalid objective type issue, got %v", issues)
-	}
-	if issueMentioning(issues, "obj-ok", "type") {
-		t.Errorf("valid CIA type must not be flagged, got %v", issues)
 	}
 }
 
@@ -369,29 +286,6 @@ func TestCheck_DataFlowRefsMustResolve(t *testing.T) {
 	}
 	if !issueMentioning(issues, "flow-x", "asset-missing") {
 		t.Errorf("missing issue for unknown asset, got %v", issues)
-	}
-}
-
-func TestCheck_DataFlowMustConnectExactlyTwoComponents(t *testing.T) {
-	p := &model.Project{
-		Components: []model.Component{{ID: "comp-a"}, {ID: "comp-b"}, {ID: "comp-c"}},
-		DataFlows: []model.DataFlow{
-			{ID: "flow-ok", Connects: []string{"comp-a", "comp-b"}},
-			{ID: "flow-one-end", Connects: []string{"comp-a"}},
-			{ID: "flow-three-ends", Connects: []string{"comp-a", "comp-b", "comp-c"}},
-		},
-	}
-
-	issues := validate.Check(p)
-
-	if len(issues) != 2 {
-		t.Fatalf("want exactly 2 issues, got %d: %v", len(issues), issues)
-	}
-	if !issueMentioning(issues, "flow-one-end") {
-		t.Errorf("missing issue for one-ended flow, got %v", issues)
-	}
-	if !issueMentioning(issues, "flow-three-ends") {
-		t.Errorf("missing issue for three-ended flow, got %v", issues)
 	}
 }
 

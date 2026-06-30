@@ -19,18 +19,6 @@ var (
 	equipmentWeights   = map[string]int{"standard": 0, "specialised": 3, "bespoke": 7, "multiple-bespoke": 9}
 )
 
-// factorWeights maps an attack factor name to its weight table, for validation.
-var factorWeights = map[string]map[string]int{
-	"expertise": expertiseWeights, "knowledge": knowledgeWeights,
-	"opportunity": opportunityWeights, "equipment": equipmentWeights,
-}
-
-// InAttackScale reports whether value is valid for the given attack factor.
-func InAttackScale(factor, value string) bool {
-	_, ok := factorWeights[factor][value]
-	return ok
-}
-
 func (AttackPotential) Score(t model.Threat) Score {
 	a := t.Attack
 	if a == nil {

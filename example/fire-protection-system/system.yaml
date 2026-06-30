@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../schema/trustward.schema.json
 version:
   semver: 0.1.0
   releasedate: 2026-06-09

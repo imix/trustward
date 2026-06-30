@@ -3,6 +3,12 @@
 // and IDs must be unique within their entity kind.
 // Requirement `satisfies` entries are exempt — they point at external
 // standards that need not be loaded into the model.
+//
+// Structural shape and the closed vocabularies (severity, treatment, objective
+// type, attack factors, risk-policy method, level scales, data-flow arity,
+// reference version) are the schema's job — package schema, which `validate`
+// runs first. This package covers only what a per-file schema can't: relations
+// between entities and the CRA gate.
 package validate
 
 import (
@@ -11,18 +17,6 @@ import (
 	"github.com/imix/trustward/internal/model"
 	"github.com/imix/trustward/internal/risk"
 )
-
-// validTreatments are the CRA risk treatment decisions (prEN 40000-1-2 §6.6).
-var validTreatments = map[string]bool{
-	"mitigate": true, "accept": true, "transfer": true, "avoid": true,
-}
-
-// validObjectiveTypes are the CIA-scale properties a cybersecurity objective
-// may protect (prEN 40000-1-2 §6.5.2).
-var validObjectiveTypes = map[string]bool{
-	"confidentiality": true, "integrity": true, "availability": true,
-	"authenticity": true, "accountability": true,
-}
 
 // Issue is a single referential-integrity finding.
 type Issue struct {
@@ -122,20 +116,6 @@ func Check(p *model.Project) []Issue {
 		}
 	}
 
-	for _, o := range p.Objectives {
-		if o.Type != "" && !validObjectiveTypes[o.Type] {
-			c.add(fmt.Sprintf("objective %q", o.ID),
-				fmt.Sprintf("type %q is not a CIA-scale property (confidentiality/integrity/availability/authenticity/accountability)", o.Type))
-		}
-	}
-
-	// External references must pin a version — that pin is what the report cites.
-	for _, r := range p.References {
-		if r.ID != "" && r.Version == "" {
-			c.add(fmt.Sprintf("reference %q", r.ID), "missing version")
-		}
-	}
-
 	// A threat target resolves against components and data flows alike.
 	targetable := make(map[string]bool, len(components)+len(flows))
 	for id := range components {
@@ -175,52 +155,17 @@ func Check(p *model.Project) []Issue {
 	resolveRefs(c, "threat", p.Threats, threatID, "backed-by", "threat catalog pattern",
 		func(t model.Threat) []string { return t.BackedBy }, patterns)
 
-	// Arity: a data flow connects exactly two components.
-	for _, f := range p.DataFlows {
-		if len(f.Connects) != 2 {
-			c.add(fmt.Sprintf("data flow %q", f.ID), fmt.Sprintf("must connect exactly 2 components, has %d", len(f.Connects)))
-		}
-	}
-
 	checkRisk(c, p)
 
 	return c.issues
 }
 
-// checkRisk validates the risk-assessment fields and enforces the CRA gate:
-// every risk whose computed level is not accepted must carry a treatment and
-// an owner. The gate only applies when a risk-policy is declared, so models
-// that don't use the risk layer are unaffected.
+// checkRisk enforces the CRA gate: every risk whose computed level is not
+// accepted must carry a treatment and an owner. The gate only applies when a
+// risk-policy is declared, so models that don't use the risk layer are
+// unaffected. (Field vocabularies — treatment, scales, attack factors,
+// residual level — are the schema's job; see the package doc.)
 func checkRisk(c *checker, p *model.Project) {
-	if p.RiskPolicy.Set && !risk.MethodKnown(p.RiskPolicy.Method) {
-		c.add("risk-policy", fmt.Sprintf("method %q is not a known scoring profile (qualitative, attack-potential)", p.RiskPolicy.Method))
-	}
-	for _, t := range p.Threats {
-		subject := fmt.Sprintf("threat %q", t.ID)
-		if t.Treatment != "" && !validTreatments[t.Treatment] {
-			c.add(subject, fmt.Sprintf("treatment %q is not one of mitigate/accept/transfer/avoid", t.Treatment))
-		}
-		if t.Likelihood != "" && !risk.InScale(t.Likelihood) {
-			c.add(subject, fmt.Sprintf("likelihood %q is not a valid scale value", t.Likelihood))
-		}
-		if t.Impact != "" && !risk.InScale(t.Impact) {
-			c.add(subject, fmt.Sprintf("impact %q is not a valid scale value", t.Impact))
-		}
-		if a := t.Attack; a != nil {
-			for factor, value := range map[string]string{
-				"expertise": a.Expertise, "knowledge": a.Knowledge,
-				"opportunity": a.Opportunity, "equipment": a.Equipment,
-			} {
-				if value != "" && !risk.InAttackScale(factor, value) {
-					c.add(subject, fmt.Sprintf("attack %s %q is not a valid scale value", factor, value))
-				}
-			}
-		}
-		if t.ResidualRisk != "" && risk.LevelRank(t.ResidualRisk) == 0 {
-			c.add(subject, fmt.Sprintf("residualRisk %q is not a valid level (low/medium/high/critical)", t.ResidualRisk))
-		}
-	}
-
 	if !p.RiskPolicy.Set {
 		return // no policy declared → no CRA gate
 	}

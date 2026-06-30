@@ -14,6 +14,7 @@ import (
 	"github.com/imix/trustward/internal/quarto"
 	"github.com/imix/trustward/internal/risk"
 	"github.com/imix/trustward/internal/validate"
+	"github.com/imix/trustward/schema"
 )
 
 const reportTmplPath = "report.tmpl"
@@ -112,11 +113,18 @@ func runReport(cmd *cobra.Command, _ []string) error {
 }
 
 func runValidate(_ *cobra.Command, _ []string) error {
-	proj, err := project.Load(".")
-	if err != nil {
-		return fmt.Errorf("loading project: %w", err)
+	// Structural schema check first (the same schema editors use), then
+	// referential integrity + the CRA gate. A structural error is reported as a
+	// schema message rather than aborting, so the loader's Decode error can't
+	// mask it; both sets of findings count toward the exit code.
+	issues := schema.Check(".")
+	if proj, err := project.Load("."); err != nil {
+		issues = append(issues, fmt.Sprintf("loading project: %v", err))
+	} else {
+		for _, issue := range validate.Check(proj) {
+			issues = append(issues, issue.String())
+		}
 	}
-	issues := validate.Check(proj)
 	for _, issue := range issues {
 		fmt.Fprintln(os.Stderr, issue)
 	}
