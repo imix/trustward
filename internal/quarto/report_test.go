@@ -182,6 +182,21 @@ func TestReport_FrontMatterMeta(t *testing.T) {
 	assertContains(t, got, "A test system.")
 }
 
+func TestReport_ComponentControlsFromMitigations(t *testing.T) {
+	// The component declares no controls: field; its control link is a threat
+	// targeting it that is mitigated by ctrl-x. The Components table must still
+	// list ctrl-x (a risk-first model links controls via mitigations).
+	proj := &model.Project{
+		Components: []model.Component{{ID: "c1", Title: "Reader", Type: "device"}},
+		Controls:   []model.Control{{ID: "ctrl-x", Title: "Signed Firmware"}},
+		Threats:    []model.Threat{{ID: "t1", Title: "Tamper", Target: "c1", Mitigations: []string{"ctrl-x"}}},
+	}
+
+	got := render(t, proj, "", false)
+
+	assertContains(t, got, "Signed Firmware (`ctrl-x`)")
+}
+
 func TestReport_DiagramReferencesStaticImage(t *testing.T) {
 	got := render(t, nil, "", false)
 

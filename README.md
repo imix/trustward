@@ -186,6 +186,7 @@ The template receives:
 | `.Controls` | `map[string]string` | Control ID → title (for the `controlTitle` helper) |
 | `.ControlList` | `[]Control` | Full control objects, for a controls section |
 | `.ControlComponents` | `map[string][]string` | Control ID → component IDs that implement it |
+| `.ComponentControls` | `map[string][]string` | Component ID → control IDs on it (`component.controls`) or mitigating a threat targeting it |
 | `.ComponentList` | `[]Component` | All components |
 | `.CatalogList` | `[]ControlCatalog` | Requirement catalogs, for compliance mapping |
 | `.RequirementControls` | `map[string][]string` | `catalog-id::req-id` → control IDs that satisfy it |

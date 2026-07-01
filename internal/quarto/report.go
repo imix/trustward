@@ -89,6 +89,7 @@ type reportData struct {
 	Controls            map[string]string    // id → title, for the controlTitle helper
 	ControlList         []model.Control
 	ControlComponents   map[string][]string // control id → component ids that implement it
+	ComponentControls   map[string][]string // component id → control ids on it or mitigating a threat targeting it
 	ComponentList       []model.Component
 	CatalogList         []model.ControlCatalog
 	RequirementControls map[string][]string // "catalog-id::req-id" → control IDs
@@ -122,6 +123,37 @@ func Report(proj *model.Project, tmpl *template.Template, diagram string, pdf bo
 		})
 	}
 
+	// componentControls lists the controls associated with each component: those
+	// declared on it (component.controls) plus those that mitigate a threat
+	// targeting it. A risk-first model treats risk through threat mitigations
+	// rather than per-component control lists, and would otherwise render an
+	// empty Controls column.
+	componentControls := make(map[string][]string)
+	ccSeen := make(map[string]map[string]bool)
+	addControl := func(comp, ctrl string) {
+		if comp == "" || ctrl == "" {
+			return
+		}
+		if ccSeen[comp] == nil {
+			ccSeen[comp] = make(map[string]bool)
+		}
+		if ccSeen[comp][ctrl] {
+			return
+		}
+		ccSeen[comp][ctrl] = true
+		componentControls[comp] = append(componentControls[comp], ctrl)
+	}
+	for _, c := range proj.Components {
+		for _, ctrl := range c.Controls {
+			addControl(c.ID, ctrl)
+		}
+	}
+	for _, t := range proj.Threats {
+		for _, m := range t.Mitigations {
+			addControl(t.Target, m) // a data-flow target is harmless — the Components table only ranges components
+		}
+	}
+
 	data := reportData{
 		References:          proj.References,
 		AssetList:           proj.Assets,
@@ -139,6 +171,7 @@ func Report(proj *model.Project, tmpl *template.Template, diagram string, pdf bo
 		Controls:            idx.ControlTitles(),
 		ControlList:         proj.Controls,
 		ControlComponents:   idx.ComponentsByControl(),
+		ComponentControls:   componentControls,
 		ComponentList:       proj.Components,
 		CatalogList:         proj.Catalogs,
 		RequirementControls: idx.ControlsByRequirement(),

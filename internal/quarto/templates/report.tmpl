@@ -42,7 +42,7 @@ External documents this assessment depends on, at the versions it was issued aga
 | Component | Type | Controls |
 |------------------------------|--------------------|--------------------------------------------------|
 {{ range .ComponentList -}}
-| {{ if .Title }}{{ .Title }}{{ else }}`{{ .ID }}`{{ end }} | {{ .Type }} | {{ range $i, $c := .Controls }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $c }}{{ end }} |
+| {{ if .Title }}{{ .Title }}{{ else }}`{{ .ID }}`{{ end }} | {{ .Type }} | {{ range $i, $c := (index $.ComponentControls .ID) }}{{ if $i }}, {{ end }}{{ controlTitle $.Controls $c }}{{ end }} |
 {{ end }}
 {{ end -}}
 ### Data Flow Diagram
