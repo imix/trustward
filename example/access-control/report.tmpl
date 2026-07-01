@@ -11,8 +11,20 @@ format:
 {{- if .PDF }}
   typst:
     toc: true
+    include-in-header:
+      text: |
+        #set text(font: "DejaVu Sans")
 {{- end }}
 ---
+
+```{=typst}
+// PDF styling: all-numeric section numbers (1.1.1, not 1.1.a) and left-aligned
+// table cells (justified narrow cells stretch short lists like a Backed-by list
+// of TIDs into ugly gaps). The sans-serif font is set in the preamble via
+// include-in-header (above) so it reaches the title and TOC too.
+#set heading(numbering: "1.1.1.1.1.1")
+#show table: set par(justify: false)
+```
 
 {{ if .Logo }}
 ![]({{ .Logo }}){width=320px fig-align="center"}
@@ -189,10 +201,10 @@ Risk is scored using the **{{ if .RiskMethod }}{{ .RiskMethod }}{{ else }}qualit
 {{ if .AssetList }}
 #### Assets
 
-| ID | Type | Classification | Hosted on | Description |
-|----------|----------|------------|-------------|-------------------------------------------------------|
+| ID | Type | Classification | Description |
+|------------|-------------|---------------|------------------------------------------------------------|
 {{ range .AssetList -}}
-| `{{ .ID }}` | {{ .Type }} | {{ .Classification }} | {{ range $i, $c := (index $.AssetComponents .ID) }}{{ if $i }}, {{ end }}`{{ $c }}`{{ end }} | {{ .Description | trim }} |
+| `{{ .ID }}` | {{ .Type }} | {{ .Classification }} | {{ .Description | trim }} |
 {{ end }}
 {{ end -}}
 {{ if .ObjectiveList }}
@@ -257,6 +269,16 @@ risk level. Worst case is top-right.
 {{- end }}
 </tbody>
 </table>
+```
+
+```{=typst}
+#align(center, table(
+  columns: (auto,) * (1 + {{ len .RiskMatrix.Impacts }}),
+  align: center + horizon,
+  stroke: 0.5pt + gray,
+  [*Likelihood*#linebreak()*Impact*], {{ range .RiskMatrix.Impacts }}[*{{ . | upper }}*], {{ end }}
+{{ range .RiskMatrix.Rows }}  [*{{ .Likelihood | upper }}*], {{ range .Cells }}table.cell(fill: rgb("{{ riskColor .Level }}"))[{{ if .Threats }}{{ len .Threats }}{{ end }}], {{ end }}
+{{ end }}))
 ```
 {{ if .RiskMatrix.Unplaced }}
 {{ len .RiskMatrix.Unplaced }} threat(s) scored by severity fallback, not placed on the matrix: {{ range $i, $id := .RiskMatrix.Unplaced }}{{ if $i }}, {{ end }}`{{ $id }}`{{ end }}.
